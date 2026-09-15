@@ -1,0 +1,8 @@
+{
+  "name": "ATTO Sementes — Governança de Soluções & Ativos (Industriatto)",
+  "description": "Plataforma de Governança de Soluções e Ativos de TI da ATTO Sementes — Backoffice Industriatto.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
