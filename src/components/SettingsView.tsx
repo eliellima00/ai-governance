@@ -17,13 +17,16 @@ import {
   Building2,
   Lock
 } from 'lucide-react';
-import { GovernanceConfig, UserRole } from '../types';
+import { GovernanceConfig, GovStage, ProjectType, UserRole } from '../types';
 import { can } from '../utils/permissions';
 import {
   DEFAULT_GOVERNANCE_CONFIG,
   saveGovernanceConfig,
   resetGovernanceConfig
 } from '../config/governanceConfig';
+import { GOV_STAGES_CATALOG } from '../data/estimationCatalog';
+
+const EDITABLE_STAGES = GOV_STAGES_CATALOG.filter((s) => s !== 'Concluído');
 import {
   exportStateAsJson,
   importStateFromJson,
@@ -108,28 +111,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div id="settings-governance-view" className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-grey-200 rounded-lg p-5 shadow-2xs">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mb-1">
+          <div className="flex items-center gap-2 text-xs text-grey-500 font-medium mb-1">
             <button
               onClick={onNavigateToPortfolio}
-              className="flex items-center gap-1 text-emerald-800 hover:text-emerald-950 font-bold hover:underline"
+              className="flex items-center gap-1 text-brand-dark hover:text-brand-dark font-bold hover:underline"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Voltar ao Portfólio</span>
             </button>
             <span>/</span>
-            <span className="text-slate-800 font-semibold">Administração</span>
+            <span className="text-grey-800 font-semibold">Administração</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <div className="p-2 rounded-lg bg-brand-lighter text-brand-dark border border-brand-light">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-slate-900">
+              <h1 className="text-xl font-extrabold text-grey-900">
                 Parametrização de Governança & Regras T.I
               </h1>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-grey-500">
                 Ajuste os parâmetros dos cálculos de esforço, réguas de risco e critérios de saída sem alterar código.
               </p>
             </div>
@@ -141,7 +144,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <>
               <button
                 onClick={handleResetDefaults}
-                className="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition-colors flex items-center gap-1.5"
+                className="px-3 py-2 text-xs font-semibold text-grey-600 hover:text-grey-900 bg-grey-100 hover:bg-grey-200 rounded-full border border-grey-300 transition-colors flex items-center gap-1.5"
                 title="Restaurar parâmetros padrão de fábrica"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -150,11 +153,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
               <button
                 onClick={handleSave}
-                className="px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-2xs transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark rounded-full shadow-2xs transition-colors flex items-center gap-2"
               >
                 {saveSuccess ? (
                   <>
-                    <Check className="w-4 h-4 text-emerald-200" />
+                    <Check className="w-4 h-4 text-brand-light" />
                     <span>Parâmetros Salvos!</span>
                   </>
                 ) : (
@@ -166,8 +169,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
             </>
           ) : (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 text-xs font-semibold">
-              <Lock className="w-3.5 h-3.5 text-amber-700" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning-50 text-warning-600 border border-warning-200 text-xs font-semibold">
+              <Lock className="w-3.5 h-3.5 text-warning-600" />
               <span>Modo Somente Leitura (Perfil Padrão)</span>
             </div>
           )}
@@ -175,8 +178,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {!isAdmin && (
-        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-xs text-amber-900 flex items-start gap-3">
-          <Info className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+        <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 text-xs text-warning-600 flex items-start gap-3">
+          <Info className="w-5 h-5 text-warning-600 shrink-0 mt-0.5" />
           <div>
             <span className="font-bold block text-sm mb-0.5">Acesso Restrito a Administradores</span>
             Você está visualizando a parametrização com o perfil <strong>Padrão</strong>. Apenas usuários com perfil <strong>Admin</strong> podem salvar alterações ou restaurar backups. Para testar a edição, altere o seletor de perfil no canto superior direito para "Admin".
@@ -185,13 +188,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       )}
 
       {/* Tabs Navigation */}
-      <div className="flex border-b border-slate-200 gap-2 overflow-x-auto pb-px">
+      <div className="flex border-b border-grey-200 gap-2 overflow-x-auto pb-px">
         <button
           onClick={() => setActiveSubTab('estimation')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
             activeSubTab === 'estimation'
-              ? 'border-emerald-600 text-emerald-900 bg-white rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-brand-main text-brand-dark bg-white rounded-t-lg'
+              : 'border-transparent text-grey-500 hover:text-grey-800'
           }`}
         >
           <Clock className="w-4 h-4" />
@@ -202,8 +205,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           onClick={() => setActiveSubTab('risk')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
             activeSubTab === 'risk'
-              ? 'border-emerald-600 text-emerald-900 bg-white rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-brand-main text-brand-dark bg-white rounded-t-lg'
+              : 'border-transparent text-grey-500 hover:text-grey-800'
           }`}
         >
           <Shield className="w-4 h-4" />
@@ -214,8 +217,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           onClick={() => setActiveSubTab('checklists')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
             activeSubTab === 'checklists'
-              ? 'border-emerald-600 text-emerald-900 bg-white rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-brand-main text-brand-dark bg-white rounded-t-lg'
+              : 'border-transparent text-grey-500 hover:text-grey-800'
           }`}
         >
           <CheckSquare className="w-4 h-4" />
@@ -226,8 +229,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           onClick={() => setActiveSubTab('backup')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
             activeSubTab === 'backup'
-              ? 'border-emerald-600 text-emerald-900 bg-white rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-brand-main text-brand-dark bg-white rounded-t-lg'
+              : 'border-transparent text-grey-500 hover:text-grey-800'
           }`}
         >
           <Database className="w-4 h-4" />
@@ -239,99 +242,107 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {activeSubTab === 'estimation' && (
         <div className="space-y-6">
           {/* Tipos Técnicos A, B, C */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-grey-100 pb-3">
               <div>
-                <h3 className="text-sm font-extrabold text-slate-900">
+                <h3 className="text-sm font-extrabold text-grey-900">
                   Esforço Base por Tipo Técnico (Eixo 2)
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-grey-500">
                   Horas base estimadas de envolvimento da equipe de T.I para cada arquétipo de solução.
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(['A', 'B', 'C'] as const).map((typeKey) => {
-                const info = formData.projectTypes[typeKey];
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {(['A', 'B', 'C'] as ProjectType[]).map((typeKey) => {
+                const info = formData.projectTypeInfo[typeKey];
+                const stagesForType = formData.stagesBaseConfig[typeKey];
+
+                const updateStageField = (
+                  stage: GovStage,
+                  field: 'hours' | 'meetings' | 'externalDeps',
+                  raw: string
+                ) => {
+                  const val = Math.max(0, field === 'hours' ? Number(raw) || 0 : Math.round(Number(raw) || 0));
+                  setFormData((prev) => ({
+                    ...prev,
+                    stagesBaseConfig: {
+                      ...prev.stagesBaseConfig,
+                      [typeKey]: {
+                        ...prev.stagesBaseConfig[typeKey],
+                        [stage]: { ...prev.stagesBaseConfig[typeKey][stage], [field]: val }
+                      }
+                    }
+                  }));
+                };
+
                 return (
                   <div
                     key={typeKey}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3"
+                    className="p-4 rounded-lg border border-grey-200 bg-grey-50/50 space-y-3 min-w-0"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-white border border-slate-300 text-slate-800">
-                        Tipo {typeKey}
-                      </span>
-                      <span className="text-[11px] text-slate-500 font-medium">{info.name}</span>
-                    </div>
-
                     <div>
-                      <label className="text-xs font-semibold text-slate-700 block mb-1">
-                        Horas Base T.I:
-                      </label>
-                      <input
-                        type="number"
-                        disabled={!isAdmin}
-                        value={info.baseHours}
-                        onChange={(e) => {
-                          const val = Math.max(1, Number(e.target.value) || 0);
-                          setFormData((prev) => ({
-                            ...prev,
-                            projectTypes: {
-                              ...prev.projectTypes,
-                              [typeKey]: { ...prev.projectTypes[typeKey], baseHours: val }
-                            }
-                          }));
-                        }}
-                        className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white font-mono font-bold text-slate-900 disabled:opacity-60 focus:ring-2 focus:ring-emerald-500"
-                      />
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-white border border-grey-300 text-grey-800 shrink-0">
+                          Tipo {typeKey}
+                        </span>
+                        {info.statusBadge && (
+                          <span className="text-[10px] font-bold text-warning-600 bg-warning-50 px-1.5 py-0.2 rounded border border-warning-200 truncate">
+                            {info.statusBadge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-grey-600 font-medium mt-1.5">{info.label}</p>
+                      <p className="text-[10px] text-grey-400 mt-0.5">{info.technologyHint}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                          Reuniões Base:
-                        </label>
-                        <input
-                          type="number"
-                          disabled={!isAdmin}
-                          value={info.baseMeetings}
-                          onChange={(e) => {
-                            const val = Math.max(0, Number(e.target.value) || 0);
-                            setFormData((prev) => ({
-                              ...prev,
-                              projectTypes: {
-                                ...prev.projectTypes,
-                                [typeKey]: { ...prev.projectTypes[typeKey], baseMeetings: val }
-                              }
-                            }));
-                          }}
-                          className="w-full px-2.5 py-1 border border-slate-300 rounded text-xs bg-white font-mono disabled:opacity-60"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                          Deps Externas:
-                        </label>
-                        <input
-                          type="number"
-                          disabled={!isAdmin}
-                          value={info.baseExternalDeps}
-                          onChange={(e) => {
-                            const val = Math.max(0, Number(e.target.value) || 0);
-                            setFormData((prev) => ({
-                              ...prev,
-                              projectTypes: {
-                                ...prev.projectTypes,
-                                [typeKey]: { ...prev.projectTypes[typeKey], baseExternalDeps: val }
-                              }
-                            }));
-                          }}
-                          className="w-full px-2.5 py-1 border border-slate-300 rounded text-xs bg-white font-mono disabled:opacity-60"
-                        />
-                      </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[10px] border-collapse">
+                        <thead>
+                          <tr className="text-grey-500 border-b border-grey-200">
+                            <th className="text-left font-semibold py-1 pr-1">Etapa</th>
+                            <th className="text-right font-semibold py-1 px-1">Horas</th>
+                            <th className="text-right font-semibold py-1 px-1">Reun.</th>
+                            <th className="text-right font-semibold py-1 pl-1">Deps</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-grey-100">
+                          {EDITABLE_STAGES.map((stage) => (
+                            <tr key={stage}>
+                              <td className="py-1 pr-1 font-mono font-bold text-grey-700">{stage}</td>
+                              <td className="py-1 px-1">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  disabled={!isAdmin}
+                                  value={stagesForType[stage].hours}
+                                  onChange={(e) => updateStageField(stage, 'hours', e.target.value)}
+                                  className="w-14 px-1.5 py-1 border border-grey-300 rounded text-right text-[11px] bg-white font-mono font-bold text-grey-900 disabled:opacity-60 focus:ring-2 focus:ring-brand-main"
+                                />
+                              </td>
+                              <td className="py-1 px-1">
+                                <input
+                                  type="number"
+                                  disabled={!isAdmin}
+                                  value={stagesForType[stage].meetings}
+                                  onChange={(e) => updateStageField(stage, 'meetings', e.target.value)}
+                                  className="w-10 px-1.5 py-1 border border-grey-300 rounded text-right text-[11px] bg-white font-mono disabled:opacity-60"
+                                />
+                              </td>
+                              <td className="py-1 pl-1">
+                                <input
+                                  type="number"
+                                  disabled={!isAdmin}
+                                  value={stagesForType[stage].externalDeps}
+                                  onChange={(e) => updateStageField(stage, 'externalDeps', e.target.value)}
+                                  className="w-10 px-1.5 py-1 border border-grey-300 rounded text-right text-[11px] bg-white font-mono disabled:opacity-60"
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 );
@@ -340,13 +351,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Módulos Adicionais */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-grey-100 pb-3">
               <div>
-                <h3 className="text-sm font-extrabold text-slate-900">
+                <h3 className="text-sm font-extrabold text-grey-900">
                   Catálogo de Módulos Adicionais de Complexidade
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-grey-500">
                   Horas e reuniões extras adicionadas quando o projeto demanda integrações ou suporte de infraestrutura.
                 </p>
               </div>
@@ -356,21 +367,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               {formData.modulesCatalog.map((mod, idx) => (
                 <div
                   key={mod.id}
-                  className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                      <span className="font-mono text-xs font-bold text-info-700 bg-info-50 px-2 py-0.5 rounded border border-info-200">
                         {mod.id}
                       </span>
-                      <span className="text-xs font-bold text-slate-900 truncate">{mod.label}</span>
+                      <span className="text-xs font-bold text-grey-900 truncate">{mod.label}</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-1">{mod.description}</p>
+                    <p className="text-[11px] text-grey-500 mt-1">{mod.description}</p>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
                     <div className="flex items-center gap-1.5">
-                      <label className="text-[11px] font-semibold text-slate-600">Horas:</label>
+                      <label className="text-[11px] font-semibold text-grey-600">Horas:</label>
                       <input
                         type="number"
                         disabled={!isAdmin}
@@ -381,12 +392,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           updated[idx] = { ...updated[idx], hours: val };
                           setFormData((prev) => ({ ...prev, modulesCatalog: updated }));
                         }}
-                        className="w-16 px-2 py-1 border border-slate-300 rounded text-xs bg-white font-mono font-bold disabled:opacity-60"
+                        className="w-16 px-2 py-1 border border-grey-300 rounded text-xs bg-white font-mono font-bold disabled:opacity-60"
                       />
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      <label className="text-[11px] font-semibold text-slate-600">Reuniões:</label>
+                      <label className="text-[11px] font-semibold text-grey-600">Reuniões:</label>
                       <input
                         type="number"
                         disabled={!isAdmin}
@@ -397,7 +408,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           updated[idx] = { ...updated[idx], meetings: val };
                           setFormData((prev) => ({ ...prev, modulesCatalog: updated }));
                         }}
-                        className="w-14 px-2 py-1 border border-slate-300 rounded text-xs bg-white font-mono disabled:opacity-60"
+                        className="w-14 px-2 py-1 border border-grey-300 rounded text-xs bg-white font-mono disabled:opacity-60"
                       />
                     </div>
                   </div>
@@ -407,13 +418,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Descontos de Esforço */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-grey-100 pb-3">
               <div>
-                <h3 className="text-sm font-extrabold text-slate-900">
+                <h3 className="text-sm font-extrabold text-grey-900">
                   Descontos de Esforço (Itens Já Atendidos Confirmados na E1)
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-grey-500">
                   Abatimento de horas computado quando a equipe de T.I valida a existência prévia de documentação ou repositório.
                 </p>
               </div>
@@ -423,20 +434,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               {formData.discountsCatalog.map((disc, idx) => (
                 <div
                   key={disc.id}
-                  className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      <span className="font-mono text-xs font-bold text-brand-dark bg-brand-lighter px-2 py-0.5 rounded border border-brand-light">
                         {disc.id}
                       </span>
-                      <span className="text-xs font-bold text-slate-900 truncate">{disc.label}</span>
+                      <span className="text-xs font-bold text-grey-900 truncate">{disc.label}</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-1">{disc.description}</p>
+                    <p className="text-[11px] text-grey-500 mt-1">{disc.description}</p>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <label className="text-[11px] font-semibold text-slate-600">Desconto de Horas:</label>
+                    <label className="text-[11px] font-semibold text-grey-600">Desconto de Horas:</label>
                     <input
                       type="number"
                       disabled={!isAdmin}
@@ -447,7 +458,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         updated[idx] = { ...updated[idx], hours: val };
                         setFormData((prev) => ({ ...prev, discountsCatalog: updated }));
                       }}
-                      className="w-16 px-2 py-1 border border-slate-300 rounded text-xs bg-white font-mono font-bold text-emerald-700 disabled:opacity-60"
+                      className="w-16 px-2 py-1 border border-grey-300 rounded text-xs bg-white font-mono font-bold text-brand-dark disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -459,20 +470,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Sub-tab 2: Réguas de Risco */}
       {activeSubTab === 'risk' && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-slate-900">
+        <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-5">
+          <div className="border-b border-grey-100 pb-3">
+            <h3 className="text-sm font-extrabold text-grey-900">
               Faixas de Corte de Risco (Pontuação Residual e Inicial)
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-grey-500">
               Valores limites de pontuação para determinar a classificação em Baixo, Médio, Alto e Crítico.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40">
-              <span className="text-xs font-bold text-emerald-900 block mb-1">Risco BAIXO</span>
-              <p className="text-[11px] text-slate-500 mb-2">Pontuação menor ou igual a:</p>
+            <div className="p-4 rounded-lg border border-brand-light bg-brand-lighter/40">
+              <span className="text-xs font-bold text-brand-dark block mb-1">Risco BAIXO</span>
+              <p className="text-[11px] text-grey-500 mb-2">Pontuação menor ou igual a:</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -485,15 +496,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       riskThresholds: { ...prev.riskThresholds, baixoMax: val }
                     }));
                   }}
-                  className="w-20 px-2 py-1 border border-emerald-300 rounded text-sm font-mono font-bold bg-white text-emerald-900"
+                  className="w-20 px-2 py-1 border border-brand-light rounded text-sm font-mono font-bold bg-white text-brand-dark"
                 />
-                <span className="text-xs text-slate-600 font-semibold">pontos</span>
+                <span className="text-xs text-grey-600 font-semibold">pontos</span>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40">
-              <span className="text-xs font-bold text-amber-900 block mb-1">Risco MÉDIO</span>
-              <p className="text-[11px] text-slate-500 mb-2">Pontuação menor ou igual a:</p>
+            <div className="p-4 rounded-lg border border-warning-200 bg-warning-50/40">
+              <span className="text-xs font-bold text-warning-600 block mb-1">Risco MÉDIO</span>
+              <p className="text-[11px] text-grey-500 mb-2">Pontuação menor ou igual a:</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -506,15 +517,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       riskThresholds: { ...prev.riskThresholds, medioMax: val }
                     }));
                   }}
-                  className="w-20 px-2 py-1 border border-amber-300 rounded text-sm font-mono font-bold bg-white text-amber-900"
+                  className="w-20 px-2 py-1 border border-warning-200 rounded text-sm font-mono font-bold bg-white text-warning-600"
                 />
-                <span className="text-xs text-slate-600 font-semibold">pontos</span>
+                <span className="text-xs text-grey-600 font-semibold">pontos</span>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-orange-200 bg-orange-50/40">
+            <div className="p-4 rounded-lg border border-orange-200 bg-orange-50/40">
               <span className="text-xs font-bold text-orange-900 block mb-1">Risco ALTO</span>
-              <p className="text-[11px] text-slate-500 mb-2">Pontuação menor ou igual a:</p>
+              <p className="text-[11px] text-grey-500 mb-2">Pontuação menor ou igual a:</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -529,18 +540,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }}
                   className="w-20 px-2 py-1 border border-orange-300 rounded text-sm font-mono font-bold bg-white text-orange-900"
                 />
-                <span className="text-xs text-slate-600 font-semibold">pontos</span>
+                <span className="text-xs text-grey-600 font-semibold">pontos</span>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/40">
-              <span className="text-xs font-bold text-rose-900 block mb-1">Risco CRÍTICO</span>
-              <p className="text-[11px] text-slate-500 mb-2">Pontuação maior que o corte Alto:</p>
+            <div className="p-4 rounded-lg border border-danger-300 bg-danger-50/40">
+              <span className="text-xs font-bold text-danger-800 block mb-1">Risco CRÍTICO</span>
+              <p className="text-[11px] text-grey-500 mb-2">Pontuação maior que o corte Alto:</p>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-mono font-extrabold text-rose-700 bg-white px-3 py-1 rounded border border-rose-300">
+                <span className="text-sm font-mono font-extrabold text-danger-800 bg-white px-3 py-1 rounded border border-danger-300">
                   &gt; {formData.riskThresholds.altoMax}
                 </span>
-                <span className="text-xs text-slate-600 font-semibold">pontos</span>
+                <span className="text-xs text-grey-600 font-semibold">pontos</span>
               </div>
             </div>
           </div>
@@ -549,12 +560,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Sub-tab 3: Critérios de Saída */}
       {activeSubTab === 'checklists' && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-slate-900">
+        <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+          <div className="border-b border-grey-100 pb-3">
+            <h3 className="text-sm font-extrabold text-grey-900">
               Critérios de Saída da Governança (Gate para Conclusão / E6)
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-grey-500">
               Checklist obrigatório de conformidade que valida a saída da solução da esteira sem risco de dependência de pessoa única.
             </p>
           </div>
@@ -563,10 +574,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {formData.exitCriteriaChecklist.map((crit, idx) => (
               <div
                 key={crit.id}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2"
+                className="p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 space-y-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  <span className="font-mono text-xs font-bold text-brand-dark bg-brand-lighter px-2 py-0.5 rounded border border-brand-light">
                     {crit.id}
                   </span>
                   <input
@@ -578,7 +589,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       updated[idx] = { ...updated[idx], title: e.target.value };
                       setFormData((prev) => ({ ...prev, exitCriteriaChecklist: updated }));
                     }}
-                    className="flex-1 px-2.5 py-1 border border-slate-300 rounded text-xs font-bold text-slate-900 bg-white disabled:opacity-60"
+                    className="flex-1 px-2.5 py-1 border border-grey-300 rounded text-xs font-bold text-grey-900 bg-white disabled:opacity-60"
                   />
                 </div>
                 <textarea
@@ -590,7 +601,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     updated[idx] = { ...updated[idx], description: e.target.value };
                     setFormData((prev) => ({ ...prev, exitCriteriaChecklist: updated }));
                   }}
-                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs text-slate-700 bg-white disabled:opacity-60 focus:ring-1 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 border border-grey-300 rounded text-xs text-grey-700 bg-white disabled:opacity-60 focus:ring-1 focus:ring-brand-main"
                 />
               </div>
             ))}
@@ -600,28 +611,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Sub-tab 4: Backup Técnico JSON */}
       {activeSubTab === 'backup' && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-slate-900">
+        <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-5">
+          <div className="border-b border-grey-100 pb-3">
+            <h3 className="text-sm font-extrabold text-grey-900">
               Backup Técnico em JSON (Persistência sem Banco)
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-grey-500">
               Exporte todos os projetos, parâmetros e histórico em um arquivo JSON íntegro, ou restaure um backup anterior.
             </p>
           </div>
 
           {backupMessage && (
             <div
-              className={`p-3.5 rounded-xl border text-xs flex items-center gap-2.5 ${
+              className={`p-3.5 rounded-lg border text-xs flex items-center gap-2.5 ${
                 backupMessage.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
-                  : 'bg-rose-50 text-rose-900 border-rose-200'
+                  ? 'bg-brand-lighter text-brand-dark border-brand-light'
+                  : 'bg-danger-50 text-danger-800 border-danger-300'
               }`}
             >
               {backupMessage.type === 'success' ? (
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <Check className="w-4 h-4 text-brand-main shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-danger-500 shrink-0" />
               )}
               <span>{backupMessage.text}</span>
             </div>
@@ -629,20 +640,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Export Card */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-3">
+            <div className="p-4 rounded-lg border border-grey-200 bg-grey-50/50 flex flex-col justify-between space-y-3">
               <div>
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <Download className="w-4 h-4 text-emerald-700" />
+                <span className="text-xs font-bold text-grey-900 flex items-center gap-1.5">
+                  <Download className="w-4 h-4 text-brand-dark" />
                   <span>Exportar Backup Completo</span>
                 </span>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-grey-500 mt-1">
                   Gera arquivo JSON estruturado contendo todas as soluções, planos de ação, parâmetros e estimativas.
                 </p>
               </div>
 
               <button
-                onClick={exportStateAsJson}
-                className="w-full py-2 px-3 rounded-lg text-xs font-bold text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors flex items-center justify-center gap-1.5"
+                onClick={() => exportStateAsJson()}
+                className="w-full py-2 px-3 rounded-full text-xs font-bold text-brand-dark bg-brand-lighter hover:bg-brand-lighter border border-brand-light transition-colors flex items-center justify-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Baixar JSON de Backup</span>
@@ -650,13 +661,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Import Card */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-3">
+            <div className="p-4 rounded-lg border border-grey-200 bg-grey-50/50 flex flex-col justify-between space-y-3">
               <div>
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <Upload className="w-4 h-4 text-blue-700" />
+                <span className="text-xs font-bold text-grey-900 flex items-center gap-1.5">
+                  <Upload className="w-4 h-4 text-info-700" />
                   <span>Restaurar Backup Técnico</span>
                 </span>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-grey-500 mt-1">
                   Selecione um arquivo JSON exportado previamente para restaurar o estado integral da aplicação.
                 </p>
               </div>
@@ -664,8 +675,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <label
                 className={`w-full py-2 px-3 rounded-lg text-xs font-bold text-center border transition-colors flex items-center justify-center gap-1.5 ${
                   isAdmin
-                    ? 'cursor-pointer text-blue-900 bg-blue-50 hover:bg-blue-100 border-blue-300'
-                    : 'cursor-not-allowed opacity-60 text-slate-400 bg-slate-100 border-slate-300'
+                    ? 'cursor-pointer text-info-700 bg-info-50 hover:bg-info-50 border-info-200'
+                    : 'cursor-not-allowed opacity-60 text-grey-400 bg-grey-100 border-grey-300'
                 }`}
               >
                 <Upload className="w-3.5 h-3.5" />
@@ -681,13 +692,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Reset Defaults Card */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-3">
+            <div className="p-4 rounded-lg border border-grey-200 bg-grey-50/50 flex flex-col justify-between space-y-3">
               <div>
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <RotateCcw className="w-4 h-4 text-rose-700" />
+                <span className="text-xs font-bold text-grey-900 flex items-center gap-1.5">
+                  <RotateCcw className="w-4 h-4 text-danger-800" />
                   <span>Resetar para Exemplos Originais</span>
                 </span>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-grey-500 mt-1">
                   Limpa o localStorage e recarrega os 5 projetos padrão da ATTO (Portal Logística, CTe OCR, etc).
                 </p>
               </div>
@@ -695,7 +706,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 onClick={handleResetAllData}
                 disabled={!isAdmin}
-                className="w-full py-2 px-3 rounded-lg text-xs font-bold text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-300 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full py-2 px-3 rounded-full text-xs font-bold text-danger-800 bg-danger-50 hover:bg-danger-50 border border-danger-300 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Restaurar Base de Exemplo</span>

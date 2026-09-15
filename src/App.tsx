@@ -265,7 +265,7 @@ export default function App() {
   const isInProject = route.name === 'project';
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex font-sans antialiased selection:bg-emerald-200">
+    <div className="min-h-screen bg-grey-100 text-grey-900 flex font-sans antialiased selection:bg-brand-light">
       {/* Permanent Unified Sidebar (Root portfolio/settings & Solution workspace) */}
       <Sidebar
         route={route}
@@ -287,7 +287,7 @@ export default function App() {
 
       {/* Main Content Layout with Consistent Left Padding */}
       <div
-        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${
+        className={`flex-1 flex flex-col min-h-screen min-w-0 w-full transition-all duration-300 ease-in-out ${
           isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'
         }`}
       >
@@ -307,58 +307,58 @@ export default function App() {
 
         {/* Informative Sub-header Bar */}
         {route.name === 'portfolio' ? (
-          <div className="bg-slate-900 text-white border-b border-slate-800 py-2 px-4 sm:px-8 text-xs">
+          <div className="bg-grey-900 text-white border-b border-grey-800 py-2 px-4 sm:px-8 text-xs">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="bg-emerald-600 text-white text-[10px] uppercase font-extrabold px-2 py-0.5 rounded shrink-0">
+                <span className="bg-brand-main text-white text-[10px] uppercase font-extrabold px-2 py-0.5 rounded shrink-0">
                   Visão Geral
                 </span>
-                <span className="text-slate-300 truncate">
+                <span className="text-grey-300 truncate">
                   Gestão Centralizada: <strong>Planilha de Demandas</strong> • <strong>Pauta de Gestão</strong> • <strong>Pipeline Kanban</strong>
                 </span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-slate-400">Total Soluções:</span>
-                <span className="bg-slate-800 text-emerald-300 border border-slate-700 px-2 py-0.5 rounded font-mono font-bold">
+                <span className="text-grey-400">Total Soluções:</span>
+                <span className="bg-grey-800 text-brand-light border border-grey-700 px-2 py-0.5 rounded font-mono font-bold">
                   {projects.length} ativas
                 </span>
-                <span className="text-amber-300 text-[11px] font-semibold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/80 flex items-center gap-1">
+                <span className="text-warning-200 text-[11px] font-semibold bg-warning-600/60 px-2 py-0.5 rounded border border-warning-600/80 flex items-center gap-1">
                   ★ {projects.filter((p) => p.isPriorityForManagement).length} priorizadas da gestão
                 </span>
               </div>
             </div>
           </div>
         ) : route.name === 'settings' ? (
-          <div className="bg-slate-900 text-white border-b border-slate-800 py-2 px-4 sm:px-8 text-xs">
+          <div className="bg-grey-900 text-white border-b border-grey-800 py-2 px-4 sm:px-8 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-slate-300">
+              <span className="text-grey-300">
                 Painel de Parametrização: Ajuste horas base, réguas de risco e critérios de saída sem alterar código.
               </span>
-              <span className="text-emerald-400 font-mono text-[11px] font-bold">
+              <span className="text-brand-light font-mono text-[11px] font-bold">
                 Perfil Atual: {userRole.toUpperCase()}
               </span>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-900 text-white border-b border-slate-800 py-2 px-4 sm:px-8 text-xs">
+          <div className="bg-grey-900 text-white border-b border-grey-800 py-2 px-4 sm:px-8 text-xs">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="bg-emerald-600 text-white text-[10px] uppercase font-extrabold px-2 py-0.5 rounded shrink-0">
+                <span className="bg-brand-main text-white text-[10px] uppercase font-extrabold px-2 py-0.5 rounded shrink-0">
                   Padrão ATTO
                 </span>
-                <span className="text-slate-300 truncate">
+                <span className="text-grey-300 truncate">
                   Fluxo de Governança: <strong>Ficha do Ativo & Doc Viva</strong> → <strong>Diagnóstico de Risco</strong> →{' '}
                   <strong>Mitigações</strong> → <strong>Estimativa & Cronograma</strong>
                 </span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-slate-400">Score Residual:</span>
-                <span className="bg-slate-800 text-emerald-300 border border-slate-700 px-2 py-0.5 rounded font-mono font-bold">
+                <span className="text-grey-400">Score Residual:</span>
+                <span className="bg-grey-800 text-brand-light border border-grey-700 px-2 py-0.5 rounded font-mono font-bold">
                   {residualStats.currentResidualScore} pts ({residualStats.currentRiskLevel})
                 </span>
-                <span className="text-slate-400 text-[11px] hidden sm:inline">
+                <span className="text-grey-400 text-[11px] hidden sm:inline">
                   ({residualStats.completedCount}/{residualStats.totalCount} concluídas)
                 </span>
               </div>
@@ -367,7 +367,7 @@ export default function App() {
         )}
 
         {/* Main Content View Switcher */}
-        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+        <main className="flex-1 w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 max-w-full overflow-x-hidden">
           {route.name === 'portfolio' && (
             <ProjectPortfolioDashboard
               projects={projects}
@@ -440,13 +440,13 @@ export default function App() {
         </main>
 
         {/* Application Footer */}
-        <footer className="bg-white border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-500 mt-auto">
+        <footer className="bg-white border-t border-grey-200 py-4 px-6 text-center text-xs text-grey-500 mt-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
             <div>
               <strong>ATTO Sementes</strong> — Gestão de Ativos & Governança de Soluções de T.I (GLPI 10.x)
             </div>
             <div className="flex items-center gap-3">
-              <span>Esteira Oficial: <code className="font-mono text-slate-700">grupoatto/governanca-solucoes</code></span>
+              <span>Esteira Oficial: <code className="font-mono text-grey-700">grupoatto/governanca-solucoes</code></span>
               <span>•</span>
               <span>Versão da Metodologia: <strong>v2.1-governance</strong></span>
             </div>

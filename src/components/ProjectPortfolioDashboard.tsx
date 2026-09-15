@@ -74,21 +74,21 @@ const STAGE_CONFIG: Record<
   { bg: string; text: string; border: string; label: string }
 > = {
   'Levantamento & Ficha': {
-    bg: 'bg-slate-100',
-    text: 'text-slate-700',
-    border: 'border-slate-300',
+    bg: 'bg-grey-100',
+    text: 'text-grey-700',
+    border: 'border-grey-300',
     label: 'Levantamento & Ficha'
   },
   'Diagnóstico de Risco': {
-    bg: 'bg-amber-50',
-    text: 'text-amber-800',
-    border: 'border-amber-300',
+    bg: 'bg-warning-50',
+    text: 'text-warning-600',
+    border: 'border-warning-200',
     label: 'Diagnóstico de Risco'
   },
   'Plano de Ação / Adequação': {
-    bg: 'bg-blue-50',
-    text: 'text-blue-800',
-    border: 'border-blue-300',
+    bg: 'bg-info-50',
+    text: 'text-info-700',
+    border: 'border-info-200',
     label: 'Plano de Ação'
   },
   'Homologação TI': {
@@ -98,9 +98,9 @@ const STAGE_CONFIG: Record<
     label: 'Homologação T.I'
   },
   'Em Produção / Operação': {
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-800',
-    border: 'border-emerald-300',
+    bg: 'bg-brand-lighter',
+    text: 'text-brand-dark',
+    border: 'border-brand-light',
     label: 'Em Produção'
   },
   Sustentação: {
@@ -110,9 +110,9 @@ const STAGE_CONFIG: Record<
     label: 'Sustentação'
   },
   'Bloqueado / Aguardando': {
-    bg: 'bg-rose-50',
-    text: 'text-rose-800',
-    border: 'border-rose-300',
+    bg: 'bg-danger-50',
+    text: 'text-danger-800',
+    border: 'border-danger-300',
     label: 'Bloqueado'
   }
 };
@@ -122,9 +122,9 @@ const PRIORITY_CONFIG: Record<
   { bg: string; text: string; border: string; label: string }
 > = {
   'P0 - Urgente': {
-    bg: 'bg-rose-100',
-    text: 'text-rose-800',
-    border: 'border-rose-300',
+    bg: 'bg-danger-50',
+    text: 'text-danger-800',
+    border: 'border-danger-300',
     label: 'P0 - Urgente'
   },
   'P1 - Alta': {
@@ -140,21 +140,21 @@ const PRIORITY_CONFIG: Record<
     label: 'P1 - Alta'
   },
   'P2 - Média': {
-    bg: 'bg-blue-100',
-    text: 'text-blue-800',
-    border: 'border-blue-300',
+    bg: 'bg-info-50',
+    text: 'text-info-700',
+    border: 'border-info-200',
     label: 'P2 - Média'
   },
   'P3 - Baixa': {
-    bg: 'bg-slate-100',
-    text: 'text-slate-700',
-    border: 'border-slate-300',
+    bg: 'bg-grey-100',
+    text: 'text-grey-700',
+    border: 'border-grey-300',
     label: 'P3 - Baixa'
   },
   Backlog: {
-    bg: 'bg-slate-100',
-    text: 'text-slate-600',
-    border: 'border-slate-200',
+    bg: 'bg-grey-100',
+    text: 'text-grey-600',
+    border: 'border-grey-200',
     label: 'Backlog'
   }
 };
@@ -390,22 +390,22 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   return (
     <div id="project-portfolio-dashboard" className="space-y-6">
       {/* Top Banner with Consultative Info */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+      <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+              <span className="bg-brand-lighter text-brand-dark text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5" />
                 Portfólio Corporativo ATTO
               </span>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-xs text-grey-500 font-medium">
                 Governança de Soluções Departamentais & Vibe Coding
               </span>
             </div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl font-black text-grey-900 tracking-tight">
               Gestão de Demandas Departamentais
             </h1>
-            <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
+            <p className="text-xs text-grey-600 max-w-3xl leading-relaxed">
               Monitore todas as soluções em desenvolvimento e sustentação. Edite diretamente a etapa de cada projeto via select, anote notificações e status, marque as prioridades da gestão e acompanhe impedimentos e agendamentos.
             </p>
           </div>
@@ -413,17 +413,17 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               onClick={handleCopyManagementPauta}
-              className="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-colors shadow-2xs flex items-center gap-2"
+              className="px-3.5 py-2 rounded-full text-xs font-bold text-grey-800 bg-warning-50 hover:bg-warning-50 border border-warning-200 transition-colors shadow-2xs flex items-center gap-2"
               title="Copiar pauta estruturada para alinhamento executivo no WhatsApp / Teams"
             >
               {copiedPauta ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span className="text-emerald-800">Pauta Copiada!</span>
+                  <Check className="w-4 h-4 text-brand-main" />
+                  <span className="text-brand-dark">Pauta Copiada!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-amber-700" />
+                  <Copy className="w-4 h-4 text-warning-600" />
                   <span>Copiar Pauta de Gestão</span>
                 </>
               )}
@@ -432,7 +432,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             {can(userRole, 'create_solution') && (
               <button
                 onClick={onOpenNewProjectModal}
-                className="px-4 py-2 rounded-lg text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-colors shadow-2xs flex items-center gap-2"
+                className="px-4 py-2 rounded-full text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark transition-colors shadow-2xs flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>Nova Solução</span>
@@ -445,18 +445,18 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* Total Projects */}
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs">
+        <div className="bg-white border border-grey-200 rounded-lg p-3.5 shadow-2xs min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Projetos</span>
-            <div className="p-1.5 rounded-md bg-slate-100 text-slate-700">
+            <span className="text-xs font-semibold text-grey-500">Total Projetos</span>
+            <div className="p-1.5 rounded-lg bg-grey-100 text-grey-700">
               <Table className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{stats.total}</span>
-            <span className="text-[11px] text-slate-500 font-medium">soluções</span>
+            <span className="text-2xl font-black text-grey-900">{stats.total}</span>
+            <span className="text-[11px] text-grey-500 font-medium">soluções</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1 truncate">
+          <p className="text-[11px] text-grey-400 mt-1 truncate">
             {stats.inProduction} em produção estável
           </p>
         </div>
@@ -464,23 +464,23 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
         {/* Management Priority */}
         <div
           onClick={() => setFilterManagementOnly(!filterManagementOnly)}
-          className={`cursor-pointer transition-all border rounded-xl p-3.5 shadow-2xs ${
+          className={`cursor-pointer transition-all border rounded-lg p-3.5 shadow-2xs min-w-0 ${
             filterManagementOnly
-              ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-300'
-              : 'bg-white border-slate-200 hover:border-amber-300'
+              ? 'bg-warning-50 border-warning-500 ring-2 ring-warning-200'
+              : 'bg-white border-grey-200 hover:border-warning-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-900">Pauta de Gestão</span>
-            <div className="p-1.5 rounded-md bg-amber-100 text-amber-700">
-              <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+            <span className="text-xs font-semibold text-warning-600">Pauta de Gestão</span>
+            <div className="p-1.5 rounded-lg bg-warning-50 text-warning-600">
+              <Star className="w-4 h-4 fill-warning-500 text-warning-500" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-amber-800">{stats.prioritizedForManagement}</span>
-            <span className="text-[11px] text-amber-700 font-bold">priorizadas</span>
+            <span className="text-2xl font-black text-warning-600">{stats.prioritizedForManagement}</span>
+            <span className="text-[11px] text-warning-600 font-bold">priorizadas</span>
           </div>
-          <p className="text-[11px] text-amber-800/80 mt-1 truncate">
+          <p className="text-[11px] text-warning-600/80 mt-1 truncate">
             {filterManagementOnly ? '✓ Filtro ativo (clique para limpar)' : 'Clique para filtrar pauta'}
           </p>
         </div>
@@ -488,94 +488,95 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
         {/* Impediments */}
         <div
           onClick={() => setFilterImpedimentOnly(!filterImpedimentOnly)}
-          className={`cursor-pointer transition-all border rounded-xl p-3.5 shadow-2xs ${
+          className={`cursor-pointer transition-all border rounded-lg p-3.5 shadow-2xs min-w-0 ${
             filterImpedimentOnly
-              ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-300'
-              : 'bg-white border-slate-200 hover:border-rose-300'
+              ? 'bg-danger-50 border-danger-400 ring-2 ring-danger-300'
+              : 'bg-white border-grey-200 hover:border-danger-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-900">Com Impedimento</span>
-            <div className="p-1.5 rounded-md bg-rose-100 text-rose-700">
-              <AlertTriangle className="w-4 h-4 text-rose-600" />
+            <span className="text-xs font-semibold text-danger-800">Com Impedimento</span>
+            <div className="p-1.5 rounded-lg bg-danger-50 text-danger-800">
+              <AlertTriangle className="w-4 h-4 text-danger-500" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-rose-700">{stats.withImpediment}</span>
-            <span className="text-[11px] text-rose-700 font-bold">bloqueios</span>
+            <span className="text-2xl font-black text-danger-800">{stats.withImpediment}</span>
+            <span className="text-[11px] text-danger-800 font-bold">bloqueios</span>
           </div>
-          <p className="text-[11px] text-rose-700/80 mt-1 truncate">
+          <p className="text-[11px] text-danger-800/80 mt-1 truncate">
             {filterImpedimentOnly ? '✓ Filtro ativo' : 'Ações necessárias da gestão'}
           </p>
         </div>
 
         {/* Scheduled Meetings / Delivery */}
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs">
+        <div className="bg-white border border-grey-200 rounded-lg p-3.5 shadow-2xs min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-900">Agendamentos</span>
-            <div className="p-1.5 rounded-md bg-blue-100 text-blue-700">
+            <span className="text-xs font-semibold text-info-700">Agendamentos</span>
+            <div className="p-1.5 rounded-lg bg-info-50 text-info-700">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-blue-800">{stats.withScheduledDate}</span>
-            <span className="text-[11px] text-blue-700 font-medium">datas marcadas</span>
+            <span className="text-2xl font-black text-info-700">{stats.withScheduledDate}</span>
+            <span className="text-[11px] text-info-700 font-medium">datas marcadas</span>
           </div>
-          <p className="text-[11px] text-blue-600 mt-1 truncate">
+          <p className="text-[11px] text-info-600 mt-1 truncate">
             Alinhamentos e homologações
           </p>
         </div>
 
         {/* Compliance / Governance */}
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs col-span-2 sm:col-span-1">
+        <div className="bg-white border border-grey-200 rounded-lg p-3.5 shadow-2xs col-span-2 sm:col-span-1 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-900">Governança T.I</span>
-            <div className="p-1.5 rounded-md bg-emerald-100 text-emerald-700">
+            <span className="text-xs font-semibold text-brand-dark">Governança T.I</span>
+            <div className="p-1.5 rounded-lg bg-brand-lighter text-brand-dark">
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-emerald-800">100%</span>
-            <span className="text-[11px] text-emerald-700 font-semibold">GLPI + Esteira</span>
+            <span className="text-2xl font-black text-brand-dark">100%</span>
+            <span className="text-[11px] text-brand-dark font-semibold">GLPI + Esteira</span>
           </div>
-          <p className="text-[11px] text-emerald-600 mt-1 truncate">
+          <p className="text-[11px] text-brand-main mt-1 truncate">
             Rastreabilidade completa
           </p>
         </div>
       </div>
 
       {/* View Mode Switcher and Controls */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3.5">
+      <div className="bg-white border border-grey-200 rounded-lg p-4 shadow-2xs space-y-3.5">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           {/* View Mode Tabs */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200/80 w-fit">
+          <div className="flex items-center p-1 bg-grey-100 rounded-lg border border-grey-200/80 max-w-full overflow-x-auto">
             <button
               onClick={() => setViewMode('spreadsheet')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
                 viewMode === 'spreadsheet'
-                  ? 'bg-white text-emerald-900 shadow-2xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-brand-dark shadow-2xs border border-grey-200'
+                  : 'text-grey-600 hover:text-grey-900'
               }`}
             >
-              <Table className="w-3.5 h-3.5" />
+              <Table className="w-3.5 h-3.5 shrink-0" />
               <span>Planilha Executiva</span>
-              <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-700 font-mono">
+              <span className="px-1.5 py-0.2 rounded text-[10px] bg-grey-100 text-grey-700 font-mono">
                 {filteredProjects.length}
               </span>
             </button>
 
             <button
               onClick={() => setViewMode('executive_summary')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
                 viewMode === 'executive_summary'
-                  ? 'bg-white text-amber-900 shadow-2xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-warning-600 shadow-2xs border border-grey-200'
+                  : 'text-grey-600 hover:text-grey-900'
               }`}
             >
-              <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-              <span>Demandas Departamentais & Alinhamento (1:1)</span>
+              <Star className="w-3.5 h-3.5 shrink-0 fill-warning-500 text-warning-500" />
+              <span className="hidden lg:inline">Demandas Departamentais & Alinhamento (1:1)</span>
+              <span className="lg:hidden">Alinhamento (1:1)</span>
               {stats.prioritizedForManagement > 0 && (
-                <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-100 text-amber-800 font-bold">
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-warning-50 text-warning-600 font-bold">
                   {stats.prioritizedForManagement}
                 </span>
               )}
@@ -583,29 +584,30 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
             <button
               onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
                 viewMode === 'kanban'
-                  ? 'bg-white text-indigo-900 shadow-2xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-indigo-900 shadow-2xs border border-grey-200'
+                  : 'text-grey-600 hover:text-grey-900'
               }`}
             >
-              <Columns className="w-3.5 h-3.5" />
-              <span>Funil de Etapas (Kanban)</span>
+              <Columns className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Funil de Etapas (Kanban)</span>
+              <span className="sm:hidden">Kanban</span>
             </button>
           </div>
         </div>
 
         {/* Filters and Search Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 pt-2 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 pt-2 border-t border-grey-100">
           {/* Search */}
           <div className="relative sm:col-span-2">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-grey-400 absolute left-3 top-2.5" />
             <input
               type="text"
               placeholder="Buscar por nome, ativo GLPI, responsável..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-9 pr-3 py-1.5 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
             />
           </div>
 
@@ -614,7 +616,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             <select
               value={filterDepartment}
               onChange={(e) => setFilterDepartment(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-medium bg-slate-50 text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-2.5 py-1.5 border border-grey-300 rounded-lg text-xs font-medium bg-grey-50 text-grey-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
             >
               <option value="all">Todas as Áreas</option>
               {departments.map((dept) => (
@@ -630,7 +632,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             <select
               value={filterStage}
               onChange={(e) => setFilterStage(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-medium bg-slate-50 text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-2.5 py-1.5 border border-grey-300 rounded-lg text-xs font-medium bg-grey-50 text-grey-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
             >
               <option value="all">Todas as Etapas</option>
               {ALL_STAGES.map((stg) => (
@@ -646,7 +648,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-medium bg-slate-50 text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-2.5 py-1.5 border border-grey-300 rounded-lg text-xs font-medium bg-grey-50 text-grey-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
             >
               <option value="all">Todas as Prioridades</option>
               <option value="P0 - Urgente">P0 - Urgente</option>
@@ -660,27 +662,27 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setFilterManagementOnly(!filterManagementOnly)}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-bold border transition-colors ${
                 filterManagementOnly
-                  ? 'bg-amber-100 text-amber-900 border-amber-300'
-                  : 'bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-100'
+                  ? 'bg-warning-50 text-warning-600 border-warning-200'
+                  : 'bg-grey-50 text-grey-600 border-grey-300 hover:bg-grey-100'
               }`}
               title="Filtrar demandas marcadas para a pauta da gestão"
             >
-              <Star className={`w-3.5 h-3.5 ${filterManagementOnly ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} />
+              <Star className={`w-3.5 h-3.5 ${filterManagementOnly ? 'fill-warning-500 text-warning-500' : 'text-grey-400'}`} />
               <span className="truncate">⭐ Gestão</span>
             </button>
 
             <button
               onClick={() => setFilterImpedimentOnly(!filterImpedimentOnly)}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-bold border transition-colors ${
                 filterImpedimentOnly
-                  ? 'bg-rose-100 text-rose-900 border-rose-300'
-                  : 'bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-100'
+                  ? 'bg-danger-50 text-danger-800 border-danger-300'
+                  : 'bg-grey-50 text-grey-600 border-grey-300 hover:bg-grey-100'
               }`}
               title="Filtrar demandas com impedimento ou bloqueio ativo"
             >
-              <AlertTriangle className={`w-3.5 h-3.5 ${filterImpedimentOnly ? 'text-rose-600' : 'text-slate-400'}`} />
+              <AlertTriangle className={`w-3.5 h-3.5 ${filterImpedimentOnly ? 'text-danger-500' : 'text-grey-400'}`} />
               <span className="truncate">🚨 Bloqueio</span>
             </button>
           </div>
@@ -689,11 +691,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
       {/* VIEW 1: SPREADSHEET TABLE (EXECUTIVE GRID) */}
       {viewMode === 'spreadsheet' && (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+        <div className="bg-white border border-grey-200 rounded-lg shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                <tr className="border-b border-grey-200 bg-grey-100 text-grey-700 font-bold uppercase tracking-wider text-[11px]">
                   <th className="py-3 px-3 text-center w-12" title="Marcar para pauta de gestão">
                     ⭐ Gestão
                   </th>
@@ -707,7 +709,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   <th className="py-3 px-3 text-right min-w-[130px]">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-grey-200">
                 {filteredProjects.map((proj) => {
                   const stageStyle = STAGE_CONFIG[proj.stage || 'Levantamento & Ficha'];
                   const priorityStyle = PRIORITY_CONFIG[proj.executivePriority || 'P2 - Média'];
@@ -715,15 +717,15 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   return (
                     <tr
                       key={proj.id}
-                      className={`hover:bg-slate-50/90 transition-colors ${
-                        proj.isPriorityForManagement ? 'bg-amber-50/30' : ''
+                      className={`hover:bg-grey-50/90 transition-colors ${
+                        proj.isPriorityForManagement ? 'bg-warning-50/30' : ''
                       }`}
                     >
                       {/* 1. Prioritized for Management Star */}
                       <td className="py-3 px-3 text-center">
                         <button
                           onClick={() => handleTogglePrioritizeForManagement(proj)}
-                          className="p-1 rounded-md hover:bg-slate-200/60 transition-transform active:scale-95"
+                          className="p-1 rounded-full hover:bg-grey-200/60 transition-transform active:scale-95"
                           title={
                             proj.isPriorityForManagement
                               ? 'Priorizado para apresentar à Gestão (Clique para desmarcar)'
@@ -733,8 +735,8 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                           <Star
                             className={`w-4 h-4 ${
                               proj.isPriorityForManagement
-                                ? 'fill-amber-500 text-amber-500'
-                                : 'text-slate-300 hover:text-slate-400'
+                                ? 'fill-warning-500 text-warning-500'
+                                : 'text-grey-300 hover:text-grey-400'
                             }`}
                           />
                         </button>
@@ -745,14 +747,14 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                            className="font-bold text-slate-900 hover:text-emerald-800 text-left hover:underline line-clamp-1"
+                            className="font-bold text-grey-900 hover:text-brand-dark text-left hover:underline line-clamp-1"
                             title={`Abrir workspace da solução: ${proj.name}`}
                           >
                             {proj.name}
                           </button>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500">
-                          <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-1 rounded border border-emerald-200">
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-grey-500">
+                          <span className="font-mono font-bold text-brand-dark bg-brand-lighter px-1 rounded border border-brand-light">
                             {proj.assetId}
                           </span>
                           <span>•</span>
@@ -762,8 +764,8 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
                       {/* 3. Department & Owner */}
                       <td className="py-3 px-3">
-                        <div className="font-semibold text-slate-800">{proj.department}</div>
-                        <div className="text-[11px] text-slate-500 truncate" title={`Dono: ${proj.businessResponsible}`}>
+                        <div className="font-semibold text-grey-800">{proj.department}</div>
+                        <div className="text-[11px] text-grey-500 truncate" title={`Dono: ${proj.businessResponsible}`}>
                           {proj.businessResponsible}
                         </div>
                       </td>
@@ -775,7 +777,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                             <Workflow className="w-2.5 h-2.5" />
                             Tipo {proj.projectType || 'A'}
                           </span>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-grey-100 text-grey-700 border border-grey-200">
                             {proj.govStage || 'E1'}
                           </span>
                         </div>
@@ -786,10 +788,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         <select
                           value={proj.stage || 'Levantamento & Ficha'}
                           onChange={(e) => handleStageChange(proj, e.target.value as ProjectStage)}
-                          className={`text-xs font-bold rounded-md px-2 py-1 border transition-colors cursor-pointer w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-emerald-500`}
+                          className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
                         >
                           {ALL_STAGES.map((stg) => (
-                            <option key={stg} value={stg} className="bg-white text-slate-900">
+                            <option key={stg} value={stg} className="bg-white text-grey-900">
                               {stg}
                             </option>
                           ))}
@@ -801,7 +803,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         <select
                           value={proj.executivePriority || 'P2 - Média'}
                           onChange={(e) => handlePriorityChange(proj, e.target.value as ExecutivePriority)}
-                          className={`text-xs font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-emerald-500`}
+                          className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
                         >
                           <option value="P0 - Urgente">P0 - Urgente</option>
                           <option value="P1 - Alta">P1 - Alta</option>
@@ -814,14 +816,14 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                       <td className="py-3 px-3">
                         <button
                           onClick={() => setActiveImpedimentModalProject(proj)}
-                          className={`px-2.5 py-1 rounded-md text-xs font-bold border transition-colors flex items-center gap-1.5 w-full justify-center ${
+                          className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-colors flex items-center gap-1.5 w-full justify-center ${
                             proj.hasImpediment
-                              ? 'bg-rose-100 text-rose-900 border-rose-300 hover:bg-rose-200'
-                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-danger-50 text-danger-800 border-danger-300 hover:bg-danger-300'
+                              : 'bg-grey-50 text-grey-500 border-grey-200 hover:bg-grey-100'
                           }`}
                           title="Clique para editar detalhes do impedimento e ação necessária da gestão"
                         >
-                          <AlertTriangle className={`w-3.5 h-3.5 shrink-0 ${proj.hasImpediment ? 'text-rose-600' : 'text-slate-400'}`} />
+                          <AlertTriangle className={`w-3.5 h-3.5 shrink-0 ${proj.hasImpediment ? 'text-danger-500' : 'text-grey-400'}`} />
                           <span className="truncate">
                             {proj.hasImpediment ? '🚨 Bloqueado' : 'Sem bloqueio'}
                           </span>
@@ -832,21 +834,21 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                       <td className="py-3 px-3">
                         <button
                           onClick={() => setActiveScheduleModalProject(proj)}
-                          className="text-left w-full hover:bg-slate-100 p-1 rounded-md transition-colors"
+                          className="text-left w-full hover:bg-grey-100 p-1 rounded-full transition-colors"
                           title="Clique para agendar data de reunião ou entrega"
                         >
                           {proj.scheduledDate ? (
                             <div>
-                              <div className="font-bold text-slate-800 flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-blue-600" />
+                              <div className="font-bold text-grey-800 flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-info-600" />
                                 <span>{proj.scheduledDate}</span>
                               </div>
-                              <div className="text-[10px] text-slate-500 truncate max-w-[120px]">
+                              <div className="text-[10px] text-grey-500 truncate max-w-[120px]">
                                 {proj.scheduledSubject || 'Reunião marcada'}
                               </div>
                             </div>
                           ) : (
-                            <span className="text-[11px] text-slate-400 italic flex items-center gap-1">
+                            <span className="text-[11px] text-grey-400 italic flex items-center gap-1">
                               <Calendar className="w-3 h-3" /> Agendar
                             </span>
                           )}
@@ -858,7 +860,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => setActiveNotesModalProject(proj)}
-                            className="p-1.5 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+                            className="p-1.5 rounded hover:bg-grey-100 text-grey-600 hover:text-grey-900 transition-colors"
                             title="Anotações & Observações"
                           >
                             <FileText className="w-4 h-4" />
@@ -866,7 +868,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
                           <button
                             onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                            className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded border border-emerald-200 text-xs transition-colors flex items-center gap-1"
+                            className="px-2.5 py-1 bg-brand-lighter hover:bg-brand-lighter text-brand-dark font-bold rounded border border-brand-light text-xs transition-colors flex items-center gap-1"
                             title="Abrir detalhes da solução"
                           >
                             <span>Abrir</span>
@@ -886,7 +888,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       {/* VIEW 2: ALINHAMENTO DE DEMANDAS DEPARTAMENTAIS (1:1) */}
       {viewMode === 'executive_summary' && (
         <div className="space-y-6">
-          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950">
+          <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-warning-600">
             <div>
               <span className="font-black text-sm block mb-0.5">Gestão de Demandas Departamentais - Alinhamento (1:1 com a Gestão)</span>
               Visão consolidada para sua reunião de reporte: demandas priorizadas com destaque, bloqueios/impedimentos onde a ação da gestão é necessária, e cronograma de datas já marcadas.
@@ -894,7 +896,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
             <button
               onClick={handleCopyManagementPauta}
-              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-2xs shrink-0 flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 bg-warning-600 hover:bg-warning-600 text-white font-bold rounded-full shadow-2xs shrink-0 flex items-center gap-1.5 transition-colors"
             >
               <Copy className="w-4 h-4" />
               <span>Copiar Pauta Formatada</span>
@@ -902,19 +904,19 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           </div>
 
           {/* Block 1: Prioritized Demands */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+          <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-grey-100 pb-3">
+              <h2 className="text-sm font-black text-grey-900 flex items-center gap-2">
+                <Star className="w-4 h-4 fill-warning-500 text-warning-500" />
                 <span>Demandas Prioritárias da Gestão ({projects.filter((p) => p.isPriorityForManagement).length})</span>
               </h2>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-grey-500">
                 Itens marcados com estrela para discussão prioritária
               </span>
             </div>
 
             {projects.filter((p) => p.isPriorityForManagement).length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400 italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+              <div className="p-8 text-center text-xs text-grey-400 italic bg-grey-50 rounded-lg border border-dashed border-grey-200">
                 Nenhum projeto marcado como prioridade da gestão no momento. Clique na estrela ⭐ ao lado de qualquer projeto na planilha para adicioná-lo aqui.
               </div>
             ) : (
@@ -928,50 +930,50 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     return (
                       <div
                         key={proj.id}
-                        className="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-3 relative flex flex-col justify-between"
+                        className="p-4 rounded-lg border border-warning-200 bg-warning-50/40 space-y-3 relative flex flex-col justify-between"
                       >
                         <div>
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-emerald-800 bg-white px-1.5 py-0.5 rounded border border-emerald-200">
+                                <span className="font-mono text-xs font-bold text-brand-dark bg-white px-1.5 py-0.5 rounded border border-brand-light">
                                   {proj.assetId}
                                 </span>
-                                <span className="text-xs font-bold text-slate-900">{proj.name}</span>
+                                <span className="text-xs font-bold text-grey-900">{proj.name}</span>
                               </div>
-                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{proj.objective}</p>
+                              <p className="text-xs text-grey-500 mt-1 line-clamp-2">{proj.objective}</p>
                             </div>
 
                             <button
                               onClick={() => handleTogglePrioritizeForManagement(proj)}
-                              className="p-1 text-amber-600 hover:text-amber-800"
+                              className="p-1 text-warning-600 hover:text-warning-600"
                               title="Remover da pauta de gestão"
                             >
-                              <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                              <Star className="w-4 h-4 fill-warning-500 text-warning-500" />
                             </button>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-amber-200/60 text-xs">
+                          <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-warning-200/60 text-xs">
                             <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Responsável:</span>
-                              <span className="font-semibold text-slate-800">{proj.businessResponsible}</span>
+                              <span className="text-grey-500 block text-[10px] uppercase font-bold">Responsável:</span>
+                              <span className="font-semibold text-grey-800">{proj.businessResponsible}</span>
                             </div>
                             <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Janela de Entrega:</span>
-                              <span className="font-mono font-bold text-emerald-800">
+                              <span className="text-grey-500 block text-[10px] uppercase font-bold">Janela de Entrega:</span>
+                              <span className="font-mono font-bold text-brand-dark">
                                 {formatPtBrDate(est.optimistic.deliveryDate)} à {formatPtBrDate(est.realistic.deliveryDate)}
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-3 pt-2 border-t border-amber-200/60 flex items-center justify-between">
+                        <div className="mt-3 pt-2 border-t border-warning-200/60 flex items-center justify-between">
                           <span className="text-[11px] font-bold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
                             Tipo {proj.projectType || 'A'} • Esteira {proj.govStage || 'E1'}
                           </span>
                           <button
                             onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                            className="text-xs font-bold text-emerald-800 hover:underline flex items-center gap-1"
+                            className="text-xs font-bold text-brand-dark hover:underline flex items-center gap-1"
                           >
                             <span>Abrir Detalhes</span>
                             <ArrowRight className="w-3.5 h-3.5" />
@@ -985,16 +987,16 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           </div>
 
           {/* Block 2: Active Impediments */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
+          <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-grey-100 pb-3">
+              <h2 className="text-sm font-black text-grey-900 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-danger-500" />
                 <span>Impedimentos Ativos & Ação Requerida da Gestão ({projects.filter((p) => p.hasImpediment).length})</span>
               </h2>
             </div>
 
             {projects.filter((p) => p.hasImpediment).length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400 italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+              <div className="p-6 text-center text-xs text-grey-400 italic bg-grey-50 rounded-lg border border-dashed border-grey-200">
                 Nenhum projeto com impedimento ou bloqueio ativo no momento.
               </div>
             ) : (
@@ -1004,18 +1006,18 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   .map((proj) => (
                     <div
                       key={proj.id}
-                      className="p-4 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-4 rounded-lg border border-danger-300 bg-danger-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     >
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-rose-800 bg-white px-1.5 py-0.5 rounded border border-rose-200">
+                          <span className="font-mono text-xs font-bold text-danger-800 bg-white px-1.5 py-0.5 rounded border border-danger-300">
                             {proj.assetId}
                           </span>
-                          <span className="text-xs font-bold text-slate-900 truncate">{proj.name}</span>
+                          <span className="text-xs font-bold text-grey-900 truncate">{proj.name}</span>
                         </div>
-                        <p className="text-xs text-rose-900 font-medium">{proj.impedimentDetails}</p>
+                        <p className="text-xs text-danger-800 font-medium">{proj.impedimentDetails}</p>
                         {proj.actionRequiredFromManagement && (
-                          <div className="mt-1 text-xs text-slate-700 bg-white p-2 rounded border border-rose-200">
+                          <div className="mt-1 text-xs text-grey-700 bg-white p-2 rounded border border-danger-300">
                             <strong>Ação Requerida da Gestão: </strong>
                             <span>{proj.actionRequiredFromManagement}</span>
                           </div>
@@ -1024,7 +1026,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
                       <button
                         onClick={() => setActiveImpedimentModalProject(proj)}
-                        className="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold rounded-lg text-xs shrink-0 transition-colors"
+                        className="px-3 py-1.5 bg-danger-800 hover:bg-danger-800 text-white font-bold rounded-full text-xs shrink-0 transition-colors"
                       >
                         Atualizar Bloqueio
                       </button>
@@ -1042,10 +1044,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           {ALL_STAGES.slice(0, 4).map((stg) => {
             const list = filteredProjects.filter((p) => (p.stage || 'Levantamento & Ficha') === stg);
             return (
-              <div key={stg} className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+              <div key={stg} className="bg-grey-50 border border-grey-200 rounded-lg p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800">{stg}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-slate-600 border border-slate-200">
+                  <span className="text-xs font-bold text-grey-800">{stg}</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-grey-600 border border-grey-200">
                     {list.length}
                   </span>
                 </div>
@@ -1055,14 +1057,14 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     <div
                       key={proj.id}
                       onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                      className="p-3 bg-white rounded-lg border border-slate-200 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all space-y-2"
+                      className="p-3 bg-white rounded-lg border border-grey-200 hover:border-brand-main shadow-2xs cursor-pointer transition-all space-y-2"
                     >
-                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-grey-500">
                         <span>{proj.assetId}</span>
                         <span className="font-bold text-purple-800">Tipo {proj.projectType || 'A'}</span>
                       </div>
-                      <div className="text-xs font-bold text-slate-900 line-clamp-1">{proj.name}</div>
-                      <div className="text-[11px] text-slate-500 truncate">{proj.businessResponsible}</div>
+                      <div className="text-xs font-bold text-grey-900 line-clamp-1">{proj.name}</div>
+                      <div className="text-[11px] text-grey-500 truncate">{proj.businessResponsible}</div>
                     </div>
                   ))}
                 </div>
@@ -1074,9 +1076,9 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
       {/* MODAL 1: EDITAR ANOTAÇÕES */}
       {activeNotesModalProject && (
-        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 space-y-4">
-            <h3 className="text-base font-extrabold text-slate-900">
+        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-extrabold text-grey-900">
               Anotações da Solução: {activeNotesModalProject.name}
             </h3>
             <textarea
@@ -1084,12 +1086,12 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               defaultValue={activeNotesModalProject.notes || ''}
               id="modal-notes-textarea"
               placeholder="Digite anotações ou observações internas sobre o andamento desta demanda..."
-              className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+              className="w-full p-3 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
             />
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setActiveNotesModalProject(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800"
+                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
               >
                 Cancelar
               </button>
@@ -1098,7 +1100,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   const val = (document.getElementById('modal-notes-textarea') as HTMLTextAreaElement)?.value || '';
                   handleSaveNotes(activeNotesModalProject, val);
                 }}
-                className="px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-2xs transition-colors"
+                className="px-4 py-2 text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark rounded-full shadow-2xs transition-colors"
               >
                 Salvar Anotações
               </button>
@@ -1109,28 +1111,28 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
       {/* MODAL 2: EDITAR IMPEDIMENTO & AÇÃO DA GESTÃO */}
       {activeImpedimentModalProject && (
-        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 space-y-4">
-            <h3 className="text-base font-extrabold text-slate-900">
+        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-extrabold text-grey-900">
               Registro de Bloqueio: {activeImpedimentModalProject.name}
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-grey-500">
               Informe o bloqueio e qual ação é requerida da gestão para destravar.
             </p>
 
             <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-grey-800">
                 <input
                   type="checkbox"
                   id="modal-has-impediment"
                   defaultChecked={activeImpedimentModalProject.hasImpediment}
-                  className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300"
+                  className="w-4 h-4 rounded text-danger-500 focus:ring-danger-500 border-grey-300"
                 />
                 <span>Projeto atualmente com impedimento / bloqueio</span>
               </label>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-bold text-grey-700 block mb-1">
                   Detalhes do Bloqueio:
                 </label>
                 <textarea
@@ -1138,12 +1140,12 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   id="modal-impediment-details"
                   defaultValue={activeImpedimentModalProject.impedimentDetails || ''}
                   placeholder="Ex: Aguardando liberação de porta de banco no firewall ou aprovação da área jurídica..."
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:bg-white focus:outline-hidden"
+                  className="w-full p-2.5 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-bold text-grey-700 block mb-1">
                   Ação Requerida da Gestão para Destravar:
                 </label>
                 <textarea
@@ -1151,7 +1153,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   id="modal-action-management"
                   defaultValue={activeImpedimentModalProject.actionRequiredFromManagement || ''}
                   placeholder="Ex: Cobrar área de Infraestrutura para priorizar ticket de rede..."
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:bg-white focus:outline-hidden"
+                  className="w-full p-2.5 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden"
                 />
               </div>
             </div>
@@ -1159,7 +1161,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setActiveImpedimentModalProject(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800"
+                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
               >
                 Cancelar
               </button>
@@ -1170,7 +1172,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   const act = (document.getElementById('modal-action-management') as HTMLTextAreaElement)?.value || '';
                   handleSaveImpediment(activeImpedimentModalProject, has, det, act);
                 }}
-                className="px-4 py-2 text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 rounded-lg shadow-2xs transition-colors"
+                className="px-4 py-2 text-xs font-bold text-white bg-danger-800 hover:bg-danger-800 rounded-full shadow-2xs transition-colors"
               >
                 Salvar Bloqueio
               </button>
@@ -1181,31 +1183,31 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
       {/* MODAL 3: AGENDAR DATA / REUNIÃO */}
       {activeScheduleModalProject && (
-        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-200 space-y-4">
-            <h3 className="text-base font-extrabold text-slate-900">
+        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-extrabold text-grey-900">
               Agendar Reunião ou Entrega: {activeScheduleModalProject.name}
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Data:</label>
+                <label className="text-xs font-bold text-grey-700 block mb-1">Data:</label>
                 <input
                   type="date"
                   id="modal-schedule-date"
                   defaultValue={activeScheduleModalProject.scheduledDate || ''}
-                  className="w-full p-2 border border-slate-300 rounded-lg text-xs font-mono font-bold bg-slate-50"
+                  className="w-full p-2 border border-grey-300 rounded-lg text-xs font-mono font-bold bg-grey-50"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Pauta / Assunto:</label>
+                <label className="text-xs font-bold text-grey-700 block mb-1">Pauta / Assunto:</label>
                 <input
                   type="text"
                   id="modal-schedule-subject"
                   defaultValue={activeScheduleModalProject.scheduledSubject || ''}
                   placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
-                  className="w-full p-2 border border-slate-300 rounded-lg text-xs bg-slate-50"
+                  className="w-full p-2 border border-grey-300 rounded-lg text-xs bg-grey-50"
                 />
               </div>
             </div>
@@ -1213,7 +1215,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setActiveScheduleModalProject(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800"
+                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
               >
                 Cancelar
               </button>
@@ -1223,7 +1225,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   const sub = (document.getElementById('modal-schedule-subject') as HTMLInputElement)?.value || '';
                   handleSaveSchedule(activeScheduleModalProject, date, sub);
                 }}
-                className="px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-2xs transition-colors"
+                className="px-4 py-2 text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark rounded-full shadow-2xs transition-colors"
               >
                 Salvar Agendamento
               </button>

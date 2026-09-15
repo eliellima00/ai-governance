@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       shortLabel: 'Ficha do Ativo',
       icon: FileText,
       badge: currentProject?.assetId || 'GLPI',
-      badgeColor: 'bg-slate-700 text-slate-200',
+      badgeColor: 'bg-grey-700 text-grey-200',
       description: 'Formulário GLPI e Doc Técnica'
     },
     {
@@ -96,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       shortLabel: 'Diagnóstico',
       icon: ShieldAlert,
       badge: `${currentProject?.initialScore ?? 0} pts`,
-      badgeColor: 'bg-rose-900/60 text-rose-200 border border-rose-800/80 font-bold',
+      badgeColor: 'bg-danger-800/60 text-danger-300 border border-danger-800/80 font-bold',
       description: 'Score inicial e critérios determinísticos'
     },
     {
@@ -107,8 +107,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: `${completedActions}/${totalActions}`,
       badgeColor:
         completedActions === totalActions && totalActions > 0
-          ? 'bg-[#264906] text-[#E3F4D3] border border-[#5C8834] font-bold'
-          : 'bg-amber-900/60 text-amber-200 border border-amber-800 font-semibold',
+          ? 'bg-brand-dark text-brand-lighter border border-brand-main font-bold'
+          : 'bg-warning-600/60 text-warning-200 border border-warning-600 font-semibold',
       description: 'Mitigações, prazos e donos'
     },
     {
@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       shortLabel: 'Evolução Risco',
       icon: Layers,
       badge: `${residualScore} pts`,
-      badgeColor: 'bg-blue-900/60 text-blue-200 border border-blue-800 font-extrabold',
+      badgeColor: 'bg-info-700/60 text-info-200 border border-info-700 font-extrabold',
       description: 'Curva histórica do score residual'
     },
     {
@@ -168,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Main Sidebar Container (Industriatto Base Dark #1E1F20) */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 bg-[#1E1F20] text-white flex flex-col transition-all duration-300 ease-in-out border-r border-[#2E3032] ${
+        className={`fixed top-0 bottom-0 left-0 z-50 bg-base-back text-white flex flex-col transition-all duration-300 ease-in-out border-r border-[#2E3032] ${
           isCollapsed ? 'w-20' : 'w-72'
         } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
@@ -186,8 +186,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span
               className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                 userRole === 'admin'
-                  ? 'bg-[#264906] text-[#E3F4D3] border border-[#5C8834]'
-                  : 'bg-slate-800 text-slate-300'
+                  ? 'bg-brand-dark text-brand-lighter border border-brand-main'
+                  : 'bg-grey-800 text-grey-300'
               }`}
             >
               {userRole}
@@ -198,7 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Primary Menu Navigation: Gestão de Demandas, Nova Solução, Parametrização */}
         <div className="p-2 border-b border-[#2E3032] space-y-1.5 bg-[#171819]/60">
           {!isCollapsed && (
-            <div className="px-2 pt-1 pb-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#788091]">
+            <div className="px-2 pt-1 pb-0.5 text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">
               Menu Principal
             </div>
           )}
@@ -206,19 +206,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* 1. Gestão de Demandas */}
           <button
             onClick={handleGoPortfolio}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-full text-xs font-semibold transition-all ${
               route.name === 'portfolio'
-                ? 'bg-[#5C8834] text-white shadow-xs font-bold'
-                : 'text-slate-300 hover:bg-[#2E3032] hover:text-white'
+                ? 'bg-brand-main text-white shadow-xs font-bold'
+                : 'text-grey-300 hover:bg-[#2E3032] hover:text-white'
             } ${isCollapsed ? 'justify-center px-0' : ''}`}
             title="Gestão de Demandas Departamentais (Portfólio Geral)"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <FolderKanban className={`w-4 h-4 shrink-0 ${route.name === 'portfolio' ? 'text-white' : 'text-[#A9CE88]'}`} />
+              <FolderKanban className={`w-4 h-4 shrink-0 ${route.name === 'portfolio' ? 'text-white' : 'text-brand-light'}`} />
               {!isCollapsed && <span className="truncate">Gestão de Demandas</span>}
             </div>
             {!isCollapsed && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/40 text-[#E3F4D3] border border-[#5C8834]/40 font-bold">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/40 text-brand-lighter border border-brand-main/40 font-bold">
                 {projects.length}
               </span>
             )}
@@ -230,17 +230,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             disabled={!canCreate}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-full text-xs font-bold transition-all ${
               canCreate
-                ? 'bg-[#5C8834] hover:bg-[#264906] text-white shadow-xs border border-[#75AD40]/30'
-                : 'bg-slate-800/40 text-slate-500 cursor-not-allowed border border-transparent'
-            } ${isCollapsed ? 'justify-center px-0 rounded-lg' : ''}`}
+                ? 'bg-brand-main hover:bg-brand-dark text-white shadow-xs border border-[#75AD40]/30'
+                : 'bg-grey-800/40 text-grey-500 cursor-not-allowed border border-transparent'
+            } ${isCollapsed ? 'justify-center px-0 rounded-full' : ''}`}
             title={canCreate ? 'Cadastrar Nova Solução / Demanda' : 'Cadastro restrito ao perfil Admin'}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <PlusCircle className={`w-4 h-4 shrink-0 ${canCreate ? 'text-[#FFED00]' : 'text-slate-600'}`} />
+              <PlusCircle className={`w-4 h-4 shrink-0 ${canCreate ? 'text-[#FFED00]' : 'text-grey-600'}`} />
               {!isCollapsed && <span className="truncate">Nova Solução</span>}
             </div>
             {!isCollapsed && canCreate && (
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#264906] text-[#E3F4D3]">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-brand-dark text-brand-lighter">
                 + Novo
               </span>
             )}
@@ -249,19 +249,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* 3. Tela de Parametrização */}
           <button
             onClick={handleGoSettings}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-full text-xs font-semibold transition-all ${
               route.name === 'settings'
-                ? 'bg-[#5C8834] text-white shadow-xs font-bold'
-                : 'text-slate-300 hover:bg-[#2E3032] hover:text-white'
+                ? 'bg-brand-main text-white shadow-xs font-bold'
+                : 'text-grey-300 hover:bg-[#2E3032] hover:text-white'
             } ${isCollapsed ? 'justify-center px-0' : ''}`}
             title="Parametrização & Regras de Governança T.I"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <SlidersHorizontal className={`w-4 h-4 shrink-0 ${route.name === 'settings' ? 'text-white' : 'text-slate-400'}`} />
+              <SlidersHorizontal className={`w-4 h-4 shrink-0 ${route.name === 'settings' ? 'text-white' : 'text-grey-400'}`} />
               {!isCollapsed && <span className="truncate">Parametrização</span>}
             </div>
             {!isCollapsed && (
-              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono text-slate-400 bg-black/40">
+              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono text-grey-400 bg-black/40">
                 Regras T.I
               </span>
             )}
@@ -278,8 +278,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Back to Demands quick action (Pill Button) */}
               <button
                 onClick={handleGoPortfolio}
-                className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold text-[#E3F4D3] hover:text-white bg-[#264906]/80 hover:bg-[#264906] border border-[#5C8834] transition-all ${
-                  isCollapsed ? 'justify-center rounded-lg' : ''
+                className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold text-brand-lighter hover:text-white bg-brand-dark/80 hover:bg-brand-dark border border-brand-main transition-all ${
+                  isCollapsed ? 'justify-center rounded-full' : ''
                 }`}
                 title="Voltar para a Gestão de Demandas"
               >
@@ -291,10 +291,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!isCollapsed ? (
                 <div className="p-3 rounded-lg border border-[#2E3032] bg-[#141516] space-y-1.5">
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="font-mono text-[#A9CE88] font-bold tracking-tight">
+                    <span className="font-mono text-brand-light font-bold tracking-tight">
                       {currentProject.assetId}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">
+                    <span className="px-2 py-0.5 rounded-full bg-grey-800 text-grey-300 text-[10px]">
                       {currentProject.department}
                     </span>
                   </div>
@@ -306,12 +306,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <Workflow className="w-3 h-3" />
                       Tipo {currentProject.projectType || 'A'}
                     </span>
-                    <span className="text-slate-500">•</span>
-                    <span className="text-slate-300 font-medium">Esteira {currentProject.govStage || 'E0'}</span>
+                    <span className="text-grey-500">•</span>
+                    <span className="text-grey-300 font-medium">Esteira {currentProject.govStage || 'E0'}</span>
                   </div>
                 </div>
               ) : (
-                <div className="py-2 text-center border-b border-[#2E3032] text-[10px] font-mono text-[#A9CE88] font-bold">
+                <div className="py-2 text-center border-b border-[#2E3032] text-[10px] font-mono text-brand-light font-bold">
                   {currentProject.assetId}
                 </div>
               )}
@@ -319,7 +319,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Asset Workspace 5 Tabs */}
               <div>
                 {!isCollapsed && (
-                  <div className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#788091]">
+                  <div className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">
                     Abas da Solução
                   </div>
                 )}
@@ -333,17 +333,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <button
                         key={item.id}
                         onClick={() => handleSelectTab(item.id)}
-                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold transition-all group ${
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-full text-xs font-semibold transition-all group ${
                           isActive
-                            ? 'bg-[#5C8834] text-white shadow-xs font-bold'
-                            : 'text-slate-300 hover:bg-[#2E3032] hover:text-white'
+                            ? 'bg-brand-main text-white shadow-xs font-bold'
+                            : 'text-grey-300 hover:bg-[#2E3032] hover:text-white'
                         } ${isCollapsed ? 'justify-center px-0' : ''}`}
                         title={isCollapsed ? item.label : undefined}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <Icon
                             className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                              isActive ? 'text-white' : 'text-slate-400'
+                              isActive ? 'text-white' : 'text-grey-400'
                             }`}
                           />
                           {!isCollapsed && (
@@ -351,7 +351,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               <div className="truncate text-xs font-bold">{item.shortLabel}</div>
                               <div
                                 className={`text-[10px] truncate ${
-                                  isActive ? 'text-[#E3F4D3]' : 'text-slate-400'
+                                  isActive ? 'text-brand-lighter' : 'text-grey-400'
                                 }`}
                               >
                                 {item.description}
@@ -376,7 +376,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Quick Switcher to another Solution */}
               {!isCollapsed && projects.length > 1 && (
                 <div className="pt-2 border-t border-[#2E3032]">
-                  <div className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#788091]">
+                  <div className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">
                     Outras Soluções
                   </div>
                   <div className="space-y-1 max-h-36 overflow-y-auto scrollbar-thin">
@@ -387,12 +387,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <button
                           key={p.id}
                           onClick={() => handleNavigateProject(p.id)}
-                          className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] text-slate-300 hover:bg-[#2E3032] hover:text-white transition-colors flex items-center justify-between group"
+                          className="w-full text-left px-2.5 py-1.5 rounded-full text-[11px] text-grey-300 hover:bg-[#2E3032] hover:text-white transition-colors flex items-center justify-between group"
                         >
-                          <span className="truncate pr-1 group-hover:text-[#A9CE88]">
+                          <span className="truncate pr-1 group-hover:text-brand-light">
                             {p.name}
                           </span>
-                          <span className="font-mono text-[9px] text-slate-400 shrink-0">
+                          <span className="font-mono text-[9px] text-grey-400 shrink-0">
                             {p.assetId}
                           </span>
                         </button>
@@ -409,15 +409,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Section Header */}
               {!isCollapsed ? (
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#788091]">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">
                     Soluções Departamentais
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-[#A9CE88]">
+                  <span className="text-[10px] font-mono font-bold text-brand-light">
                     {filteredProjects.length}/{projects.length}
                   </span>
                 </div>
               ) : (
-                <div className="text-center text-[9px] text-slate-400 font-bold uppercase">
+                <div className="text-center text-[9px] text-grey-400 font-bold uppercase">
                   Ativos
                 </div>
               )}
@@ -425,13 +425,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Quick Search inside Sidebar */}
               {!isCollapsed && (
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-grey-400" />
                   <input
                     type="text"
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
                     placeholder="Filtrar por nome ou ID..."
-                    className="w-full pl-8 pr-2.5 py-1.5 bg-[#141516] border border-[#2E3032] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#5C8834]"
+                    className="w-full pl-8 pr-2.5 py-1.5 bg-[#141516] border border-[#2E3032] rounded-lg text-xs text-white placeholder-grey-500 focus:outline-none focus:border-brand-main"
                   />
                 </div>
               )}
@@ -444,36 +444,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       key={project.id}
                       onClick={() => handleNavigateProject(project.id)}
-                      className={`w-full text-left p-2 rounded-lg transition-all group ${
+                      className={`w-full text-left p-2 rounded-full transition-all group ${
                         isCurrent
-                          ? 'bg-[#264906] border border-[#5C8834] text-white'
-                          : 'text-slate-300 hover:bg-[#2E3032] hover:text-white border border-transparent'
+                          ? 'bg-brand-dark border border-brand-main text-white'
+                          : 'text-grey-300 hover:bg-[#2E3032] hover:text-white border border-transparent'
                       } ${isCollapsed ? 'text-center py-2 px-1' : ''}`}
                       title={`${project.assetId} - ${project.name}`}
                     >
                       {isCollapsed ? (
-                        <div className="font-mono text-[10px] font-bold text-[#A9CE88] truncate">
+                        <div className="font-mono text-[10px] font-bold text-brand-light truncate">
                           {project.assetId.replace('SOL-', '')}
                         </div>
                       ) : (
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-[10px]">
-                            <span className="font-mono font-bold text-[#A9CE88] flex items-center gap-1">
+                            <span className="font-mono font-bold text-brand-light flex items-center gap-1">
                               {project.isPriorityForManagement && (
                                 <Star className="w-3 h-3 fill-[#EAB818] text-[#EAB818] shrink-0" />
                               )}
                               <span>{project.assetId}</span>
                             </span>
-                            <span className="px-2 py-0.2 rounded-full bg-slate-800 text-slate-300 text-[9px] font-semibold">
+                            <span className="px-2 py-0.2 rounded-full bg-grey-800 text-grey-300 text-[9px] font-semibold">
                               {project.govStage || 'E0'}
                             </span>
                           </div>
-                          <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate leading-tight">
+                          <div className="text-xs font-bold text-grey-200 group-hover:text-white truncate leading-tight">
                             {project.name}
                           </div>
-                          <div className="text-[10px] text-slate-400 truncate flex items-center justify-between">
+                          <div className="text-[10px] text-grey-400 truncate flex items-center justify-between">
                             <span>{project.department}</span>
-                            <span className="text-slate-500 font-mono text-[9px]">
+                            <span className="text-grey-500 font-mono text-[9px]">
                               Tipo {project.projectType || 'A'}
                             </span>
                           </div>
@@ -484,7 +484,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 })}
 
                 {filteredProjects.length === 0 && !isCollapsed && (
-                  <div className="p-4 text-center text-xs text-slate-500 italic">
+                  <div className="p-4 text-center text-xs text-grey-500 italic">
                     Nenhuma demanda encontrada
                   </div>
                 )}
@@ -499,25 +499,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {isInProject && currentProject ? (
               <>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400 font-medium">Criticidade Residual:</span>
+                  <span className="text-grey-400 font-medium">Criticidade Residual:</span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${currentRiskColor.badge}`}>
                     {residualScore <= 5 ? 'Baixo' : residualScore <= 12 ? 'Médio' : residualScore <= 20 ? 'Alto' : 'Crítico'}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
                   <span className="text-lg font-black font-mono text-white">{residualScore} pts</span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-grey-400">
                     de {currentProject.initialScore} pts iniciais
                   </span>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <div className="flex items-center justify-between text-[10px] text-grey-400">
                   <span>Demandas Ativas:</span>
-                  <strong className="text-[#A9CE88] font-mono">{projects.length}</strong>
+                  <strong className="text-brand-light font-mono">{projects.length}</strong>
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <div className="flex items-center justify-between text-[10px] text-grey-400">
                   <span>Priorizadas Gestão:</span>
                   <strong className="text-[#FFED00] font-mono">
                     {projects.filter((p) => p.isPriorityForManagement).length}
@@ -532,7 +532,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-2.5 border-t border-[#2E3032] hidden lg:block bg-[#171819]">
           <button
             onClick={onToggleCollapse}
-            className="w-full flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#2E3032] transition-colors"
+            className="w-full flex items-center justify-center p-1.5 rounded-full text-grey-400 hover:text-white hover:bg-[#2E3032] transition-colors"
             title={isCollapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}

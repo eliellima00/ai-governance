@@ -34,7 +34,7 @@ export type Route =
 
 // --- Eixo 2 & Governança Low-Code / Vibe Coding ATTO ---
 export type ProjectType = 'A' | 'B' | 'C'; // A=Google Workspace/App Script · B=Container/VPS · C=No-code/externo
-export type GenerationTool = 'Codex' | 'Claude Code' | 'ChatGPT' | 'Manual' | 'Outro';
+export type GenerationTool = 'Codex' | 'Claude Code' | 'Gemini (copia-e-cola)' | 'ChatGPT' | 'Manual' | 'Outro';
 export type GovStage = 'E0' | 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6' | 'Concluído';
 
 export interface ModuleToggle {

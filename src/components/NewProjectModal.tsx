@@ -298,23 +298,23 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between border-b border-slate-200 pb-3">
+    <div className="fixed inset-0 z-50 bg-grey-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full p-6 shadow-2xl border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between border-b border-grey-200 pb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-purple-100 text-purple-700 rounded-md">
+            <div className="p-2 bg-purple-100 text-purple-700 rounded-lg">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-base font-bold text-grey-900">
                 Cadastrar Nova Solução de Outro Setor (GLPI + Diagnóstico IA)
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-grey-500">
                 Preencha as informações do chamado para classificar a criticidade e gerar o plano de governança.
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 font-bold text-lg">
+          <button onClick={onClose} className="text-grey-400 hover:text-grey-600 p-1 font-bold text-lg">
             ✕
           </button>
         </div>
@@ -323,23 +323,23 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
           {/* Identificação */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">Nome da Solução:</label>
+              <label className="font-semibold text-grey-700 block mb-1">Nome da Solução:</label>
               <input
                 type="text"
                 required
                 placeholder="Ex: Planilha de Montagem de Cargas CTVs"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                className="w-full px-3 py-1.5 border border-grey-300 rounded text-xs focus:ring-2 focus:ring-brand-main focus:outline-hidden"
               />
             </div>
 
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">Área Demandante:</label>
+              <label className="font-semibold text-grey-700 block mb-1">Área Demandante:</label>
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-hidden"
+                className="w-full px-3 py-1.5 border border-grey-300 rounded text-xs bg-white focus:outline-hidden"
               >
                 <option value="Logística / Expedição">Logística / Expedição</option>
                 <option value="Controladoria & Finanças">Controladoria & Finanças</option>
@@ -354,55 +354,55 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">Responsável de Negócio:</label>
+              <label className="font-semibold text-grey-700 block mb-1">Responsável de Negócio:</label>
               <input
                 type="text"
                 required
                 placeholder="Ex: Gerente ou Analista do setor"
                 value={businessResp}
                 onChange={(e) => setBusinessResp(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-hidden"
+                className="w-full px-3 py-1.5 border border-grey-300 rounded text-xs focus:outline-hidden"
               />
             </div>
 
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">Responsável Técnico / Desenvolvedor:</label>
+              <label className="font-semibold text-grey-700 block mb-1">Responsável Técnico / Desenvolvedor:</label>
               <input
                 type="text"
                 required
                 placeholder="Ex: Criador do script / planilha"
                 value={techResp}
                 onChange={(e) => setTechResp(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:outline-hidden"
+                className="w-full px-3 py-1.5 border border-grey-300 rounded text-xs focus:outline-hidden"
               />
             </div>
           </div>
 
           <div>
-            <label className="font-semibold text-slate-700 block mb-1">Objetivo e Processo:</label>
+            <label className="font-semibold text-grey-700 block mb-1">Objetivo e Processo:</label>
             <textarea
               rows={3}
               required
               placeholder="Descreva o que a solução faz e quais processos manuais ela substitui..."
               value={objective}
               onChange={(e) => setObjective(e.target.value)}
-              className="w-full p-2 border border-slate-300 rounded text-xs focus:outline-hidden"
+              className="w-full p-2 border border-grey-300 rounded text-xs focus:outline-hidden"
             />
           </div>
 
           {/* Perguntas de Criticidade e Risco */}
-          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-2.5">
-            <span className="font-bold text-slate-800 block text-xs">
+          <div className="bg-grey-50 p-3.5 rounded-lg border border-grey-200 space-y-2.5">
+            <span className="font-bold text-grey-800 block text-xs">
               Critérios de Governança & Diagnóstico de Risco:
             </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-grey-700">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={hasLgpd}
                   onChange={(e) => setHasLgpd(e.target.checked)}
-                  className="rounded text-emerald-600"
+                  className="rounded text-brand-main"
                 />
                 <span>Trata dados pessoais (LGPD) (+5 pts)</span>
               </label>
@@ -412,7 +412,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="checkbox"
                   checked={hasConfidential}
                   onChange={(e) => setHasConfidential(e.target.checked)}
-                  className="rounded text-emerald-600"
+                  className="rounded text-brand-main"
                 />
                 <span>Trata dados confidenciais (+5 pts)</span>
               </label>
@@ -422,7 +422,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="checkbox"
                   checked={hasErp}
                   onChange={(e) => setHasErp(e.target.checked)}
-                  className="rounded text-emerald-600"
+                  className="rounded text-brand-main"
                 />
                 <span>Integra com ERP Senior / Sistemas (+4 pts)</span>
               </label>
@@ -432,7 +432,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="checkbox"
                   checked={isSheetsDrive}
                   onChange={(e) => setIsSheetsDrive(e.target.checked)}
-                  className="rounded text-emerald-600"
+                  className="rounded text-brand-main"
                 />
                 <span>Usa Google Sheets / Drive pessoal (+3 pts)</span>
               </label>
@@ -442,7 +442,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="checkbox"
                   checked={hasExternalUsers}
                   onChange={(e) => setHasExternalUsers(e.target.checked)}
-                  className="rounded text-emerald-600"
+                  className="rounded text-brand-main"
                 />
                 <span>Usado por terceiros externos (+4 pts)</span>
               </label>
@@ -452,18 +452,18 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   type="checkbox"
                   checked={!hasDoc}
                   onChange={(e) => setHasDoc(!e.target.checked)}
-                  className="rounded text-emerald-600"
+                  className="rounded text-brand-main"
                 />
                 <span>Documentação inexistente (+2 pts)</span>
               </label>
             </div>
 
             <div className="pt-2 flex items-center gap-2">
-              <span className="font-semibold text-slate-700">Impacto se parar amanhã:</span>
+              <span className="font-semibold text-grey-700">Impacto se parar amanhã:</span>
               <select
                 value={impact}
                 onChange={(e) => setImpact(e.target.value as any)}
-                className="px-2 py-1 bg-white border border-slate-300 rounded font-semibold text-xs text-slate-800"
+                className="px-2 py-1 bg-white border border-grey-300 rounded font-semibold text-xs text-grey-800"
               >
                 <option value="Crítico">Crítico (+5 pts)</option>
                 <option value="Alto">Alto (+3 pts)</option>
@@ -474,13 +474,13 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
           </div>
 
           {/* Eixo 2: Tipo Técnico, Ferramenta & Declarações de Entrada */}
-          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-3">
+          <div className="bg-grey-50 p-3.5 rounded-lg border border-grey-200 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                <Server className="w-3.5 h-3.5 text-emerald-700" />
+              <span className="font-bold text-grey-800 text-xs flex items-center gap-1.5">
+                <Server className="w-3.5 h-3.5 text-brand-dark" />
                 <span>Eixo 2 — Tipo Técnico & Vibe Coding</span>
               </span>
-              <span className="text-[10px] text-slate-500 font-mono">
+              <span className="text-[10px] text-grey-500 font-mono">
                 Base: {projectType === 'B' ? '19.0h' : '15.5h'}
               </span>
             </div>
@@ -495,21 +495,21 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     key={tKey}
                     type="button"
                     onClick={() => setProjectType(tKey)}
-                    className={`text-left p-2.5 rounded-lg border text-xs transition-all ${
+                    className={`text-left p-2.5 rounded-full border text-xs transition-all ${
                       isSelected
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-semibold ring-1 ring-emerald-500'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                        ? 'border-brand-main bg-brand-lighter text-brand-dark font-semibold ring-1 ring-brand-main'
+                        : 'border-grey-200 bg-white text-grey-700 hover:bg-grey-100'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-extrabold text-[11px]">Tipo {tKey}</span>
                       {info.statusBadge && (
-                        <span className="text-[9px] bg-amber-100 text-amber-800 px-1 rounded font-bold">
+                        <span className="text-[9px] bg-warning-50 text-warning-600 px-1 rounded font-bold">
                           {info.statusBadge}
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                    <div className="text-[10px] text-grey-500 mt-1 line-clamp-2">
                       {info.shortDesc}
                     </div>
                   </button>
@@ -519,11 +519,11 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Ferramenta de Geração / IA:</label>
+                <label className="font-semibold text-grey-700 block mb-1">Ferramenta de Geração / IA:</label>
                 <select
                   value={generationTool}
                   onChange={(e) => setGenerationTool(e.target.value as GenerationTool)}
-                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-hidden"
+                  className="w-full px-2.5 py-1.5 border border-grey-300 rounded text-xs bg-white focus:outline-hidden"
                 >
                   <option value="Codex">Codex</option>
                   <option value="Claude Code">Claude Code</option>
@@ -535,51 +535,51 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Data de Início da Contagem:</label>
+                <label className="font-semibold text-grey-700 block mb-1">Data de Início da Contagem:</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs bg-white font-mono focus:outline-hidden"
+                  className="w-full px-2.5 py-1.5 border border-grey-300 rounded text-xs bg-white font-mono focus:outline-hidden"
                 />
               </div>
             </div>
 
             {/* Declarações no cadastro */}
-            <div className="pt-2 border-t border-slate-200">
-              <span className="text-[11px] font-bold text-slate-700 block mb-1.5">
+            <div className="pt-2 border-t border-grey-200">
+              <span className="text-[11px] font-bold text-grey-700 block mb-1.5">
                 Declarações no Cadastro (auditadas pela T.I na etapa E1):
               </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-grey-700">
                 {DISCOUNTS_CATALOG.map((disc) => (
                   <label key={disc.id} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={!!declaredDiscounts[disc.id]}
                       onChange={() => handleToggleDeclaredDiscount(disc.id)}
-                      className="rounded text-emerald-600 w-3.5 h-3.5"
+                      className="rounded text-brand-main w-3.5 h-3.5"
                     />
                     <span>{disc.label} (-{disc.hours}h)</span>
                   </label>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-400 mt-1 italic">
+              <p className="text-[10px] text-grey-400 mt-1 italic">
                 * Conforme governança da T.I: O cadastro é declaração, não fato consumado. Descontos só se tornam efetivos após confirmação na E1.
               </p>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+          <div className="flex justify-end gap-2 pt-2 border-t border-grey-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded-md"
+              className="px-4 py-2 bg-grey-200 hover:bg-grey-300 text-grey-800 font-semibold rounded-full"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-md shadow-xs flex items-center gap-1.5"
+              className="px-5 py-2 bg-brand-dark hover:bg-brand-dark text-white font-semibold rounded-full shadow-xs flex items-center gap-1.5"
             >
               <Sparkles className="w-4 h-4" />
               <span>Gerar Ativo GLPI & Diagnóstico</span>
