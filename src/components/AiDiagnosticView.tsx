@@ -9,8 +9,6 @@ import {
   Server,
   FileCheck,
   HelpCircle,
-  Home,
-  ArrowLeft,
   Workflow,
   Check,
   Sparkles,
@@ -20,6 +18,24 @@ import {
 import { SolutionProject, RiskCriterion, ProjectType } from '../types';
 import { getRiskColorClass } from '../utils/riskCalculations';
 import { PROJECT_TYPE_INFO } from '../data/estimationCatalog';
+import {
+  Button,
+  Badge,
+  Card,
+  Label,
+  Textarea,
+  PageHeader,
+  Tabs,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  ProgressBar,
+  ChecklistItem,
+  StatTile
+} from './ui';
 
 interface AiDiagnosticViewProps {
   project: SolutionProject;
@@ -190,140 +206,81 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Breadcrumb & Return to Home Bar */}
-      {onNavigateHome && (
-        <div className="flex flex-wrap items-center justify-between gap-2 bg-white border border-grey-200 px-4 py-2.5 rounded-lg shadow-2xs text-xs">
-          <div className="flex items-center gap-2 text-grey-500 font-medium">
-            <button
-              onClick={onNavigateHome}
-              className="flex items-center gap-1.5 text-brand-dark hover:text-brand-dark font-bold hover:underline"
-            >
-              <Home className="w-3.5 h-3.5" />
-              <span>Início (Dados do Ativo)</span>
-            </button>
-            <span>›</span>
-            <span className="text-grey-800 font-semibold">Diagnóstico de Risco (regras)</span>
-          </div>
-
-          <button
-            onClick={onNavigateHome}
-            className="flex items-center gap-1.5 px-3 py-1 bg-grey-100 hover:bg-grey-200 text-grey-700 font-semibold rounded-full border border-grey-300 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Voltar p/ Ficha do Ativo</span>
-          </button>
-        </div>
-      )}
-
       {/* Sub-Header & Switcher */}
       <div className="bg-white border border-grey-200 rounded-lg p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-brand-lighter text-brand-dark rounded-lg border border-brand-light">
+          <div className="p-2 bg-brand-lighter text-brand-dark rounded-lg border border-brand-light shrink-0">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-brand-lighter text-brand-dark">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge className="bg-brand-lighter text-brand-dark border-transparent">
                 Diagnóstico de Risco por Regras
-              </span>
+              </Badge>
               <span className="text-xs text-grey-500 font-mono">Motor Determinístico T.I</span>
             </div>
-            <h2 className="text-lg font-bold text-grey-900">
-              Parecer Técnico de Criticidade & Avaliação Inicial
-            </h2>
-            <p className="text-xs text-grey-500 mt-0.5">
-              Classificação por regras a partir do cadastro — declaração a confirmar na Reunião de Entendimento (E1).
-            </p>
+            <PageHeader
+              title="Parecer Técnico de Criticidade & Avaliação Inicial"
+              subtitle="Classificação por regras a partir do cadastro — declaração a confirmar na Reunião de Entendimento (E1)."
+            />
           </div>
         </div>
 
-        <div className="flex items-center bg-grey-100 p-1 rounded-lg border border-grey-200 text-xs font-medium max-w-full overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('official')}
-            className={`px-3 py-1.5 rounded-full transition-all ${
-              activeTab === 'official'
-                ? 'bg-white text-grey-900 font-bold shadow-xs'
-                : 'text-grey-600 hover:text-grey-900'
-            }`}
-          >
-            Parecer Oficial do Chamado
-          </button>
-          <button
-            onClick={() => setActiveTab('simulator')}
-            className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
-              activeTab === 'simulator'
-                ? 'bg-white text-brand-dark font-bold shadow-xs'
-                : 'text-grey-600 hover:text-grey-900'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Simulador de Regras</span>
-          </button>
-        </div>
+        <Tabs<'official' | 'simulator'>
+          items={[
+            { id: 'official', label: 'Parecer Oficial do Chamado' },
+            { id: 'simulator', label: 'Simulador de Regras', badge: <Sliders className="w-3.5 h-3.5" /> }
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {activeTab === 'official' ? (
         <div className="space-y-6">
           {/* Executive Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Overall Score */}
-            <div className="bg-grey-900 text-white rounded-lg p-5 border border-grey-800 shadow-xs relative overflow-hidden">
-              <div className="absolute top-2 right-2 opacity-10">
-                <ShieldAlert className="w-24 h-24 text-white" />
-              </div>
-              <span className="text-xs uppercase tracking-wider text-grey-400 font-semibold block">
-                Pontuação Total por Regras
-              </span>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-extrabold text-white">{project.initialScore}</span>
-                <span className="text-xs text-red-400 font-semibold uppercase">pontos</span>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold ${riskColor.badge} flex items-center gap-1`}>
-                  <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                  Risco Inicial: {project.initialRisk}
-                </span>
+            {/* Overall Score — custom block: StatTile has no decorative-icon slot */}
+            <div className="relative overflow-hidden text-left rounded-lg border border-grey-800 bg-grey-900 text-white p-3.5 min-w-0">
+              <div className="relative">
+                <span className="text-xs font-semibold text-grey-300">Pontuação Total por Regras</span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-2xl font-black">{project.initialScore}</span>
+                  <span className="text-[11px] text-red-400 font-semibold uppercase">pontos</span>
+                </div>
+                <div className="mt-2">
+                  <Badge className={`${riskColor.badge} border-transparent`}>
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <span>Risco Inicial: {project.initialRisk}</span>
+                  </Badge>
+                </div>
               </div>
             </div>
 
             {/* Category Card */}
-            <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-xs">
-              <span className="text-xs uppercase tracking-wider text-grey-500 font-semibold block">
-                Categoria da Solução
-              </span>
-              <div className="text-lg font-bold text-grey-900 mt-1">Solução Corporativa</div>
-              <p className="text-xs text-grey-600 mt-2 line-clamp-2">
-                Mais de 20 usuários, acesso por terceiros e impacto na operação de embarque.
-              </p>
-            </div>
+            <StatTile
+              label="Categoria da Solução"
+              value="Solução Corporativa"
+              subtext="Mais de 20 usuários, acesso por terceiros e impacto na operação de embarque."
+            />
 
             {/* TI Mandate */}
-            <div className="bg-warning-50 border border-warning-200 rounded-lg p-5 shadow-xs">
-              <span className="text-xs uppercase tracking-wider text-warning-600 font-semibold block">
-                Aprovação da T.I
-              </span>
-              <div className="text-lg font-bold text-warning-600 mt-1 flex items-center gap-1.5">
-                <AlertOctagon className="w-5 h-5 text-warning-600" />
-                <span>Obrigatória</span>
-              </div>
-              <p className="text-xs text-warning-600 mt-2">
-                Exige esteira com Reunião de Entendimento (E1) e homologação.
-              </p>
-            </div>
+            <StatTile
+              label="Aprovação da T.I"
+              icon={<AlertOctagon className="w-5 h-5" />}
+              iconClassName="bg-warning-50 text-warning-600"
+              value={<span className="text-warning-600">Obrigatória</span>}
+              subtext="Exige esteira com Reunião de Entendimento (E1) e homologação."
+            />
 
             {/* Security Audit */}
-            <div className="bg-brand-lighter border border-brand-light rounded-lg p-5 shadow-xs">
-              <span className="text-xs uppercase tracking-wider text-brand-dark font-semibold block">
-                Revisão de Segurança
-              </span>
-              <div className="text-lg font-bold text-brand-dark mt-1 flex items-center gap-1.5">
-                <CheckCircle2 className="w-5 h-5 text-brand-dark" />
-                <span>Necessária</span>
-              </div>
-              <p className="text-xs text-brand-dark mt-2">
-                Controle de acessos, segregação de credenciais e proteção LGPD.
-              </p>
-            </div>
+            <StatTile
+              label="Revisão de Segurança"
+              icon={<CheckCircle2 className="w-5 h-5" />}
+              iconClassName="bg-brand-lighter text-brand-dark"
+              value={<span className="text-brand-dark">Necessária</span>}
+              subtext="Controle de acessos, segregação de credenciais e proteção LGPD."
+            />
           </div>
 
           {/* Eixo 2 Technical Type Suggestion Box */}
@@ -335,9 +292,9 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-900">
+                    <Badge className="bg-purple-100 text-purple-900 border-transparent">
                       Sugestão de Eixo 2 (Tipo Técnico)
-                    </span>
+                    </Badge>
                     <span className="text-xs text-grey-500 font-medium">
                       Confiança: <strong>{typeSuggestion.confidence}</strong>
                     </span>
@@ -354,12 +311,12 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     <span className="text-[11px] text-grey-500 font-medium">Termos identificados:</span>
                     {typeSuggestion.matchedKeywords.map((kw, i) => (
-                      <span
+                      <Badge
                         key={i}
-                        className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-50 text-purple-800 border border-purple-200 font-bold"
+                        className="bg-purple-50 text-purple-800 border-purple-200 font-mono text-[10px]"
                       >
                         {kw}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -370,34 +327,32 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                   Tipo Atual: <strong>Tipo {project.projectType || 'A'}</strong>
                 </div>
                 {project.projectType !== typeSuggestion.suggestedType ? (
-                  <button
+                  <Button
+                    size="sm"
                     onClick={handleApplySuggestedType}
-                    className="px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors shadow-2xs flex items-center gap-1.5"
-                  >
-                    {appliedTypeSuccess ? (
-                      <>
+                    className="bg-purple-700! hover:bg-purple-800! shadow-2xs"
+                    leftIcon={
+                      appliedTypeSuccess ? (
                         <Check className="w-4 h-4" />
-                        <span>Tipo Aplicado!</span>
-                      </>
-                    ) : (
-                      <>
+                      ) : (
                         <Workflow className="w-3.5 h-3.5" />
-                        <span>Aplicar Tipo {typeSuggestion.suggestedType}</span>
-                      </>
-                    )}
-                  </button>
+                      )
+                    }
+                  >
+                    {appliedTypeSuccess ? 'Tipo Aplicado!' : `Aplicar Tipo ${typeSuggestion.suggestedType}`}
+                  </Button>
                 ) : (
-                  <span className="text-xs font-bold text-brand-dark bg-brand-lighter px-2.5 py-1 rounded border border-brand-light flex items-center gap-1">
+                  <Badge className="text-brand-dark bg-brand-lighter border-brand-light">
                     <Check className="w-3.5 h-3.5 text-brand-main" />
                     <span>Tipo Alinhado</span>
-                  </span>
+                  </Badge>
                 )}
               </div>
             </div>
           </div>
 
           {/* Detailed Dimensions Breakdown */}
-          <div className="bg-white border border-grey-200 rounded-lg p-6 shadow-xs">
+          <Card>
             <h3 className="text-sm font-bold uppercase tracking-wider text-grey-900 mb-4 flex items-center gap-2">
               <FileCheck className="w-4 h-4 text-brand-dark" />
               <span>Detalhamento por Dimensão de Risco (Matriz Shadow IT)</span>
@@ -411,26 +366,22 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                     <Lock className="w-4 h-4 text-grey-500" />
                     <span>Segurança da Informação</span>
                   </span>
-                  <span className="text-xs font-mono font-bold text-grey-900 bg-grey-100 px-2 py-0.5 rounded">
+                  <Badge className="bg-grey-100 text-grey-900 border-transparent font-mono">
                     {project.dimensionsInitial.seguranca} pts
-                  </span>
+                  </Badge>
                 </div>
-                <div className="w-full bg-grey-100 rounded-full h-2">
-                  <div
-                    className="bg-red-500 h-2 rounded-full"
-                    style={{ width: `${Math.min(100, (project.dimensionsInitial.seguranca / 15) * 100)}%` }}
-                  ></div>
+                <ProgressBar
+                  value={Math.min(100, (project.dimensionsInitial.seguranca / 15) * 100)}
+                  colorClassName="bg-red-500"
+                />
+                <div className="space-y-1.5 mt-2">
+                  <ChecklistItem checked>
+                    Credenciais de bancos de dados gravadas em scripts abertos.
+                  </ChecklistItem>
+                  <ChecklistItem checked>
+                    Tokens de API de ERP sem expiração nem segregação de perfil.
+                  </ChecklistItem>
                 </div>
-                <ul className="text-xs text-grey-600 space-y-1.5 mt-2">
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-red-500 mt-0.5">•</span>
-                    <span>Credenciais de bancos de dados gravadas em scripts abertos.</span>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-red-500 mt-0.5">•</span>
-                    <span>Tokens de API de ERP sem expiração nem segregação de perfil.</span>
-                  </li>
-                </ul>
               </div>
 
               {/* LGPD */}
@@ -440,26 +391,22 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                     <Database className="w-4 h-4 text-grey-500" />
                     <span>Privacidade & LGPD</span>
                   </span>
-                  <span className="text-xs font-mono font-bold text-grey-900 bg-grey-100 px-2 py-0.5 rounded">
+                  <Badge className="bg-grey-100 text-grey-900 border-transparent font-mono">
                     {project.dimensionsInitial.lgpd} pts
-                  </span>
+                  </Badge>
                 </div>
-                <div className="w-full bg-grey-100 rounded-full h-2">
-                  <div
-                    className="bg-warning-500 h-2 rounded-full"
-                    style={{ width: `${Math.min(100, (project.dimensionsInitial.lgpd / 10) * 100)}%` }}
-                  ></div>
+                <ProgressBar
+                  value={Math.min(100, (project.dimensionsInitial.lgpd / 10) * 100)}
+                  colorClassName="bg-warning-500"
+                />
+                <div className="space-y-1.5 mt-2">
+                  <ChecklistItem checked>
+                    Dados de motoristas (CPF, CNH, telefone) compartilhados via Google Sheets.
+                  </ChecklistItem>
+                  <ChecklistItem checked>
+                    Ausência de política de expiração automática de documentos.
+                  </ChecklistItem>
                 </div>
-                <ul className="text-xs text-grey-600 space-y-1.5 mt-2">
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-warning-500 mt-0.5">•</span>
-                    <span>Dados de motoristas (CPF, CNH, telefone) compartilhados via Google Sheets.</span>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-warning-500 mt-0.5">•</span>
-                    <span>Ausência de política de expiração automática de documentos.</span>
-                  </li>
-                </ul>
               </div>
 
               {/* Operacional */}
@@ -469,29 +416,25 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                     <Users className="w-4 h-4 text-grey-500" />
                     <span>Continuidade & Operação</span>
                   </span>
-                  <span className="text-xs font-mono font-bold text-grey-900 bg-grey-100 px-2 py-0.5 rounded">
+                  <Badge className="bg-grey-100 text-grey-900 border-transparent font-mono">
                     {project.dimensionsInitial.operacional} pts
-                  </span>
+                  </Badge>
                 </div>
-                <div className="w-full bg-grey-100 rounded-full h-2">
-                  <div
-                    className="bg-info-500 h-2 rounded-full"
-                    style={{ width: `${Math.min(100, (project.dimensionsInitial.operacional / 10) * 100)}%` }}
-                  ></div>
+                <ProgressBar
+                  value={Math.min(100, (project.dimensionsInitial.operacional / 10) * 100)}
+                  colorClassName="bg-info-500"
+                />
+                <div className="space-y-1.5 mt-2">
+                  <ChecklistItem checked>
+                    Dependência de pessoa única para suporte e manutenção da planilha.
+                  </ChecklistItem>
+                  <ChecklistItem checked>
+                    Risco de bloqueio operacional em época de safra de sementes.
+                  </ChecklistItem>
                 </div>
-                <ul className="text-xs text-grey-600 space-y-1.5 mt-2">
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-info-500 mt-0.5">•</span>
-                    <span>Dependência de pessoa única para suporte e manutenção da planilha.</span>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-info-500 mt-0.5">•</span>
-                    <span>Risco de bloqueio operacional em época de safra de sementes.</span>
-                  </li>
-                </ul>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Criteria Evaluation Table */}
           <div className="bg-white border border-grey-200 rounded-lg shadow-xs overflow-hidden">
@@ -506,23 +449,22 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                 Ver Plano de Ação & Mitigações →
               </button>
             </div>
-            <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-grey-200 bg-grey-100 text-grey-600">
-                  <th className="py-2.5 px-4 font-semibold min-w-[180px]">Critério Avaliado</th>
-                  <th className="py-2.5 px-4 font-semibold min-w-[110px]">Dimensão</th>
-                  <th className="py-2.5 px-4 font-semibold min-w-[220px]">Evidência / Justificativa</th>
-                  <th className="py-2.5 px-4 font-semibold text-right min-w-[90px]">Pontos</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-grey-200">
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th className="min-w-45">Critério Avaliado</Th>
+                  <Th className="min-w-27.5">Dimensão</Th>
+                  <Th className="min-w-55">Evidência / Justificativa</Th>
+                  <Th className="text-right min-w-22.5">Pontos</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
                 {project.criteria.map((c) => (
-                  <tr key={c.id} className="hover:bg-grey-50">
-                    <td className="py-3 px-4 font-semibold text-grey-800">{c.criterion}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                  <Tr key={c.id}>
+                    <Td className="font-semibold text-grey-800">{c.criterion}</Td>
+                    <Td>
+                      <Badge
+                        className={`border-transparent text-[11px] ${
                           c.dimension === 'Segurança'
                             ? 'bg-red-50 text-red-700'
                             : c.dimension === 'LGPD'
@@ -531,22 +473,19 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                         }`}
                       >
                         {c.dimension}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-grey-600">{c.evidence}</td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-grey-900">
-                      +{c.points}
-                    </td>
-                  </tr>
+                      </Badge>
+                    </Td>
+                    <Td>{c.evidence}</Td>
+                    <Td className="text-right font-mono font-bold text-grey-900">+{c.points}</Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
-            </div>
+              </Tbody>
+            </Table>
           </div>
         </div>
       ) : (
         /* Deterministic Rules Simulator View */
-        <div className="bg-white border border-grey-200 rounded-lg p-6 shadow-xs space-y-5">
+        <Card className="space-y-5">
           <div>
             <h3 className="text-sm font-bold text-grey-900">
               Simulador de Regras de Triagem (Determinístico)
@@ -557,24 +496,18 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-grey-700 block mb-1">
-              Texto de Descrição do Chamado / Solução:
-            </label>
-            <textarea
+            <Label>Texto de Descrição do Chamado / Solução:</Label>
+            <Textarea
               rows={5}
               value={simText}
               onChange={(e) => setSimText(e.target.value)}
-              className="w-full p-3 border border-grey-300 rounded-lg text-xs font-mono bg-grey-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
+              className="font-mono"
             />
           </div>
 
-          <button
-            onClick={runDeterministicTriage}
-            className="px-4 py-2 bg-brand-dark hover:bg-brand-dark text-white text-xs font-bold rounded-full transition-colors flex items-center gap-2"
-          >
-            <Sliders className="w-4 h-4" />
-            <span>Avaliar por Regras</span>
-          </button>
+          <Button size="sm" onClick={runDeterministicTriage} leftIcon={<Sliders className="w-4 h-4" />}>
+            Avaliar por Regras
+          </Button>
 
           {simResult && (
             <div className="p-4 rounded-lg border border-grey-200 bg-grey-50 space-y-3">
@@ -586,15 +519,17 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
               </div>
               <div className="text-xs text-grey-700">
                 <div className="font-semibold mb-1">Regras Acionadas ({simResult.rules.length}):</div>
-                <ul className="list-disc pl-5 space-y-1 text-grey-600">
+                <div className="space-y-1.5">
                   {simResult.rules.map((r: string, idx: number) => (
-                    <li key={idx}>{r}</li>
+                    <ChecklistItem key={idx} checked>
+                      {r}
+                    </ChecklistItem>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

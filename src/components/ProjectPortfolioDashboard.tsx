@@ -1,32 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Table,
-  Columns,
+  Table as TableIcon,
   Calendar,
   AlertTriangle,
   Star,
-  Search,
-  Filter,
   Plus,
   Copy,
   Check,
-  ExternalLink,
-  MessageSquare,
-  Bell,
-  CheckCircle2,
-  Clock,
-  ChevronDown,
   Building2,
   FileText,
-  User,
-  ShieldCheck,
-  Flame,
   ArrowRight,
-  Info,
-  Layers,
-  Server,
-  Workflow,
-  Sparkles
+  Workflow
 } from 'lucide-react';
 import {
   SolutionProject,
@@ -47,6 +31,16 @@ import {
   STAGE_NAMES
 } from '../data/estimationCatalog';
 import { can } from '../utils/permissions';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Field, Input, Select, Textarea } from './ui/FormField';
+import { PageHeader } from './ui/PageHeader';
+import { Tabs } from './ui/Tabs';
+import { Modal, ModalFooter } from './ui/Modal';
+import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
+import { StatTile } from './ui/StatTile';
+import { SearchInput } from './ui/SearchInput';
 
 interface ProjectPortfolioDashboardProps {
   projects: SolutionProject[];
@@ -390,521 +384,428 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   return (
     <div id="project-portfolio-dashboard" className="space-y-6">
       {/* Top Banner with Consultative Info */}
-      <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="bg-brand-lighter text-brand-dark text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5" />
-                Portfólio Corporativo ATTO
-              </span>
-              <span className="text-xs text-grey-500 font-medium">
-                Governança de Soluções Departamentais & Vibe Coding
-              </span>
-            </div>
-            <h1 className="text-xl font-black text-grey-900 tracking-tight">
-              Gestão de Demandas Departamentais
-            </h1>
-            <p className="text-xs text-grey-600 max-w-3xl leading-relaxed">
-              Monitore todas as soluções em desenvolvimento e sustentação. Edite diretamente a etapa de cada projeto via select, anote notificações e status, marque as prioridades da gestão e acompanhe impedimentos e agendamentos.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <button
-              onClick={handleCopyManagementPauta}
-              className="px-3.5 py-2 rounded-full text-xs font-bold text-grey-800 bg-warning-50 hover:bg-warning-50 border border-warning-200 transition-colors shadow-2xs flex items-center gap-2"
-              title="Copiar pauta estruturada para alinhamento executivo no WhatsApp / Teams"
-            >
-              {copiedPauta ? (
-                <>
-                  <Check className="w-4 h-4 text-brand-main" />
-                  <span className="text-brand-dark">Pauta Copiada!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4 text-warning-600" />
-                  <span>Copiar Pauta de Gestão</span>
-                </>
-              )}
-            </button>
-
-            {can(userRole, 'create_solution') && (
-              <button
-                onClick={onOpenNewProjectModal}
-                className="px-4 py-2 rounded-full text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark transition-colors shadow-2xs flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Nova Solução</span>
-              </button>
-            )}
-          </div>
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Badge className="bg-brand-lighter text-brand-dark border-transparent text-[11px] uppercase tracking-wider">
+            <Building2 className="w-3.5 h-3.5" />
+            Portfólio Corporativo ATTO
+          </Badge>
+          <span className="text-xs text-grey-500 font-medium">
+            Governança de Soluções Departamentais & Vibe Coding
+          </span>
         </div>
-      </div>
+
+        <PageHeader
+          title="Gestão de Demandas Departamentais"
+          subtitle="Monitore todas as soluções em desenvolvimento e sustentação. Edite diretamente a etapa de cada projeto via select, anote notificações e status, marque as prioridades da gestão e acompanhe impedimentos e agendamentos."
+          actions={
+            <>
+              <Button
+                color="secondary"
+                size="sm"
+                onClick={handleCopyManagementPauta}
+                leftIcon={
+                  copiedPauta ? (
+                    <Check className="w-4 h-4 text-brand-main" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-warning-600" />
+                  )
+                }
+                className="bg-warning-50 border-warning-200 hover:bg-warning-50"
+                title="Copiar pauta estruturada para alinhamento executivo no WhatsApp / Teams"
+              >
+                <span className={copiedPauta ? 'text-brand-dark' : 'text-grey-800'}>
+                  {copiedPauta ? 'Pauta Copiada!' : 'Copiar Pauta de Gestão'}
+                </span>
+              </Button>
+
+              {can(userRole, 'create_solution') && (
+                <Button
+                  color="primary"
+                  size="sm"
+                  onClick={onOpenNewProjectModal}
+                  leftIcon={<Plus className="w-4 h-4" />}
+                >
+                  Nova Solução
+                </Button>
+              )}
+            </>
+          }
+        />
+      </Card>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        {/* Total Projects */}
-        <div className="bg-white border border-grey-200 rounded-lg p-3.5 shadow-2xs min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-grey-500">Total Projetos</span>
-            <div className="p-1.5 rounded-lg bg-grey-100 text-grey-700">
-              <Table className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-grey-900">{stats.total}</span>
-            <span className="text-[11px] text-grey-500 font-medium">soluções</span>
-          </div>
-          <p className="text-[11px] text-grey-400 mt-1 truncate">
-            {stats.inProduction} em produção estável
-          </p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <StatTile
+          label="Total Projetos"
+          value={
+            <>
+              {stats.total} <span className="text-xs font-normal text-grey-400">soluções</span>
+            </>
+          }
+          subtext={`${stats.inProduction} em produção estável`}
+          icon={<TableIcon className="w-4 h-4" />}
+          iconClassName="bg-grey-100 text-grey-700"
+        />
 
-        {/* Management Priority */}
-        <div
+        <StatTile
+          label="Pauta de Gestão"
+          value={
+            <>
+              {stats.prioritizedForManagement}{' '}
+              <span className="text-xs font-normal text-warning-600">priorizadas</span>
+            </>
+          }
+          subtext={
+            filterManagementOnly ? '✓ Filtro ativo (clique para limpar)' : 'Clique para filtrar pauta'
+          }
+          icon={<Star className="w-4 h-4 fill-warning-500 text-warning-500" />}
+          iconClassName="bg-warning-50 text-warning-600"
+          active={filterManagementOnly}
           onClick={() => setFilterManagementOnly(!filterManagementOnly)}
-          className={`cursor-pointer transition-all border rounded-lg p-3.5 shadow-2xs min-w-0 ${
-            filterManagementOnly
-              ? 'bg-warning-50 border-warning-500 ring-2 ring-warning-200'
-              : 'bg-white border-grey-200 hover:border-warning-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-warning-600">Pauta de Gestão</span>
-            <div className="p-1.5 rounded-lg bg-warning-50 text-warning-600">
-              <Star className="w-4 h-4 fill-warning-500 text-warning-500" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-warning-600">{stats.prioritizedForManagement}</span>
-            <span className="text-[11px] text-warning-600 font-bold">priorizadas</span>
-          </div>
-          <p className="text-[11px] text-warning-600/80 mt-1 truncate">
-            {filterManagementOnly ? '✓ Filtro ativo (clique para limpar)' : 'Clique para filtrar pauta'}
-          </p>
-        </div>
+        />
 
-        {/* Impediments */}
-        <div
+        <StatTile
+          label="Com Impedimento"
+          value={
+            <>
+              {stats.withImpediment} <span className="text-xs font-normal text-danger-800">bloqueios</span>
+            </>
+          }
+          subtext={filterImpedimentOnly ? '✓ Filtro ativo' : 'Ações necessárias da gestão'}
+          icon={<AlertTriangle className="w-4 h-4 text-danger-500" />}
+          iconClassName="bg-danger-50 text-danger-800"
+          active={filterImpedimentOnly}
           onClick={() => setFilterImpedimentOnly(!filterImpedimentOnly)}
-          className={`cursor-pointer transition-all border rounded-lg p-3.5 shadow-2xs min-w-0 ${
-            filterImpedimentOnly
-              ? 'bg-danger-50 border-danger-400 ring-2 ring-danger-300'
-              : 'bg-white border-grey-200 hover:border-danger-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-danger-800">Com Impedimento</span>
-            <div className="p-1.5 rounded-lg bg-danger-50 text-danger-800">
-              <AlertTriangle className="w-4 h-4 text-danger-500" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-danger-800">{stats.withImpediment}</span>
-            <span className="text-[11px] text-danger-800 font-bold">bloqueios</span>
-          </div>
-          <p className="text-[11px] text-danger-800/80 mt-1 truncate">
-            {filterImpedimentOnly ? '✓ Filtro ativo' : 'Ações necessárias da gestão'}
-          </p>
-        </div>
+        />
 
-        {/* Scheduled Meetings / Delivery */}
-        <div className="bg-white border border-grey-200 rounded-lg p-3.5 shadow-2xs min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-info-700">Agendamentos</span>
-            <div className="p-1.5 rounded-lg bg-info-50 text-info-700">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-info-700">{stats.withScheduledDate}</span>
-            <span className="text-[11px] text-info-700 font-medium">datas marcadas</span>
-          </div>
-          <p className="text-[11px] text-info-600 mt-1 truncate">
-            Alinhamentos e homologações
-          </p>
-        </div>
-
-        {/* Compliance / Governance */}
-        <div className="bg-white border border-grey-200 rounded-lg p-3.5 shadow-2xs col-span-2 sm:col-span-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-brand-dark">Governança T.I</span>
-            <div className="p-1.5 rounded-lg bg-brand-lighter text-brand-dark">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-brand-dark">100%</span>
-            <span className="text-[11px] text-brand-dark font-semibold">GLPI + Esteira</span>
-          </div>
-          <p className="text-[11px] text-brand-main mt-1 truncate">
-            Rastreabilidade completa
-          </p>
-        </div>
+        <StatTile
+          label="Agendamentos"
+          value={
+            <>
+              {stats.withScheduledDate}{' '}
+              <span className="text-xs font-normal text-info-700">datas marcadas</span>
+            </>
+          }
+          subtext="Alinhamentos e homologações"
+          icon={<Calendar className="w-4 h-4" />}
+          iconClassName="bg-info-50 text-info-700"
+        />
       </div>
 
       {/* View Mode Switcher and Controls */}
-      <div className="bg-white border border-grey-200 rounded-lg p-4 shadow-2xs space-y-3.5">
+      <Card className="p-4 space-y-3.5">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          {/* View Mode Tabs */}
-          <div className="flex items-center p-1 bg-grey-100 rounded-lg border border-grey-200/80 max-w-full overflow-x-auto">
-            <button
-              onClick={() => setViewMode('spreadsheet')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
-                viewMode === 'spreadsheet'
-                  ? 'bg-white text-brand-dark shadow-2xs border border-grey-200'
-                  : 'text-grey-600 hover:text-grey-900'
-              }`}
-            >
-              <Table className="w-3.5 h-3.5 shrink-0" />
-              <span>Planilha Executiva</span>
-              <span className="px-1.5 py-0.2 rounded text-[10px] bg-grey-100 text-grey-700 font-mono">
-                {filteredProjects.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setViewMode('executive_summary')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
-                viewMode === 'executive_summary'
-                  ? 'bg-white text-warning-600 shadow-2xs border border-grey-200'
-                  : 'text-grey-600 hover:text-grey-900'
-              }`}
-            >
-              <Star className="w-3.5 h-3.5 shrink-0 fill-warning-500 text-warning-500" />
-              <span className="hidden lg:inline">Demandas Departamentais & Alinhamento (1:1)</span>
-              <span className="lg:hidden">Alinhamento (1:1)</span>
-              {stats.prioritizedForManagement > 0 && (
-                <span className="px-1.5 py-0.2 rounded text-[10px] bg-warning-50 text-warning-600 font-bold">
-                  {stats.prioritizedForManagement}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
-                viewMode === 'kanban'
-                  ? 'bg-white text-indigo-900 shadow-2xs border border-grey-200'
-                  : 'text-grey-600 hover:text-grey-900'
-              }`}
-            >
-              <Columns className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">Funil de Etapas (Kanban)</span>
-              <span className="sm:hidden">Kanban</span>
-            </button>
-          </div>
+          <Tabs<'spreadsheet' | 'executive_summary' | 'kanban'>
+            items={[
+              {
+                id: 'spreadsheet' as const,
+                label: 'Planilha Executiva',
+                badge: (
+                  <span className="px-1.5 py-0.2 rounded text-[10px] bg-grey-100 text-grey-700 font-mono">
+                    {filteredProjects.length}
+                  </span>
+                )
+              },
+              {
+                id: 'executive_summary' as const,
+                label: 'Alinhamento (1:1)',
+                badge:
+                  stats.prioritizedForManagement > 0 ? (
+                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-warning-50 text-warning-600 font-bold">
+                      {stats.prioritizedForManagement}
+                    </span>
+                  ) : undefined
+              },
+              {
+                id: 'kanban' as const,
+                label: 'Funil de Etapas (Kanban)'
+              }
+            ]}
+            value={viewMode}
+            onChange={setViewMode}
+          />
         </div>
 
         {/* Filters and Search Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 pt-2 border-t border-grey-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-2 border-t border-grey-100">
           {/* Search */}
-          <div className="relative sm:col-span-2">
-            <Search className="w-4 h-4 text-grey-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
+          <div className="sm:col-span-2">
+            <SearchInput
               placeholder="Buscar por nome, ativo GLPI, responsável..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
+              className="text-xs py-1.5"
             />
           </div>
 
           {/* Department Filter */}
-          <div>
-            <select
-              value={filterDepartment}
-              onChange={(e) => setFilterDepartment(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-grey-300 rounded-lg text-xs font-medium bg-grey-50 text-grey-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
-            >
-              <option value="all">Todas as Áreas</option>
-              {departments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+            className="text-xs py-1.5 bg-grey-50"
+          >
+            <option value="all">Todas as Áreas</option>
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </Select>
 
           {/* Stage Filter */}
-          <div>
-            <select
-              value={filterStage}
-              onChange={(e) => setFilterStage(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-grey-300 rounded-lg text-xs font-medium bg-grey-50 text-grey-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
-            >
-              <option value="all">Todas as Etapas</option>
-              {ALL_STAGES.map((stg) => (
-                <option key={stg} value={stg}>
-                  {stg}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            value={filterStage}
+            onChange={(e) => setFilterStage(e.target.value)}
+            className="text-xs py-1.5 bg-grey-50"
+          >
+            <option value="all">Todas as Etapas</option>
+            {ALL_STAGES.map((stg) => (
+              <option key={stg} value={stg}>
+                {stg}
+              </option>
+            ))}
+          </Select>
 
           {/* Priority Filter */}
-          <div>
-            <select
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-grey-300 rounded-lg text-xs font-medium bg-grey-50 text-grey-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
-            >
-              <option value="all">Todas as Prioridades</option>
-              <option value="P0 - Urgente">P0 - Urgente</option>
-              <option value="P1 - Alta">P1 - Alta</option>
-              <option value="P2 - Média">P2 - Média</option>
-              <option value="P3 - Baixa">P3 - Baixa</option>
-            </select>
-          </div>
-
-          {/* Quick Toggle Buttons */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setFilterManagementOnly(!filterManagementOnly)}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                filterManagementOnly
-                  ? 'bg-warning-50 text-warning-600 border-warning-200'
-                  : 'bg-grey-50 text-grey-600 border-grey-300 hover:bg-grey-100'
-              }`}
-              title="Filtrar demandas marcadas para a pauta da gestão"
-            >
-              <Star className={`w-3.5 h-3.5 ${filterManagementOnly ? 'fill-warning-500 text-warning-500' : 'text-grey-400'}`} />
-              <span className="truncate">⭐ Gestão</span>
-            </button>
-
-            <button
-              onClick={() => setFilterImpedimentOnly(!filterImpedimentOnly)}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                filterImpedimentOnly
-                  ? 'bg-danger-50 text-danger-800 border-danger-300'
-                  : 'bg-grey-50 text-grey-600 border-grey-300 hover:bg-grey-100'
-              }`}
-              title="Filtrar demandas com impedimento ou bloqueio ativo"
-            >
-              <AlertTriangle className={`w-3.5 h-3.5 ${filterImpedimentOnly ? 'text-danger-500' : 'text-grey-400'}`} />
-              <span className="truncate">🚨 Bloqueio</span>
-            </button>
-          </div>
+          <Select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+            className="text-xs py-1.5 bg-grey-50"
+          >
+            <option value="all">Todas as Prioridades</option>
+            <option value="P0 - Urgente">P0 - Urgente</option>
+            <option value="P1 - Alta">P1 - Alta</option>
+            <option value="P2 - Média">P2 - Média</option>
+            <option value="P3 - Baixa">P3 - Baixa</option>
+          </Select>
         </div>
-      </div>
+      </Card>
 
       {/* VIEW 1: SPREADSHEET TABLE (EXECUTIVE GRID) */}
       {viewMode === 'spreadsheet' && (
-        <div className="bg-white border border-grey-200 rounded-lg shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-grey-200 bg-grey-100 text-grey-700 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-3 text-center w-12" title="Marcar para pauta de gestão">
-                    ⭐ Gestão
-                  </th>
-                  <th className="py-3 px-4 min-w-[200px]">Solução & Ativo GLPI</th>
-                  <th className="py-3 px-3 min-w-[130px]">Área & Dono</th>
-                  <th className="py-3 px-3 min-w-[130px]">Tipo Técnico & Esteira</th>
-                  <th className="py-3 px-3 min-w-[160px]">Etapa do Ciclo</th>
-                  <th className="py-3 px-3 min-w-[120px]">Prioridade</th>
-                  <th className="py-3 px-3 min-w-[140px]">Impedimento / Bloqueio</th>
-                  <th className="py-3 px-3 min-w-[130px]">Data Marcada</th>
-                  <th className="py-3 px-3 text-right min-w-[130px]">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-grey-200">
-                {filteredProjects.map((proj) => {
-                  const stageStyle = STAGE_CONFIG[proj.stage || 'Levantamento & Ficha'];
-                  const priorityStyle = PRIORITY_CONFIG[proj.executivePriority || 'P2 - Média'];
+        <Card className="p-0 overflow-hidden">
+          <Table className="text-xs">
+            <Thead>
+              <Tr className="hover:bg-transparent">
+                <Th className="text-center w-12" title="Marcar para pauta de gestão">
+                  ⭐ Gestão
+                </Th>
+                <Th className="min-w-[200px]">Solução & Ativo GLPI</Th>
+                <Th className="min-w-[130px]">Área & Dono</Th>
+                <Th className="min-w-[130px]">Tipo Técnico & Esteira</Th>
+                <Th className="min-w-[230px]">Etapa do Ciclo</Th>
+                <Th className="min-w-[150px]">Prioridade</Th>
+                <Th className="min-w-[140px]">Impedimento / Bloqueio</Th>
+                <Th className="min-w-[130px]">Data Marcada</Th>
+                <Th sticky="right" className="text-right min-w-[130px] bg-grey-50">
+                  Ações
+                </Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {filteredProjects.map((proj) => {
+                const stageStyle = STAGE_CONFIG[proj.stage || 'Levantamento & Ficha'];
+                const priorityStyle = PRIORITY_CONFIG[proj.executivePriority || 'P2 - Média'];
 
-                  return (
-                    <tr
-                      key={proj.id}
-                      className={`hover:bg-grey-50/90 transition-colors ${
-                        proj.isPriorityForManagement ? 'bg-warning-50/30' : ''
+                return (
+                  <Tr key={proj.id} className={proj.isPriorityForManagement ? 'bg-warning-50/30' : ''}>
+                    {/* 1. Prioritized for Management Star */}
+                    <Td className="text-center">
+                      <button
+                        onClick={() => handleTogglePrioritizeForManagement(proj)}
+                        className="p-1 rounded-full hover:bg-grey-200/60 transition-transform active:scale-95"
+                        title={
+                          proj.isPriorityForManagement
+                            ? 'Priorizado para apresentar à Gestão (Clique para desmarcar)'
+                            : 'Clique para marcar e priorizar na pauta da Gestão'
+                        }
+                      >
+                        <Star
+                          className={`w-4 h-4 ${
+                            proj.isPriorityForManagement
+                              ? 'fill-warning-500 text-warning-500'
+                              : 'text-grey-300 hover:text-grey-400'
+                          }`}
+                        />
+                      </button>
+                    </Td>
+
+                    {/* 2. Solution Name & Identifiers */}
+                    <Td>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
+                          className="font-bold text-grey-900 hover:text-brand-dark text-left hover:underline line-clamp-1"
+                          title={`Abrir workspace da solução: ${proj.name}`}
+                        >
+                          {proj.name}
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-grey-500">
+                        <Badge className="font-mono font-bold text-brand-dark bg-brand-lighter border-brand-light px-1 py-0 rounded">
+                          {proj.assetId}
+                        </Badge>
+                        <span>•</span>
+                        <span className="font-mono">GLPI: #{proj.glpiTicketId}</span>
+                      </div>
+                    </Td>
+
+                    {/* 3. Department & Owner */}
+                    <Td>
+                      <div className="font-semibold text-grey-800">{proj.department}</div>
+                      <div className="text-[11px] text-grey-500 truncate" title={`Dono: ${proj.businessResponsible}`}>
+                        {proj.businessResponsible}
+                      </div>
+                    </Td>
+
+                    {/* 4. Technical Type & GovStage */}
+                    <Td>
+                      <div className="flex items-center gap-1">
+                        <Badge className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-800 border-purple-200">
+                          <Workflow className="w-2.5 h-2.5" />
+                          Tipo {proj.projectType || 'A'}
+                        </Badge>
+                        <Badge className="text-[10px] px-1.5 py-0.5 bg-grey-100 text-grey-700 border-grey-200">
+                          {proj.govStage || 'E1'}
+                        </Badge>
+                      </div>
+                    </Td>
+
+                    {/* 5. Stage Select (Interactive) */}
+                    <Td>
+                      <select
+                        value={proj.stage || 'Levantamento & Ficha'}
+                        onChange={(e) => handleStageChange(proj, e.target.value as ProjectStage)}
+                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
+                      >
+                        {ALL_STAGES.map((stg) => (
+                          <option key={stg} value={stg} className="bg-white text-grey-900">
+                            {stg}
+                          </option>
+                        ))}
+                      </select>
+                    </Td>
+
+                    {/* 6. Priority Select */}
+                    <Td>
+                      <select
+                        value={proj.executivePriority || 'P2 - Média'}
+                        onChange={(e) => handlePriorityChange(proj, e.target.value as ExecutivePriority)}
+                        className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
+                      >
+                        <option value="P0 - Urgente">P0 - Urgente</option>
+                        <option value="P1 - Alta">P1 - Alta</option>
+                        <option value="P2 - Média">P2 - Média</option>
+                        <option value="P3 - Baixa">P3 - Baixa</option>
+                      </select>
+                    </Td>
+
+                    {/* 7. Impediment Button & Status */}
+                    <Td>
+                      <Button
+                        type="button"
+                        size="sm"
+                        color="secondary"
+                        onClick={() => setActiveImpedimentModalProject(proj)}
+                        leftIcon={
+                          <AlertTriangle
+                            className={`w-3.5 h-3.5 shrink-0 ${proj.hasImpediment ? 'text-danger-500' : 'text-grey-400'}`}
+                          />
+                        }
+                        className={`w-full justify-center ${
+                          proj.hasImpediment
+                            ? 'bg-danger-50 text-danger-800 border-danger-300'
+                            : 'text-grey-500'
+                        }`}
+                        title="Clique para editar detalhes do impedimento e ação necessária da gestão"
+                      >
+                        <span className="truncate">{proj.hasImpediment ? '🚨 Bloqueado' : 'Sem bloqueio'}</span>
+                      </Button>
+                    </Td>
+
+                    {/* 8. Scheduled Date */}
+                    <Td>
+                      <button
+                        onClick={() => setActiveScheduleModalProject(proj)}
+                        className="text-left w-full hover:bg-grey-100 p-1 rounded-full transition-colors"
+                        title="Clique para agendar data de reunião ou entrega"
+                      >
+                        {proj.scheduledDate ? (
+                          <div>
+                            <div className="font-bold text-grey-800 flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-info-600" />
+                              <span>{proj.scheduledDate}</span>
+                            </div>
+                            <div className="text-[10px] text-grey-500 truncate max-w-[120px]">
+                              {proj.scheduledSubject || 'Reunião marcada'}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-grey-400 italic flex items-center gap-1">
+                            <Calendar className="w-3 h-3" /> Agendar
+                          </span>
+                        )}
+                      </button>
+                    </Td>
+
+                    {/* 9. Action Buttons */}
+                    <Td
+                      sticky="right"
+                      className={`text-right ${
+                        proj.isPriorityForManagement ? 'bg-warning-50' : 'bg-white group-hover:bg-grey-50'
                       }`}
                     >
-                      {/* 1. Prioritized for Management Star */}
-                      <td className="py-3 px-3 text-center">
+                      <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => handleTogglePrioritizeForManagement(proj)}
-                          className="p-1 rounded-full hover:bg-grey-200/60 transition-transform active:scale-95"
-                          title={
-                            proj.isPriorityForManagement
-                              ? 'Priorizado para apresentar à Gestão (Clique para desmarcar)'
-                              : 'Clique para marcar e priorizar na pauta da Gestão'
-                          }
+                          onClick={() => setActiveNotesModalProject(proj)}
+                          className="p-1.5 rounded hover:bg-grey-100 text-grey-600 hover:text-grey-900 transition-colors"
+                          title="Anotações & Observações"
                         >
-                          <Star
-                            className={`w-4 h-4 ${
-                              proj.isPriorityForManagement
-                                ? 'fill-warning-500 text-warning-500'
-                                : 'text-grey-300 hover:text-grey-400'
-                            }`}
-                          />
+                          <FileText className="w-4 h-4" />
                         </button>
-                      </td>
 
-                      {/* 2. Solution Name & Identifiers */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                            className="font-bold text-grey-900 hover:text-brand-dark text-left hover:underline line-clamp-1"
-                            title={`Abrir workspace da solução: ${proj.name}`}
-                          >
-                            {proj.name}
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-grey-500">
-                          <span className="font-mono font-bold text-brand-dark bg-brand-lighter px-1 rounded border border-brand-light">
-                            {proj.assetId}
-                          </span>
-                          <span>•</span>
-                          <span className="font-mono">GLPI: #{proj.glpiTicketId}</span>
-                        </div>
-                      </td>
-
-                      {/* 3. Department & Owner */}
-                      <td className="py-3 px-3">
-                        <div className="font-semibold text-grey-800">{proj.department}</div>
-                        <div className="text-[11px] text-grey-500 truncate" title={`Dono: ${proj.businessResponsible}`}>
-                          {proj.businessResponsible}
-                        </div>
-                      </td>
-
-                      {/* 4. Technical Type & GovStage */}
-                      <td className="py-3 px-3">
-                        <div className="flex items-center gap-1">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200 inline-flex items-center gap-0.5">
-                            <Workflow className="w-2.5 h-2.5" />
-                            Tipo {proj.projectType || 'A'}
-                          </span>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-grey-100 text-grey-700 border border-grey-200">
-                            {proj.govStage || 'E1'}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* 5. Stage Select (Interactive) */}
-                      <td className="py-3 px-3">
-                        <select
-                          value={proj.stage || 'Levantamento & Ficha'}
-                          onChange={(e) => handleStageChange(proj, e.target.value as ProjectStage)}
-                          className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
+                        <Button
+                          size="sm"
+                          color="secondary"
+                          onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
+                          rightIcon={<ArrowRight className="w-3 h-3" />}
+                          className="bg-brand-lighter text-brand-dark border-brand-light hover:bg-brand-lighter px-2.5 py-1"
+                          title="Abrir detalhes da solução"
                         >
-                          {ALL_STAGES.map((stg) => (
-                            <option key={stg} value={stg} className="bg-white text-grey-900">
-                              {stg}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {/* 6. Priority Select */}
-                      <td className="py-3 px-3">
-                        <select
-                          value={proj.executivePriority || 'P2 - Média'}
-                          onChange={(e) => handlePriorityChange(proj, e.target.value as ExecutivePriority)}
-                          className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
-                        >
-                          <option value="P0 - Urgente">P0 - Urgente</option>
-                          <option value="P1 - Alta">P1 - Alta</option>
-                          <option value="P2 - Média">P2 - Média</option>
-                          <option value="P3 - Baixa">P3 - Baixa</option>
-                        </select>
-                      </td>
-
-                      {/* 7. Impediment Button & Status */}
-                      <td className="py-3 px-3">
-                        <button
-                          onClick={() => setActiveImpedimentModalProject(proj)}
-                          className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-colors flex items-center gap-1.5 w-full justify-center ${
-                            proj.hasImpediment
-                              ? 'bg-danger-50 text-danger-800 border-danger-300 hover:bg-danger-300'
-                              : 'bg-grey-50 text-grey-500 border-grey-200 hover:bg-grey-100'
-                          }`}
-                          title="Clique para editar detalhes do impedimento e ação necessária da gestão"
-                        >
-                          <AlertTriangle className={`w-3.5 h-3.5 shrink-0 ${proj.hasImpediment ? 'text-danger-500' : 'text-grey-400'}`} />
-                          <span className="truncate">
-                            {proj.hasImpediment ? '🚨 Bloqueado' : 'Sem bloqueio'}
-                          </span>
-                        </button>
-                      </td>
-
-                      {/* 8. Scheduled Date */}
-                      <td className="py-3 px-3">
-                        <button
-                          onClick={() => setActiveScheduleModalProject(proj)}
-                          className="text-left w-full hover:bg-grey-100 p-1 rounded-full transition-colors"
-                          title="Clique para agendar data de reunião ou entrega"
-                        >
-                          {proj.scheduledDate ? (
-                            <div>
-                              <div className="font-bold text-grey-800 flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-info-600" />
-                                <span>{proj.scheduledDate}</span>
-                              </div>
-                              <div className="text-[10px] text-grey-500 truncate max-w-[120px]">
-                                {proj.scheduledSubject || 'Reunião marcada'}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-grey-400 italic flex items-center gap-1">
-                              <Calendar className="w-3 h-3" /> Agendar
-                            </span>
-                          )}
-                        </button>
-                      </td>
-
-                      {/* 9. Action Buttons */}
-                      <td className="py-3 px-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setActiveNotesModalProject(proj)}
-                            className="p-1.5 rounded hover:bg-grey-100 text-grey-600 hover:text-grey-900 transition-colors"
-                            title="Anotações & Observações"
-                          >
-                            <FileText className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                            className="px-2.5 py-1 bg-brand-lighter hover:bg-brand-lighter text-brand-dark font-bold rounded border border-brand-light text-xs transition-colors flex items-center gap-1"
-                            title="Abrir detalhes da solução"
-                          >
-                            <span>Abrir</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                          Abrir
+                        </Button>
+                      </div>
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </Tbody>
+          </Table>
+        </Card>
       )}
 
       {/* VIEW 2: ALINHAMENTO DE DEMANDAS DEPARTAMENTAIS (1:1) */}
       {viewMode === 'executive_summary' && (
         <div className="space-y-6">
-          <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-warning-600">
+          <Card className="bg-warning-50 border-warning-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-warning-600 p-4">
             <div>
               <span className="font-black text-sm block mb-0.5">Gestão de Demandas Departamentais - Alinhamento (1:1 com a Gestão)</span>
               Visão consolidada para sua reunião de reporte: demandas priorizadas com destaque, bloqueios/impedimentos onde a ação da gestão é necessária, e cronograma de datas já marcadas.
             </div>
 
-            <button
+            <Button
+              color="secondary"
               onClick={handleCopyManagementPauta}
-              className="px-3.5 py-2 bg-warning-600 hover:bg-warning-600 text-white font-bold rounded-full shadow-2xs shrink-0 flex items-center gap-1.5 transition-colors"
+              leftIcon={<Copy className="w-4 h-4" />}
+              className="bg-warning-600 hover:bg-warning-600 text-white border-transparent shrink-0"
             >
-              <Copy className="w-4 h-4" />
-              <span>Copiar Pauta Formatada</span>
-            </button>
-          </div>
+              Copiar Pauta Formatada
+            </Button>
+          </Card>
 
           {/* Block 1: Prioritized Demands */}
-          <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+          <Card className="space-y-4">
             <div className="flex items-center justify-between border-b border-grey-100 pb-3">
               <h2 className="text-sm font-black text-grey-900 flex items-center gap-2">
                 <Star className="w-4 h-4 fill-warning-500 text-warning-500" />
@@ -936,9 +837,9 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-brand-dark bg-white px-1.5 py-0.5 rounded border border-brand-light">
+                                <Badge className="font-mono text-xs font-bold text-brand-dark bg-white border-brand-light px-1.5 py-0.5">
                                   {proj.assetId}
-                                </span>
+                                </Badge>
                                 <span className="text-xs font-bold text-grey-900">{proj.name}</span>
                               </div>
                               <p className="text-xs text-grey-500 mt-1 line-clamp-2">{proj.objective}</p>
@@ -968,9 +869,9 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         </div>
 
                         <div className="mt-3 pt-2 border-t border-warning-200/60 flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                          <Badge className="text-[11px] font-bold text-purple-800 bg-purple-50 border-purple-200 px-2 py-0.5">
                             Tipo {proj.projectType || 'A'} • Esteira {proj.govStage || 'E1'}
-                          </span>
+                          </Badge>
                           <button
                             onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
                             className="text-xs font-bold text-brand-dark hover:underline flex items-center gap-1"
@@ -984,10 +885,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                   })}
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Block 2: Active Impediments */}
-          <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-2xs space-y-4">
+          <Card className="space-y-4">
             <div className="flex items-center justify-between border-b border-grey-100 pb-3">
               <h2 className="text-sm font-black text-grey-900 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-danger-500" />
@@ -1010,9 +911,9 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     >
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-danger-800 bg-white px-1.5 py-0.5 rounded border border-danger-300">
+                          <Badge className="font-mono text-xs font-bold text-danger-800 bg-white border-danger-300 px-1.5 py-0.5">
                             {proj.assetId}
-                          </span>
+                          </Badge>
                           <span className="text-xs font-bold text-grey-900 truncate">{proj.name}</span>
                         </div>
                         <p className="text-xs text-danger-800 font-medium">{proj.impedimentDetails}</p>
@@ -1024,17 +925,19 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         )}
                       </div>
 
-                      <button
+                      <Button
+                        size="sm"
+                        color="danger"
                         onClick={() => setActiveImpedimentModalProject(proj)}
-                        className="px-3 py-1.5 bg-danger-800 hover:bg-danger-800 text-white font-bold rounded-full text-xs shrink-0 transition-colors"
+                        className="shrink-0"
                       >
                         Atualizar Bloqueio
-                      </button>
+                      </Button>
                     </div>
                   ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       )}
 
@@ -1044,7 +947,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           {ALL_STAGES.slice(0, 4).map((stg) => {
             const list = filteredProjects.filter((p) => (p.stage || 'Levantamento & Ficha') === stg);
             return (
-              <div key={stg} className="bg-grey-50 border border-grey-200 rounded-lg p-3.5 space-y-3">
+              <Card key={stg} className="bg-grey-50 p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-grey-800">{stg}</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-grey-600 border border-grey-200">
@@ -1054,10 +957,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
                 <div className="space-y-2">
                   {list.map((proj) => (
-                    <div
+                    <Card
                       key={proj.id}
                       onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                      className="p-3 bg-white rounded-lg border border-grey-200 hover:border-brand-main shadow-2xs cursor-pointer transition-all space-y-2"
+                      className="p-3 hover:border-brand-main cursor-pointer transition-all space-y-2"
                     >
                       <div className="flex items-center justify-between text-[10px] font-mono text-grey-500">
                         <span>{proj.assetId}</span>
@@ -1065,10 +968,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                       </div>
                       <div className="text-xs font-bold text-grey-900 line-clamp-1">{proj.name}</div>
                       <div className="text-[11px] text-grey-500 truncate">{proj.businessResponsible}</div>
-                    </div>
+                    </Card>
                   ))}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -1076,162 +979,131 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
       {/* MODAL 1: EDITAR ANOTAÇÕES */}
       {activeNotesModalProject && (
-        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-base font-extrabold text-grey-900">
-              Anotações da Solução: {activeNotesModalProject.name}
-            </h3>
-            <textarea
-              rows={5}
-              defaultValue={activeNotesModalProject.notes || ''}
-              id="modal-notes-textarea"
-              placeholder="Digite anotações ou observações internas sobre o andamento desta demanda..."
-              className="w-full p-3 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
-            />
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setActiveNotesModalProject(null)}
-                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  const val = (document.getElementById('modal-notes-textarea') as HTMLTextAreaElement)?.value || '';
-                  handleSaveNotes(activeNotesModalProject, val);
-                }}
-                className="px-4 py-2 text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark rounded-full shadow-2xs transition-colors"
-              >
-                Salvar Anotações
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal
+          isOpen
+          onClose={() => setActiveNotesModalProject(null)}
+          title={`Anotações da Solução: ${activeNotesModalProject.name}`}
+        >
+          <Textarea
+            rows={5}
+            defaultValue={activeNotesModalProject.notes || ''}
+            id="modal-notes-textarea"
+            placeholder="Digite anotações ou observações internas sobre o andamento desta demanda..."
+          />
+          <ModalFooter>
+            <Button color="secondary" onClick={() => setActiveNotesModalProject(null)}>
+              Cancelar
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => {
+                const val = (document.getElementById('modal-notes-textarea') as HTMLTextAreaElement)?.value || '';
+                handleSaveNotes(activeNotesModalProject, val);
+              }}
+            >
+              Salvar Anotações
+            </Button>
+          </ModalFooter>
+        </Modal>
       )}
 
       {/* MODAL 2: EDITAR IMPEDIMENTO & AÇÃO DA GESTÃO */}
       {activeImpedimentModalProject && (
-        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-base font-extrabold text-grey-900">
-              Registro de Bloqueio: {activeImpedimentModalProject.name}
-            </h3>
-            <p className="text-xs text-grey-500">
-              Informe o bloqueio e qual ação é requerida da gestão para destravar.
-            </p>
+        <Modal
+          isOpen
+          onClose={() => setActiveImpedimentModalProject(null)}
+          title={`Registro de Bloqueio: ${activeImpedimentModalProject.name}`}
+          subtitle="Informe o bloqueio e qual ação é requerida da gestão para destravar."
+        >
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-grey-800">
+            <input
+              type="checkbox"
+              id="modal-has-impediment"
+              defaultChecked={activeImpedimentModalProject.hasImpediment}
+              className="w-4 h-4 rounded text-danger-500 focus:ring-danger-500 border-grey-300"
+            />
+            <span>Projeto atualmente com impedimento / bloqueio</span>
+          </label>
 
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-grey-800">
-                <input
-                  type="checkbox"
-                  id="modal-has-impediment"
-                  defaultChecked={activeImpedimentModalProject.hasImpediment}
-                  className="w-4 h-4 rounded text-danger-500 focus:ring-danger-500 border-grey-300"
-                />
-                <span>Projeto atualmente com impedimento / bloqueio</span>
-              </label>
+          <Field label="Detalhes do Bloqueio:">
+            <Textarea
+              rows={3}
+              id="modal-impediment-details"
+              defaultValue={activeImpedimentModalProject.impedimentDetails || ''}
+              placeholder="Ex: Aguardando liberação de porta de banco no firewall ou aprovação da área jurídica..."
+            />
+          </Field>
 
-              <div>
-                <label className="text-xs font-bold text-grey-700 block mb-1">
-                  Detalhes do Bloqueio:
-                </label>
-                <textarea
-                  rows={3}
-                  id="modal-impediment-details"
-                  defaultValue={activeImpedimentModalProject.impedimentDetails || ''}
-                  placeholder="Ex: Aguardando liberação de porta de banco no firewall ou aprovação da área jurídica..."
-                  className="w-full p-2.5 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden"
-                />
-              </div>
+          <Field label="Ação Requerida da Gestão para Destravar:">
+            <Textarea
+              rows={2}
+              id="modal-action-management"
+              defaultValue={activeImpedimentModalProject.actionRequiredFromManagement || ''}
+              placeholder="Ex: Cobrar área de Infraestrutura para priorizar ticket de rede..."
+            />
+          </Field>
 
-              <div>
-                <label className="text-xs font-bold text-grey-700 block mb-1">
-                  Ação Requerida da Gestão para Destravar:
-                </label>
-                <textarea
-                  rows={2}
-                  id="modal-action-management"
-                  defaultValue={activeImpedimentModalProject.actionRequiredFromManagement || ''}
-                  placeholder="Ex: Cobrar área de Infraestrutura para priorizar ticket de rede..."
-                  className="w-full p-2.5 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setActiveImpedimentModalProject(null)}
-                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  const has = (document.getElementById('modal-has-impediment') as HTMLInputElement)?.checked || false;
-                  const det = (document.getElementById('modal-impediment-details') as HTMLTextAreaElement)?.value || '';
-                  const act = (document.getElementById('modal-action-management') as HTMLTextAreaElement)?.value || '';
-                  handleSaveImpediment(activeImpedimentModalProject, has, det, act);
-                }}
-                className="px-4 py-2 text-xs font-bold text-white bg-danger-800 hover:bg-danger-800 rounded-full shadow-2xs transition-colors"
-              >
-                Salvar Bloqueio
-              </button>
-            </div>
-          </div>
-        </div>
+          <ModalFooter>
+            <Button color="secondary" onClick={() => setActiveImpedimentModalProject(null)}>
+              Cancelar
+            </Button>
+            <Button
+              color="danger"
+              onClick={() => {
+                const has = (document.getElementById('modal-has-impediment') as HTMLInputElement)?.checked || false;
+                const det = (document.getElementById('modal-impediment-details') as HTMLTextAreaElement)?.value || '';
+                const act = (document.getElementById('modal-action-management') as HTMLTextAreaElement)?.value || '';
+                handleSaveImpediment(activeImpedimentModalProject, has, det, act);
+              }}
+            >
+              Salvar Bloqueio
+            </Button>
+          </ModalFooter>
+        </Modal>
       )}
 
       {/* MODAL 3: AGENDAR DATA / REUNIÃO */}
       {activeScheduleModalProject && (
-        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-base font-extrabold text-grey-900">
-              Agendar Reunião ou Entrega: {activeScheduleModalProject.name}
-            </h3>
+        <Modal
+          isOpen
+          onClose={() => setActiveScheduleModalProject(null)}
+          title={`Agendar Reunião ou Entrega: ${activeScheduleModalProject.name}`}
+          size="sm"
+        >
+          <Field label="Data:">
+            <Input
+              type="date"
+              id="modal-schedule-date"
+              defaultValue={activeScheduleModalProject.scheduledDate || ''}
+              className="font-mono font-bold"
+            />
+          </Field>
 
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-grey-700 block mb-1">Data:</label>
-                <input
-                  type="date"
-                  id="modal-schedule-date"
-                  defaultValue={activeScheduleModalProject.scheduledDate || ''}
-                  className="w-full p-2 border border-grey-300 rounded-lg text-xs font-mono font-bold bg-grey-50"
-                />
-              </div>
+          <Field label="Pauta / Assunto:">
+            <Input
+              type="text"
+              id="modal-schedule-subject"
+              defaultValue={activeScheduleModalProject.scheduledSubject || ''}
+              placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
+            />
+          </Field>
 
-              <div>
-                <label className="text-xs font-bold text-grey-700 block mb-1">Pauta / Assunto:</label>
-                <input
-                  type="text"
-                  id="modal-schedule-subject"
-                  defaultValue={activeScheduleModalProject.scheduledSubject || ''}
-                  placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
-                  className="w-full p-2 border border-grey-300 rounded-lg text-xs bg-grey-50"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setActiveScheduleModalProject(null)}
-                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  const date = (document.getElementById('modal-schedule-date') as HTMLInputElement)?.value || '';
-                  const sub = (document.getElementById('modal-schedule-subject') as HTMLInputElement)?.value || '';
-                  handleSaveSchedule(activeScheduleModalProject, date, sub);
-                }}
-                className="px-4 py-2 text-xs font-bold text-white bg-brand-dark hover:bg-brand-dark rounded-full shadow-2xs transition-colors"
-              >
-                Salvar Agendamento
-              </button>
-            </div>
-          </div>
-        </div>
+          <ModalFooter>
+            <Button color="secondary" onClick={() => setActiveScheduleModalProject(null)}>
+              Cancelar
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => {
+                const date = (document.getElementById('modal-schedule-date') as HTMLInputElement)?.value || '';
+                const sub = (document.getElementById('modal-schedule-subject') as HTMLInputElement)?.value || '';
+                handleSaveSchedule(activeScheduleModalProject, date, sub);
+              }}
+            >
+              Salvar Agendamento
+            </Button>
+          </ModalFooter>
+        </Modal>
       )}
     </div>
   );

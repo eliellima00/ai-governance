@@ -14,6 +14,7 @@ import { loadState, saveState, resetToDefaultState } from './utils/storage';
 import { getActiveConfig } from './config/governanceConfig';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
+import { ProjectWorkspaceHeader } from './components/ProjectWorkspaceHeader';
 import { GlpiAssetView } from './components/GlpiAssetView';
 import { AiDiagnosticView } from './components/AiDiagnosticView';
 import { ActionPlanView } from './components/ActionPlanView';
@@ -21,7 +22,7 @@ import { CriticalityEvolutionView } from './components/CriticalityEvolutionView'
 import { ProjectPortfolioDashboard } from './components/ProjectPortfolioDashboard';
 import { EstimationScheduleView } from './components/EstimationScheduleView';
 import { SettingsView } from './components/SettingsView';
-import { NewProjectModal } from './components/NewProjectModal';
+import { NewProjectPage } from './components/NewProjectPage';
 
 // Helper to parse URL hash into Route
 function parseHashToRoute(): Route | null {
@@ -31,6 +32,9 @@ function parseHashToRoute(): Route | null {
   }
   if (hash === 'settings') {
     return { name: 'settings' };
+  }
+  if (hash === 'new-project') {
+    return { name: 'new-project' };
   }
   const parts = hash.split('/');
   if (parts[0] === 'project' && parts[1]) {
@@ -54,6 +58,10 @@ function syncRouteToHash(route: Route) {
   } else if (route.name === 'settings') {
     if (window.location.hash !== '#settings') {
       window.location.hash = '#settings';
+    }
+  } else if (route.name === 'new-project') {
+    if (window.location.hash !== '#new-project') {
+      window.location.hash = '#new-project';
     }
   } else if (route.name === 'project') {
     const targetHash = `#project/${route.projectId}/${route.tab}`;
@@ -83,7 +91,6 @@ export default function App() {
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
 
   // Sync state to localStorage whenever changed
   useEffect(() => {
@@ -127,6 +134,10 @@ export default function App() {
 
   const navigateToSettings = useCallback(() => {
     setRoute({ name: 'settings' });
+  }, []);
+
+  const navigateToNewProject = useCallback(() => {
+    setRoute({ name: 'new-project' });
   }, []);
 
   const navigateToProject = useCallback(
@@ -262,22 +273,14 @@ export default function App() {
     if (reloaded.route) setRoute(reloaded.route);
   };
 
-  const isInProject = route.name === 'project';
-
   return (
     <div className="min-h-screen bg-grey-100 text-grey-900 flex font-sans antialiased selection:bg-brand-light">
-      {/* Permanent Unified Sidebar (Root portfolio/settings & Solution workspace) */}
+      {/* Permanent Unified Sidebar — pure top-level menu, no per-solution content */}
       <Sidebar
         route={route}
-        projects={projects}
-        currentProject={isInProject ? currentProject : undefined}
-        activeTab={isInProject ? route.tab : undefined}
-        onSelectTab={selectProjectTab}
         onNavigateToPortfolio={navigateToPortfolio}
         onNavigateToSettings={navigateToSettings}
-        onNavigateToProject={navigateToProject}
-        onOpenNewProject={() => setIsNewProjectModalOpen(true)}
-        residualScore={residualStats.currentResidualScore}
+        onOpenNewProject={navigateToNewProject}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         isMobileOpen={isMobileSidebarOpen}
@@ -294,76 +297,24 @@ export default function App() {
         {/* Top Header Bar */}
         <Navbar
           route={route}
-          currentProject={isInProject ? currentProject : undefined}
           totalProjects={projects.length}
-          residualScore={residualStats.currentResidualScore}
           userRole={userRole}
           onSetUserRole={setUserRole}
           onNavigateToPortfolio={navigateToPortfolio}
-          onNavigateToSettings={navigateToSettings}
-          onOpenNewProject={() => setIsNewProjectModalOpen(true)}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)}
         />
 
-        {/* Informative Sub-header Bar */}
-        {route.name === 'portfolio' ? (
-          <div className="bg-grey-900 text-white border-b border-grey-800 py-2 px-4 sm:px-8 text-xs">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="bg-brand-main text-white text-[10px] uppercase font-extrabold px-2 py-0.5 rounded shrink-0">
-                  Visão Geral
-                </span>
-                <span className="text-grey-300 truncate">
-                  Gestão Centralizada: <strong>Planilha de Demandas</strong> • <strong>Pauta de Gestão</strong> • <strong>Pipeline Kanban</strong>
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-grey-400">Total Soluções:</span>
-                <span className="bg-grey-800 text-brand-light border border-grey-700 px-2 py-0.5 rounded font-mono font-bold">
-                  {projects.length} ativas
-                </span>
-                <span className="text-warning-200 text-[11px] font-semibold bg-warning-600/60 px-2 py-0.5 rounded border border-warning-600/80 flex items-center gap-1">
-                  ★ {projects.filter((p) => p.isPriorityForManagement).length} priorizadas da gestão
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : route.name === 'settings' ? (
-          <div className="bg-grey-900 text-white border-b border-grey-800 py-2 px-4 sm:px-8 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-grey-300">
-                Painel de Parametrização: Ajuste horas base, réguas de risco e critérios de saída sem alterar código.
-              </span>
-              <span className="text-brand-light font-mono text-[11px] font-bold">
-                Perfil Atual: {userRole.toUpperCase()}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-grey-900 text-white border-b border-grey-800 py-2 px-4 sm:px-8 text-xs">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="bg-brand-main text-white text-[10px] uppercase font-extrabold px-2 py-0.5 rounded shrink-0">
-                  Padrão ATTO
-                </span>
-                <span className="text-grey-300 truncate">
-                  Fluxo de Governança: <strong>Ficha do Ativo & Doc Viva</strong> → <strong>Diagnóstico de Risco</strong> →{' '}
-                  <strong>Mitigações</strong> → <strong>Estimativa & Cronograma</strong>
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-grey-400">Score Residual:</span>
-                <span className="bg-grey-800 text-brand-light border border-grey-700 px-2 py-0.5 rounded font-mono font-bold">
-                  {residualStats.currentResidualScore} pts ({residualStats.currentRiskLevel})
-                </span>
-                <span className="text-grey-400 text-[11px] hidden sm:inline">
-                  ({residualStats.completedCount}/{residualStats.totalCount} concluídas)
-                </span>
-              </div>
-            </div>
-          </div>
+        {route.name === 'project' && (
+          <ProjectWorkspaceHeader
+            project={currentProject}
+            activeTab={route.tab}
+            onSelectTab={selectProjectTab}
+            onNavigateToPortfolio={navigateToPortfolio}
+            residualScore={residualStats.currentResidualScore}
+            completedActions={currentProject.actionPlan.filter((a) => a.status === 'Concluído').length}
+            totalActions={currentProject.actionPlan.length}
+            config={governanceConfig}
+          />
         )}
 
         {/* Main Content View Switcher */}
@@ -374,7 +325,7 @@ export default function App() {
               userRole={userRole}
               onUpdateProject={handleUpdateProject}
               onSelectProjectAndNavigate={(proj, tab) => navigateToProject(proj.id, tab)}
-              onOpenNewProjectModal={() => setIsNewProjectModalOpen(true)}
+              onOpenNewProjectModal={navigateToNewProject}
             />
           )}
 
@@ -385,6 +336,14 @@ export default function App() {
               onUpdateConfig={setGovernanceConfig}
               onNavigateToPortfolio={navigateToPortfolio}
               onReloadAllState={handleReloadAllState}
+            />
+          )}
+
+          {route.name === 'new-project' && (
+            <NewProjectPage
+              userRole={userRole}
+              onAddProject={handleAddNewProject}
+              onNavigateToPortfolio={navigateToPortfolio}
             />
           )}
 
@@ -453,13 +412,6 @@ export default function App() {
           </div>
         </footer>
       </div>
-
-      {/* New Project Intake Modal */}
-      <NewProjectModal
-        isOpen={isNewProjectModalOpen}
-        onClose={() => setIsNewProjectModalOpen(false)}
-        onAddProject={handleAddNewProject}
-      />
     </div>
   );
 }

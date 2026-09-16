@@ -2,24 +2,15 @@ import React, { useMemo, useState } from 'react';
 import {
   Clock,
   Calendar,
-  AlertTriangle,
   CheckCircle2,
   Users,
-  ExternalLink,
-  ChevronRight,
   Info,
   Layers,
   ShieldCheck,
-  Server,
-  FileCode,
   Workflow,
-  ArrowRight,
-  HelpCircle,
-  TrendingDown,
   Copy,
   Check,
   FileText,
-  X,
   History,
   AlertOctagon
 } from 'lucide-react';
@@ -48,6 +39,16 @@ import {
   formatPtBrDate,
   getDefaultEstimationInputs
 } from '../utils/estimation';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Field, Input, Select, Textarea } from './ui/FormField';
+import { PageHeader } from './ui/PageHeader';
+import { Modal, ModalFooter } from './ui/Modal';
+import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
+import { StatTile } from './ui/StatTile';
+import { ChecklistItem } from './ui/ChecklistItem';
+import { SelectableCard } from './ui/SelectableCard';
 
 interface EstimationScheduleViewProps {
   project: SolutionProject;
@@ -289,49 +290,45 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   return (
     <div id="estimation-schedule-view" className="space-y-6">
       {/* Header & Subtitle */}
-      <div className="bg-white rounded-lg p-5 border border-grey-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded text-[11px] font-extrabold uppercase bg-brand-lighter text-brand-dark border border-brand-light">
-                Eixo 2 — Tipo Técnico & Cronograma
-              </span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-grey-100 text-grey-700 border border-grey-300">
-                {project.assetId}
-              </span>
-              <span className="text-xs text-grey-500 font-medium">
-                Chamado: <strong>{project.glpiTicketId}</strong>
-              </span>
-            </div>
-            <h1 className="text-xl font-black text-grey-900 flex items-center gap-2">
-              <span>Estimativa de Esforço, Prazo & Esteira de Governança</span>
-            </h1>
-            <p className="text-xs text-grey-600 mt-1 max-w-3xl">
-              Modelo oficial de esteira da T.I para soluções departamentais e vibe coding. O tempo de entrega é dominado pelo <strong>overhead de agenda e dependências externas</strong>, e não apenas pelo tempo de código ativo.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            {/* Botão de Apontamento GLPI */}
-            <button
-              onClick={() => setIsGlpiModalOpen(true)}
-              className="px-3.5 py-2 rounded-full text-xs font-bold text-white bg-info-700 hover:bg-info-700 transition-colors shadow-2xs flex items-center gap-1.5"
-              title="Gerar texto estruturado do apontamento da esteira para colar no chamado GLPI"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Gerar Apontamento GLPI</span>
-            </button>
-
-            <div className="bg-grey-50 p-2 rounded-lg border border-grey-200 text-right">
-              <div className="text-[10px] uppercase font-bold text-grey-500">Etapa Atual da Esteira</div>
-              <div className="text-xs font-extrabold text-brand-dark flex items-center justify-end gap-1 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-brand-main animate-pulse"></span>
-                <span>{currentGovStage}: {STAGE_NAMES[currentGovStage]}</span>
-              </div>
-            </div>
-          </div>
+      <Card>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <Badge className="uppercase bg-brand-lighter text-brand-dark border-brand-light">
+            Eixo 2 — Tipo Técnico & Cronograma
+          </Badge>
+          <Badge className="font-mono bg-grey-100 text-grey-700 border-grey-300">
+            {project.assetId}
+          </Badge>
+          <span className="text-xs text-grey-500 font-medium">
+            Chamado: <strong>{project.glpiTicketId}</strong>
+          </span>
         </div>
-      </div>
+
+        <PageHeader
+          title="Estimativa de Esforço, Prazo & Esteira de Governança"
+          subtitle="Modelo oficial de esteira da T.I para soluções departamentais e vibe coding. O tempo de entrega é dominado pelo overhead de agenda e dependências externas, e não apenas pelo tempo de código ativo."
+          actions={
+            <>
+              <Button
+                color="primary"
+                size="sm"
+                leftIcon={<FileText className="w-4 h-4" />}
+                onClick={() => setIsGlpiModalOpen(true)}
+                title="Gerar texto estruturado do apontamento da esteira para colar no chamado GLPI"
+              >
+                Gerar Apontamento GLPI
+              </Button>
+
+              <div className="bg-grey-50 p-2 rounded-lg border border-grey-200 text-right">
+                <div className="text-[10px] uppercase font-bold text-grey-500">Etapa Atual da Esteira</div>
+                <div className="text-xs font-extrabold text-brand-dark flex items-center justify-end gap-1 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-brand-main animate-pulse"></span>
+                  <span>{currentGovStage}: {STAGE_NAMES[currentGovStage]}</span>
+                </div>
+              </div>
+            </>
+          }
+        />
+      </Card>
 
       {/* Mandatory Disclaimer Box */}
       <div className="bg-warning-50 border border-warning-200 rounded-lg p-3.5 flex items-start gap-3 text-xs text-warning-600 shadow-xs">
@@ -350,21 +347,14 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
       {/* Main KPI Results Panel (Janela de Entrega em Destaque) */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* KPI 1: Janela de Entrega */}
-        <div className="bg-gradient-to-br from-brand-dark to-grey-900 text-white rounded-lg p-4 border border-brand-dark shadow-sm relative overflow-hidden md:col-span-2">
-          <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none">
-            <Calendar className="w-44 h-44" />
-          </div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-light bg-brand-dark/70 px-2 py-0.5 rounded border border-brand-dark/80">
-              Janela de Entrega Homologada
-            </span>
-            <span className="text-xs text-grey-300 font-mono">
-              Início: {formatPtBrDate(currentInputs.startDate)}
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-baseline gap-3 my-2">
-            <div className="flex items-baseline gap-2">
+        <StatTile
+          variant="dark"
+          className="md:col-span-2"
+          label="Janela de Entrega Homologada"
+          icon={<Calendar className="w-4 h-4" />}
+          iconClassName="bg-white/10 text-brand-light"
+          value={
+            <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
               <span className="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">
                 {formatPtBrDate(estimationResult.optimistic.deliveryDate)}
               </span>
@@ -372,93 +362,95 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               <span className="text-2xl sm:text-3xl font-black tracking-tight text-warning-200 font-mono">
                 {formatPtBrDate(estimationResult.realistic.deliveryDate)}
               </span>
+            </span>
+          }
+          subtext={
+            <div className="space-y-2">
+              <div className="text-[10px] text-grey-400 font-mono">
+                Início: {formatPtBrDate(currentInputs.startDate)}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-grey-700/80 text-[11px]">
+                <div>
+                  <span className="text-brand-light font-semibold">Cenário Otimista:</span>{' '}
+                  <span className="text-grey-300">
+                    {estimationResult.optimistic.totalDays} dias úteis ({estimationResult.optimistic.activeDays}d ativos + {estimationResult.optimistic.agendaDays}d agenda)
+                  </span>
+                </div>
+                <div>
+                  <span className="text-warning-200 font-semibold">Cenário Realista:</span>{' '}
+                  <span className="text-grey-300">
+                    {estimationResult.realistic.totalDays} dias úteis ({estimationResult.realistic.activeDays}d ativos + {estimationResult.realistic.agendaDays}d agenda)
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] text-grey-500 italic pt-1">
+                * Sempre apresentada como janela prospectiva; nunca como data seca.
+              </p>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-grey-700/80 text-[11px]">
-            <div>
-              <span className="text-brand-light font-semibold">Cenário Otimista:</span>{' '}
-              <span className="text-grey-200">
-                {estimationResult.optimistic.totalDays} dias úteis ({estimationResult.optimistic.activeDays}d ativos + {estimationResult.optimistic.agendaDays}d agenda)
-              </span>
-            </div>
-            <div>
-              <span className="text-warning-200 font-semibold">Cenário Realista:</span>{' '}
-              <span className="text-grey-200">
-                {estimationResult.realistic.totalDays} dias úteis ({estimationResult.realistic.activeDays}d ativos + {estimationResult.realistic.agendaDays}d agenda)
-              </span>
-            </div>
-          </div>
-          <p className="text-[10px] text-grey-400 mt-2 italic">
-            * Sempre apresentada como janela prospectiva; nunca como data seca.
-          </p>
-        </div>
+          }
+        />
 
         {/* KPI 2: Esforço de T.I */}
-        <div className="bg-white rounded-lg p-4 border border-grey-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-grey-500 mb-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Esforço Total T.I</span>
-              <Clock className="w-4 h-4 text-brand-main" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-grey-900 font-mono">
-                {estimationResult.effortTotalHours.toFixed(1)}h
-              </span>
+        <StatTile
+          label="Esforço Total T.I"
+          icon={<Clock className="w-4 h-4" />}
+          iconClassName="bg-brand-lighter text-brand-main"
+          value={
+            <span className="flex items-baseline gap-2">
+              <span>{estimationResult.effortTotalHours.toFixed(1)}h</span>
               <span className="text-xs text-grey-500 font-medium">confirmadas</span>
+            </span>
+          }
+          subtext={
+            <div className="space-y-1 pt-1.5 mt-1 border-t border-grey-100">
+              <div className="flex justify-between">
+                <span>Base Tipo {currentProjectType}:</span>
+                <span className="font-mono font-bold">{estimationResult.effortBaseHours.toFixed(1)}h</span>
+              </div>
+              <div className="flex justify-between text-info-700">
+                <span>Módulos extras:</span>
+                <span className="font-mono font-bold">+{estimationResult.effortModulesHours.toFixed(1)}h</span>
+              </div>
+              <div className="flex justify-between text-brand-dark font-semibold">
+                <span>Descontos E1:</span>
+                <span className="font-mono font-bold">-{estimationResult.effortDiscountHours.toFixed(1)}h</span>
+              </div>
             </div>
-          </div>
-
-          <div className="mt-3 pt-2.5 border-t border-grey-100 text-[11px] text-grey-600 space-y-1">
-            <div className="flex justify-between">
-              <span>Base Tipo {currentProjectType}:</span>
-              <span className="font-mono font-bold">{estimationResult.effortBaseHours.toFixed(1)}h</span>
-            </div>
-            <div className="flex justify-between text-info-700">
-              <span>Módulos extras:</span>
-              <span className="font-mono font-bold">+{estimationResult.effortModulesHours.toFixed(1)}h</span>
-            </div>
-            <div className="flex justify-between text-brand-dark font-semibold">
-              <span>Descontos E1:</span>
-              <span className="font-mono font-bold">-{estimationResult.effortDiscountHours.toFixed(1)}h</span>
-            </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* KPI 3: Reuniões & Dependências */}
-        <div className="bg-white rounded-lg p-4 border border-grey-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-grey-500 mb-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Interações & Bloqueios</span>
-              <Users className="w-4 h-4 text-info-600" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-grey-900 font-mono">
-                {estimationResult.meetingsCount}
-              </span>
+        <StatTile
+          label="Interações & Bloqueios"
+          icon={<Users className="w-4 h-4" />}
+          iconClassName="bg-info-50 text-info-600"
+          value={
+            <span className="flex items-baseline gap-2">
+              <span>{estimationResult.meetingsCount}</span>
               <span className="text-xs text-grey-500 font-medium">reuniões</span>
+            </span>
+          }
+          subtext={
+            <div className="space-y-1 pt-1.5 mt-1 border-t border-grey-100">
+              <div className="flex justify-between">
+                <span>Dependências Externas:</span>
+                <span className="font-mono font-bold text-warning-600 bg-warning-50 px-1.5 rounded">
+                  {estimationResult.externalDepsCount} pontos
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Overhead de Espera:</span>
+                <span className="font-mono font-bold text-grey-800">
+                  +{estimationResult.realistic.agendaDays} dias úteis
+                </span>
+              </div>
             </div>
-          </div>
-
-          <div className="mt-3 pt-2.5 border-t border-grey-100 text-[11px] text-grey-600 space-y-1">
-            <div className="flex justify-between">
-              <span>Dependências Externas:</span>
-              <span className="font-mono font-bold text-warning-600 bg-warning-50 px-1.5 rounded">
-                {estimationResult.externalDepsCount} pontos
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Overhead de Espera:</span>
-              <span className="font-mono font-bold text-grey-800">
-                +{estimationResult.realistic.agendaDays} dias úteis
-              </span>
-            </div>
-          </div>
-        </div>
+          }
+        />
       </div>
 
       {/* Seção 1: Configuração do Eixo 2 (Tipo Técnico & Parâmetros) */}
-      <div className="bg-white rounded-lg p-5 border border-grey-200 shadow-sm space-y-5">
+      <Card className="space-y-5">
         <div className="border-b border-grey-100 pb-3">
           <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
             <Workflow className="w-4 h-4 text-brand-dark" />
@@ -476,26 +468,23 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
             const info = PROJECT_TYPE_INFO[typeKey];
 
             return (
-              <div
+              <SelectableCard
                 key={typeKey}
+                selected={isSelected}
                 onClick={() => handleTypeChange(typeKey)}
-                className={`p-4 rounded-lg border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
-                  isSelected
-                    ? 'border-brand-main bg-brand-lighter/40 shadow-xs ring-2 ring-brand-main/20'
-                    : 'border-grey-200 hover:border-grey-300 bg-white hover:bg-grey-50/50'
-                }`}
+                className="flex flex-col justify-between h-full"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs font-black uppercase ${
+                    <Badge
+                      className={`uppercase ${
                         isSelected
-                          ? 'bg-brand-main text-white'
-                          : 'bg-grey-100 text-grey-700'
+                          ? 'bg-brand-main text-white border-brand-main'
+                          : 'bg-grey-100 text-grey-700 border-grey-200'
                       }`}
                     >
                       Tipo {typeKey}
-                    </span>
+                    </Badge>
                     {isSelected && (
                       <span className="text-brand-dark flex items-center gap-1 text-xs font-bold">
                         <CheckCircle2 className="w-4 h-4" /> Selecionado
@@ -525,33 +514,27 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                     </div>
                   )}
                 </div>
-              </div>
+              </SelectableCard>
             );
           })}
         </div>
 
         {/* Inputs de Data de Início e Ferramenta de Geração */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-          <div>
-            <label className="text-xs font-bold text-grey-700 block mb-1">
-              Data de Início da Contagem:
-            </label>
-            <input
+          <Field label="Data de Início da Contagem:">
+            <Input
               type="date"
               value={currentInputs.startDate}
               onChange={(e) => handleStartDateChange(e.target.value)}
-              className="w-full px-3 py-2 border border-grey-300 rounded-lg text-xs font-mono font-bold text-grey-800 bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
+              className="text-xs font-mono font-bold text-grey-800"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="text-xs font-bold text-grey-700 block mb-1">
-              Ferramenta de Vibe Coding / Geração:
-            </label>
-            <select
+          <Field label="Ferramenta de Vibe Coding / Geração:">
+            <Select
               value={currentGenerationTool}
               onChange={(e) => handleToolChange(e.target.value as GenerationTool)}
-              className="w-full px-3 py-2 border border-grey-300 rounded-lg text-xs font-bold text-grey-800 bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-main"
+              className="text-xs font-bold text-grey-800"
             >
               <option value="Claude Code">Claude Code</option>
               <option value="Codex">Codex</option>
@@ -559,25 +542,22 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               <option value="Gemini (copia-e-cola)">Gemini (copia-e-cola)</option>
               <option value="Manual">Manual</option>
               <option value="Outro">Outro</option>
-            </select>
-          </div>
+            </Select>
+          </Field>
 
-          <div>
-            <label className="text-xs font-bold text-grey-700 block mb-1">
-              Responsável Técnico da T.I:
-            </label>
-            <input
+          <Field label="Responsável Técnico da T.I:">
+            <Input
               type="text"
               readOnly
               value={project.technicalResponsible}
-              className="w-full px-3 py-2 border border-grey-200 rounded-lg text-xs text-grey-600 bg-grey-50 font-medium cursor-not-allowed"
+              className="text-xs text-grey-600 bg-grey-50 font-medium cursor-not-allowed"
             />
-          </div>
+          </Field>
         </div>
-      </div>
+      </Card>
 
       {/* Seção 2: Esteira de Governança (E0..E6) com Stepper Interativo */}
-      <div className="bg-white rounded-lg p-5 border border-grey-200 shadow-sm space-y-4">
+      <Card className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-grey-100 pb-3">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
@@ -588,12 +568,12 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               Clique em qualquer etapa para avançar o projeto na esteira. Ao avançar para homologação final ou conclusão, os critérios de saída são validados.
             </p>
           </div>
-          <span className="text-xs font-mono font-bold px-2 py-1 bg-brand-lighter text-brand-dark border border-brand-light rounded self-start sm:self-auto">
+          <Badge className="font-mono bg-brand-lighter text-brand-dark border-brand-light self-start sm:self-auto">
             Etapa Atual: {currentGovStage}
-          </span>
+          </Badge>
         </div>
 
-        {/* Stepper visual */}
+        {/* Stepper visual — bespoke: cada clique passa por handleRequestStageChange (gate de critérios de saída), não é um tab switcher simples */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-5">
           {GOV_STAGES_CATALOG.map((stageKey, idx) => {
             const isCurrent = currentGovStage === stageKey;
@@ -638,9 +618,9 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
             <span>{STAGE_DESCRIPTIONS[currentGovStage] || 'Esteira finalizada e ativo homologado em produção.'}</span>
           </div>
           {currentGovStage === 'E1' && (
-            <span className="text-[11px] bg-info-50 text-info-700 px-2 py-1 rounded font-bold shrink-0 border border-info-200">
+            <Badge className="bg-info-50 text-info-700 border-info-200 shrink-0">
               Nesta etapa: validar e marcar "Confirmado" nos itens atendidos
-            </span>
+            </Badge>
           )}
         </div>
 
@@ -661,51 +641,48 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               const isChecked = !!exitCriteriaChecked[crit.id];
 
               return (
-                <label
+                <div
                   key={crit.id}
-                  className={`p-3 rounded-lg border transition-all cursor-pointer flex items-start gap-3 ${
+                  className={`p-3 rounded-lg border transition-all ${
                     isChecked
-                      ? 'bg-brand-dark/90 border-brand-main text-white shadow-xs'
-                      : 'bg-brand-dark/40 border-brand-dark/80 text-brand-lighter hover:bg-brand-dark/60'
+                      ? 'bg-brand-dark/90 border-brand-main shadow-xs'
+                      : 'bg-brand-dark/40 border-brand-dark/80'
                   }`}
                 >
-                  <input
-                    type="checkbox"
+                  <ChecklistItem
                     checked={isChecked}
-                    onChange={() => handleToggleExitCriteria(crit.id)}
-                    className="mt-0.5 w-4 h-4 rounded text-brand-main focus:ring-brand-main border-brand-main bg-brand-dark"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold flex items-center justify-between">
-                      <span>{crit.title}</span>
-                      {isChecked && (
-                        <span className="text-[10px] font-mono text-brand-light font-bold">✓ Atendido</span>
-                      )}
-                    </div>
+                    onToggle={() => handleToggleExitCriteria(crit.id)}
+                    trailing={
+                      isChecked && (
+                        <span className="text-[10px] font-mono text-brand-light font-bold shrink-0">✓ Atendido</span>
+                      )
+                    }
+                  >
+                    <div className="text-xs font-bold text-white">{crit.title}</div>
                     <div className="text-[11px] text-brand-light leading-snug mt-0.5">
                       {crit.description}
                     </div>
-                  </div>
-                </label>
+                  </ChecklistItem>
+                </div>
               );
             })}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Seções de Módulos Adicionais e Descontos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bloco 1: Módulos Adicionais (Somam horas, reuniões e deps) */}
-        <div className="bg-white rounded-lg p-5 border border-grey-200 shadow-sm flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-info-700" />
                 <span>Módulos Adicionais de Complexidade</span>
               </h2>
-              <span className="text-xs font-mono font-bold text-info-700 bg-info-50 px-2 py-0.5 rounded border border-info-200">
+              <Badge className="font-mono bg-info-50 text-info-700 border-info-200">
                 +{estimationResult.effortModulesHours.toFixed(2)}h
-              </span>
+              </Badge>
             </div>
             <p className="text-xs text-grey-500 mb-4">
               Selecione os módulos extras caso a solução necessite de integrações com ERP, infraestrutura específica ou ambientes de dev.
@@ -716,27 +693,24 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                 const isApplied = currentInputs.modules.some((m) => m.id === mod.id && m.applied);
 
                 return (
-                  <label
+                  <div
                     key={mod.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                    className={`p-3 rounded-lg border transition-all ${
                       isApplied
                         ? 'border-info-500 bg-info-50/60 shadow-xs'
                         : 'border-grey-200 hover:bg-grey-50/60'
                     }`}
                   >
-                    <input
-                      type="checkbox"
+                    <ChecklistItem
                       checked={isApplied}
-                      onChange={() => handleToggleModule(mod.id)}
-                      className="mt-1 w-4 h-4 rounded text-info-600 focus:ring-info-500 border-grey-300"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-grey-900">{mod.label}</span>
+                      onToggle={() => handleToggleModule(mod.id)}
+                      trailing={
                         <span className="text-xs font-mono font-bold text-info-700 shrink-0 bg-white px-1.5 py-0.5 rounded border border-info-200">
                           +{mod.hours}h ({mod.stageId})
                         </span>
-                      </div>
+                      }
+                    >
+                      <span className="text-xs font-bold text-grey-900">{mod.label}</span>
                       <p className="text-[11px] text-grey-500 mt-0.5">
                         {mod.description}
                       </p>
@@ -744,25 +718,25 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                         {mod.meetings > 0 && <span>+{mod.meetings} reunião</span>}
                         {mod.externalDeps > 0 && <span>+{mod.externalDeps} dependência externa</span>}
                       </div>
-                    </div>
-                  </label>
+                    </ChecklistItem>
+                  </div>
                 );
               })}
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Bloco 2: Itens Já Atendidos (Declarado vs Confirmado) */}
-        <div className="bg-white rounded-lg p-5 border border-grey-200 shadow-sm flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-brand-dark" />
                 <span>Itens Já Atendidos (Descontos de Esforço)</span>
               </h2>
-              <span className="text-xs font-mono font-bold text-brand-dark bg-brand-lighter px-2 py-0.5 rounded border border-brand-light">
+              <Badge className="font-mono bg-brand-lighter text-brand-dark border-brand-light">
                 -{estimationResult.effortDiscountHours.toFixed(1)}h abatidas
-              </span>
+              </Badge>
             </div>
             <p className="text-xs text-grey-500 mb-4">
               <strong>Regra de Ouro:</strong> Declarado no cadastro não reduz esforço. O desconto de horas só é computado quando a T.I <strong>confirmar na E1</strong>.
@@ -779,6 +753,12 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
 
                 // Regra de bloqueio do interruptor Confirmado: só habilita quando govStage >= E1
                 const canConfirm = itemState.declared && currentGovStage !== 'E0';
+                const confirmTitle =
+                  currentGovStage === 'E0'
+                    ? 'Confirmação habilitada a partir da Reunião de Entendimento (E1)'
+                    : !itemState.declared
+                    ? 'Declare primeiro antes de confirmar'
+                    : undefined;
 
                 return (
                   <div
@@ -801,53 +781,38 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="mt-2.5 pt-2 border-t border-grey-100 flex items-center justify-between gap-4">
+                    <div className="mt-2.5 pt-2 border-t border-grey-100 flex items-center justify-between gap-4 flex-wrap">
                       {/* Checkbox 1: Declarado */}
-                      <label className="flex items-center gap-2 cursor-pointer text-xs text-grey-700 font-medium">
-                        <input
-                          type="checkbox"
-                          checked={itemState.declared}
-                          onChange={() => handleToggleDiscount(disc.id, 'declared')}
-                          className="w-4 h-4 rounded text-warning-600 focus:ring-warning-500 border-grey-300"
-                        />
-                        <span>Declarado no Cadastro</span>
-                      </label>
+                      <ChecklistItem
+                        checked={itemState.declared}
+                        onToggle={() => handleToggleDiscount(disc.id, 'declared')}
+                      >
+                        <span className="text-xs text-grey-700 font-medium">Declarado no Cadastro</span>
+                      </ChecklistItem>
 
                       {/* Checkbox 2: Confirmado na E1 */}
-                      <label
-                        className={`flex items-center gap-2 text-xs font-bold ${
-                          canConfirm
-                            ? 'cursor-pointer text-brand-dark'
-                            : 'cursor-not-allowed text-grey-400 opacity-60'
-                        }`}
-                        title={
-                          currentGovStage === 'E0'
-                            ? 'Confirmação habilitada a partir da Reunião de Entendimento (E1)'
-                            : !itemState.declared
-                            ? 'Declare primeiro antes de confirmar'
-                            : undefined
-                        }
-                      >
-                        <input
-                          type="checkbox"
-                          disabled={!canConfirm}
+                      <div title={confirmTitle}>
+                        <ChecklistItem
                           checked={itemState.confirmed}
-                          onChange={() => handleToggleDiscount(disc.id, 'confirmed')}
-                          className="w-4 h-4 rounded text-brand-main focus:ring-brand-main border-grey-300 disabled:cursor-not-allowed"
-                        />
-                        <span>Confirmado T.I (E1)</span>
-                      </label>
+                          disabled={!canConfirm}
+                          onToggle={() => handleToggleDiscount(disc.id, 'confirmed')}
+                        >
+                          <span className={`text-xs font-bold ${canConfirm ? 'text-brand-dark' : 'text-grey-400'}`}>
+                            Confirmado T.I (E1)
+                          </span>
+                        </ChecklistItem>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Seção 3: Cronograma Detalhado & Breakdown de Etapas */}
-      <div className="bg-white rounded-lg p-5 border border-grey-200 shadow-sm space-y-4">
+      <Card className="space-y-4">
         <div className="flex items-center justify-between border-b border-grey-100 pb-3">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
@@ -860,95 +825,91 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-grey-50 text-grey-600 border-b border-grey-200">
-                <th className="p-2.5 font-bold">Etapa</th>
-                <th className="p-2.5 font-bold text-right">Horas Base</th>
-                <th className="p-2.5 font-bold text-right">Módulos</th>
-                <th className="p-2.5 font-bold text-right">Descontos</th>
-                <th className="p-2.5 font-bold text-right">Horas Total</th>
-                <th className="p-2.5 font-bold text-center">Interações</th>
-                <th className="p-2.5 font-bold text-center">Dias Ativos</th>
-                <th className="p-2.5 font-bold text-center">Dias Agenda</th>
-                <th className="p-2.5 font-bold text-center">Início Previsto</th>
-                <th className="p-2.5 font-bold text-center">Fim Previsto</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-grey-100">
-              {estimationResult.stages.map((stg) => {
-                const isCurrentStage = currentGovStage === stg.stageId;
+        <Table>
+          <Thead>
+            <Tr>
+              <Th className="min-w-[220px]">Etapa</Th>
+              <Th className="text-right">Horas Base</Th>
+              <Th className="text-right">Módulos</Th>
+              <Th className="text-right">Descontos</Th>
+              <Th className="text-right">Horas Total</Th>
+              <Th className="text-center">Interações</Th>
+              <Th className="text-center">Dias Ativos</Th>
+              <Th className="text-center">Dias Agenda</Th>
+              <Th className="text-center">Início Previsto</Th>
+              <Th className="text-center">Fim Previsto</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {estimationResult.stages.map((stg) => {
+              const isCurrentStage = currentGovStage === stg.stageId;
 
-                return (
-                  <tr
-                    key={stg.stageId}
-                    className={`hover:bg-grey-50 transition-colors ${
-                      isCurrentStage ? 'bg-brand-lighter/50 font-bold' : ''
-                    }`}
-                  >
-                    <td className="p-2.5 flex items-center gap-2">
-                      <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-grey-100 border border-grey-200 text-grey-800 font-bold">
-                        {stg.stageId}
-                      </span>
-                      <span className="truncate max-w-[180px]">{stg.stageName}</span>
-                    </td>
-                    <td className="p-2.5 text-right font-mono">{stg.baseHours}h</td>
-                    <td className="p-2.5 text-right font-mono text-info-700">
-                      {stg.modulesHours > 0 ? `+${stg.modulesHours}h` : '—'}
-                    </td>
-                    <td className="p-2.5 text-right font-mono text-brand-dark">
-                      {stg.discountHours > 0 ? `-${stg.discountHours}h` : '—'}
-                    </td>
-                    <td className="p-2.5 text-right font-mono font-bold text-grey-900">
-                      {stg.totalHours}h
-                    </td>
-                    <td className="p-2.5 text-center text-grey-600 font-mono">
-                      {stg.meetingsCount} reun / {stg.externalDepsCount} deps
-                    </td>
-                    <td className="p-2.5 text-center font-mono font-bold text-grey-800">
-                      {stg.workDays}d
-                    </td>
-                    <td className="p-2.5 text-center font-mono text-warning-600">
-                      +{stg.waitDays}d
-                    </td>
-                    <td className="p-2.5 text-center font-mono text-grey-600">
-                      {formatPtBrDate(stg.startDate)}
-                    </td>
-                    <td className="p-2.5 text-center font-mono font-bold text-brand-dark">
-                      {formatPtBrDate(stg.endDate)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="bg-grey-100 font-extrabold text-grey-900 border-t-2 border-grey-300">
-                <td className="p-2.5">Totais Consolidados</td>
-                <td className="p-2.5 text-right font-mono">{estimationResult.effortBaseHours.toFixed(1)}h</td>
-                <td className="p-2.5 text-right font-mono text-info-700">+{estimationResult.effortModulesHours.toFixed(1)}h</td>
-                <td className="p-2.5 text-right font-mono text-brand-dark">-{estimationResult.effortDiscountHours.toFixed(1)}h</td>
-                <td className="p-2.5 text-right font-mono text-brand-dark text-sm">
-                  {estimationResult.effortTotalHours.toFixed(1)}h
-                </td>
-                <td className="p-2.5 text-center font-mono">
-                  {estimationResult.meetingsCount} reun / {estimationResult.externalDepsCount} deps
-                </td>
-                <td className="p-2.5 text-center font-mono">{estimationResult.realistic.activeDays}d</td>
-                <td className="p-2.5 text-center font-mono text-warning-600">+{estimationResult.realistic.agendaDays}d</td>
-                <td className="p-2.5 text-center font-mono">{formatPtBrDate(currentInputs.startDate)}</td>
-                <td className="p-2.5 text-center font-mono text-brand-dark text-sm">
-                  {formatPtBrDate(estimationResult.realistic.deliveryDate)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+              return (
+                <Tr
+                  key={stg.stageId}
+                  className={isCurrentStage ? 'bg-brand-lighter/50 font-bold' : ''}
+                >
+                  <Td className="flex items-center gap-2">
+                    <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-grey-100 border border-grey-200 text-grey-800 font-bold">
+                      {stg.stageId}
+                    </span>
+                    <span className="whitespace-nowrap">{stg.stageName}</span>
+                  </Td>
+                  <Td className="text-right font-mono">{stg.baseHours}h</Td>
+                  <Td className="text-right font-mono text-info-700">
+                    {stg.modulesHours > 0 ? `+${stg.modulesHours}h` : '—'}
+                  </Td>
+                  <Td className="text-right font-mono text-brand-dark">
+                    {stg.discountHours > 0 ? `-${stg.discountHours}h` : '—'}
+                  </Td>
+                  <Td className="text-right font-mono font-bold text-grey-900">
+                    {stg.totalHours}h
+                  </Td>
+                  <Td className="text-center text-grey-600 font-mono">
+                    {stg.meetingsCount} reun / {stg.externalDepsCount} deps
+                  </Td>
+                  <Td className="text-center font-mono font-bold text-grey-800">
+                    {stg.workDays}d
+                  </Td>
+                  <Td className="text-center font-mono text-warning-600">
+                    +{stg.waitDays}d
+                  </Td>
+                  <Td className="text-center font-mono text-grey-600">
+                    {formatPtBrDate(stg.startDate)}
+                  </Td>
+                  <Td className="text-center font-mono font-bold text-brand-dark">
+                    {formatPtBrDate(stg.endDate)}
+                  </Td>
+                </Tr>
+              );
+            })}
+          </Tbody>
+          <tfoot>
+            <tr className="bg-grey-50 border-t-2 border-grey-200 font-bold text-grey-900">
+              <td className="px-3 py-2.5">Totais Consolidados</td>
+              <td className="px-3 py-2.5 text-right font-mono">{estimationResult.effortBaseHours.toFixed(1)}h</td>
+              <td className="px-3 py-2.5 text-right font-mono text-info-700">+{estimationResult.effortModulesHours.toFixed(1)}h</td>
+              <td className="px-3 py-2.5 text-right font-mono text-brand-dark">-{estimationResult.effortDiscountHours.toFixed(1)}h</td>
+              <td className="px-3 py-2.5 text-right font-mono text-brand-dark text-sm">
+                {estimationResult.effortTotalHours.toFixed(1)}h
+              </td>
+              <td className="px-3 py-2.5 text-center font-mono">
+                {estimationResult.meetingsCount} reun / {estimationResult.externalDepsCount} deps
+              </td>
+              <td className="px-3 py-2.5 text-center font-mono">{estimationResult.realistic.activeDays}d</td>
+              <td className="px-3 py-2.5 text-center font-mono text-warning-600">+{estimationResult.realistic.agendaDays}d</td>
+              <td className="px-3 py-2.5 text-center font-mono">{formatPtBrDate(currentInputs.startDate)}</td>
+              <td className="px-3 py-2.5 text-center font-mono text-brand-dark text-sm">
+                {formatPtBrDate(estimationResult.realistic.deliveryDate)}
+              </td>
+            </tr>
+          </tfoot>
+        </Table>
+      </Card>
 
       {/* Histórico e Registro de Atividades da Solução */}
       {project.activityLog && project.activityLog.length > 0 && (
-        <div className="bg-white rounded-lg p-5 border border-grey-200 shadow-sm space-y-3">
+        <Card className="space-y-3">
           <div className="flex items-center gap-2 border-b border-grey-100 pb-2">
             <History className="w-4 h-4 text-grey-600" />
             <h3 className="text-xs font-black uppercase tracking-wider text-grey-800">
@@ -972,120 +933,88 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* MODAL 1: Apontamento para GLPI */}
-      {isGlpiModalOpen && (
-        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-grey-100 pb-3">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-info-700" />
-                <h3 className="text-base font-extrabold text-grey-900">
-                  Apontamento da Esteira para Chamado GLPI
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsGlpiModalOpen(false)}
-                className="p-1 rounded-full hover:bg-grey-100 text-grey-400 hover:text-grey-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <Modal
+        isOpen={isGlpiModalOpen}
+        onClose={() => setIsGlpiModalOpen(false)}
+        title="Apontamento da Esteira para Chamado GLPI"
+        subtitle="Copie o texto estruturado abaixo e cole diretamente no chamado correspondente no GLPI (ou envie por e-mail/Teams) para registrar a evolução da governança e as datas homologadas."
+        size="lg"
+      >
+        <Textarea
+          readOnly
+          rows={12}
+          value={generateGlpiNoteText()}
+          className="font-mono bg-grey-50 text-grey-800"
+        />
 
-            <p className="text-xs text-grey-500">
-              Copie o texto estruturado abaixo e cole diretamente no chamado correspondente no GLPI (ou envie por e-mail/Teams) para registrar a evolução da governança e as datas homologadas:
-            </p>
-
-            <textarea
-              readOnly
-              rows={12}
-              value={generateGlpiNoteText()}
-              className="w-full p-3 border border-grey-300 rounded-lg text-xs font-mono bg-grey-50 text-grey-800 focus:outline-hidden"
-            />
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setIsGlpiModalOpen(false)}
-                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
-              >
-                Fechar
-              </button>
-              <button
-                onClick={handleCopyGlpiNote}
-                className="px-4 py-2 text-xs font-bold text-white bg-info-700 hover:bg-info-700 rounded-full shadow-2xs flex items-center gap-1.5 transition-colors"
-              >
-                {copiedGlpiNote ? (
-                  <>
-                    <Check className="w-4 h-4 text-brand-light" />
-                    <span>Copiado com Sucesso!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    <span>Copiar para Área de Transferência</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <ModalFooter>
+          <Button color="secondary" onClick={() => setIsGlpiModalOpen(false)}>
+            Fechar
+          </Button>
+          <Button
+            color="primary"
+            leftIcon={copiedGlpiNote ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            onClick={handleCopyGlpiNote}
+          >
+            {copiedGlpiNote ? 'Copiado com Sucesso!' : 'Copiar para Área de Transferência'}
+          </Button>
+        </ModalFooter>
+      </Modal>
 
       {/* MODAL 2: Justificativa de Avanço de Etapa com Critérios Faltantes */}
       {pendingStageModal && (
-        <div className="fixed inset-0 bg-grey-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 border border-grey-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center gap-2 text-warning-600">
-              <AlertOctagon className="w-5 h-5" />
-              <h3 className="text-base font-extrabold text-grey-900">
-                Atenção: Critérios de Saída Incompletos
-              </h3>
-            </div>
-
-            <p className="text-xs text-grey-600">
-              Você está avançando para a etapa <strong>{pendingStageModal.targetStage}</strong>, mas os seguintes critérios de saída da governança ainda não foram validados:
-            </p>
-
-            <div className="p-3 bg-warning-50 rounded-lg border border-warning-200 space-y-1.5 text-xs text-warning-600 font-medium">
-              {pendingStageModal.missingCriteria.map((item, i) => (
-                <div key={i} className="flex items-start gap-1.5">
-                  <span className="text-warning-600 font-bold">•</span>
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-grey-800 block mb-1">
-                Justificativa para avanço extraordinário:
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Informe o motivo ou aprovação formal para avançar mesmo com critérios em aberto..."
-                value={stageJustification}
-                onChange={(e) => setStageJustification(e.target.value)}
-                className="w-full p-2.5 border border-grey-300 rounded-lg text-xs bg-grey-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-warning-500"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setPendingStageModal(null)}
-                className="px-4 py-2 text-xs font-bold text-grey-600 hover:text-grey-800"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => applyStageTransition(pendingStageModal.targetStage, stageJustification || 'Avanço autorizado com critérios parciais')}
-                className="px-4 py-2 text-xs font-bold text-white bg-warning-600 hover:bg-warning-600 rounded-full shadow-2xs transition-colors"
-              >
-                Confirmar Avanço de Etapa
-              </button>
-            </div>
+        <Modal
+          isOpen
+          onClose={() => setPendingStageModal(null)}
+          title="Atenção: Critérios de Saída Incompletos"
+          size="md"
+        >
+          <div className="flex items-center gap-2 text-warning-600 -mt-1">
+            <AlertOctagon className="w-5 h-5" />
+            <span className="text-xs font-semibold">
+              Avançando para a etapa {pendingStageModal.targetStage}
+            </span>
           </div>
-        </div>
+
+          <p className="text-xs text-grey-600">
+            Você está avançando para a etapa <strong>{pendingStageModal.targetStage}</strong>, mas os seguintes critérios de saída da governança ainda não foram validados:
+          </p>
+
+          <div className="p-3 bg-warning-50 rounded-lg border border-warning-200 space-y-1.5 text-xs text-warning-600 font-medium">
+            {pendingStageModal.missingCriteria.map((item, i) => (
+              <div key={i} className="flex items-start gap-1.5">
+                <span className="text-warning-600 font-bold">•</span>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+
+          <Field label="Justificativa para avanço extraordinário:">
+            <Textarea
+              rows={3}
+              placeholder="Informe o motivo ou aprovação formal para avançar mesmo com critérios em aberto..."
+              value={stageJustification}
+              onChange={(e) => setStageJustification(e.target.value)}
+              className="bg-grey-50 focus:bg-white"
+            />
+          </Field>
+
+          <ModalFooter>
+            <Button color="secondary" onClick={() => setPendingStageModal(null)}>
+              Cancelar
+            </Button>
+            <Button
+              color="danger"
+              onClick={() => applyStageTransition(pendingStageModal.targetStage, stageJustification || 'Avanço autorizado com critérios parciais')}
+            >
+              Confirmar Avanço de Etapa
+            </Button>
+          </ModalFooter>
+        </Modal>
       )}
     </div>
   );

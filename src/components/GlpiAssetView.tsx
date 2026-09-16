@@ -1,21 +1,15 @@
 import React, { useState } from 'react';
 import {
-  QrCode,
   Save,
-  Info,
   ExternalLink,
   GitBranch,
-  ShieldAlert,
   Sparkles,
-  Layers,
   FileSpreadsheet,
   Code2,
   CheckCircle,
   HelpCircle,
   Clock,
-  UserCheck,
   Building,
-  RefreshCw,
   Eye,
   Edit3,
   FileText,
@@ -24,18 +18,23 @@ import {
   Database,
   ShieldCheck,
   ArrowRight,
-  Printer,
   Copy,
   Check,
-  Search,
-  Filter,
-  Shield,
-  Download,
-  BookOpen,
   Lock
 } from 'lucide-react';
-import { SolutionProject, SheetBaseInfo } from '../types';
-import { getRiskColorClass } from '../utils/riskCalculations';
+import { SolutionProject } from '../types';
+import {
+  Button,
+  Card,
+  Badge,
+  Field,
+  Input,
+  Select,
+  Textarea,
+  Tabs,
+  StatTile,
+  SearchInput
+} from './ui';
 
 interface GlpiAssetViewProps {
   project: SolutionProject;
@@ -52,6 +51,20 @@ interface GlpiAssetViewProps {
   }) => void;
 }
 
+/** Instância única de QR Code (estilo unificado) usada tanto na Ficha GLPI quanto na Documentação Viva. */
+const QrCodeBlock: React.FC<{ project: SolutionProject; caption: string }> = ({ project, caption }) => (
+  <div className="text-center">
+    <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-grey-700 mb-2">
+      <span>Etiqueta & QR Code do ativo</span>
+      <HelpCircle className="w-3.5 h-3.5 text-grey-400" />
+    </div>
+    <div className="w-32 h-32 bg-white p-2 rounded-lg border border-grey-300 mx-auto flex items-center justify-center shadow-2xs">
+      <img src={project.qrCodeUrl} alt="QR Code Ativo GLPI" className="max-w-full max-h-full object-contain" />
+    </div>
+    <div className="mt-2 text-[11px] text-grey-500 truncate font-mono">{caption}</div>
+  </div>
+);
+
 export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   project,
   residualScore,
@@ -59,7 +72,9 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   onSave
 }) => {
   const [viewMode, setViewMode] = useState<'edit' | 'live_preview'>('edit');
-  const [docSectionFilter, setDocSectionFilter] = useState<'all' | 'overview' | 'sheets' | 'ops' | 'security'>('all');
+  const [docSectionFilter, setDocSectionFilter] = useState<'all' | 'overview' | 'sheets' | 'ops' | 'security'>(
+    'overview'
+  );
   const [sheetSearch, setSheetSearch] = useState('');
   const [sheetCategory, setSheetCategory] = useState<string>('all');
 
@@ -75,10 +90,6 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   const [copiedDoc, setCopiedDoc] = useState(false);
 
   const { technicalDoc, sheetsCatalog } = project;
-
-  const currentRiskColor = getRiskColorClass(
-    residualScore <= 5 ? 'BAIXO' : residualScore <= 12 ? 'MEDIO' : residualScore <= 20 ? 'ALTO' : 'CRITICO'
-  );
 
   const filteredSheets = (sheetsCatalog || []).filter((sheet) => {
     if (sheetCategory !== 'all' && sheet.category !== sheetCategory) return false;
@@ -156,87 +167,35 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
 
   return (
     <div className="space-y-6">
-      {/* GLPI Breadcrumb & Quick Governance Banner */}
-      <div className="bg-white border border-grey-200 rounded-lg p-4 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-grey-500 font-medium">
-            <span>GLPI</span>
-            <span>›</span>
-            <span>Ativos</span>
-            <span>›</span>
-            <span>Soluções Setoriais & Automações</span>
-            <span>›</span>
-            <span className="text-grey-800 font-semibold">{name}</span>
-          </div>
-          <div className="flex items-center gap-3 mt-1">
-            <h2 className="text-xl font-bold text-grey-900">{name}</h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-info-50 text-info-700 border border-info-200 font-mono">
-              ID: {project.assetId}
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-lighter text-brand-dark border border-brand-light">
-              Chamado: {project.glpiTicketId}
-            </span>
-          </div>
-        </div>
-
-        {/* Dynamic Criticality Badge and Mode Switcher */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Mode Switcher: Form GLPI vs Documentação Viva Preview */}
-          <div className="flex items-center bg-grey-100 p-1 rounded-lg border border-grey-200 max-w-full overflow-x-auto">
-            <button
-              onClick={() => setViewMode('edit')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                viewMode === 'edit'
-                  ? 'bg-white text-grey-900 shadow-xs border border-grey-200'
-                  : 'text-grey-600 hover:text-grey-900'
-              }`}
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Ficha Cadastral GLPI</span>
-            </button>
-            <button
-              onClick={() => setViewMode('live_preview')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                viewMode === 'live_preview'
-                  ? 'bg-brand-dark text-white shadow-xs'
-                  : 'text-grey-600 hover:text-grey-900'
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Documentação Viva & Técnica</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 bg-grey-50 px-3 py-1.5 rounded-lg border border-grey-200">
-            <div className="text-right">
-              <span className="text-[10px] uppercase tracking-wider text-grey-500 block">Risco Residual</span>
-              <span className="text-xs font-extrabold text-grey-900 font-mono">
-                {residualScore} pts
-              </span>
-            </div>
-            <button
-              onClick={() => onNavigateTab('evolution')}
-              className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${currentRiskColor.badge}`}
-            >
-              {residualScore <= 5 ? 'Baixo' : residualScore <= 12 ? 'Médio' : residualScore <= 20 ? 'Alto' : 'Crítico'}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Mode Switcher: Ficha Cadastral GLPI vs. Documentação Viva & Técnica */}
+      <Tabs<'edit' | 'live_preview'>
+        items={[
+          { id: 'edit', label: 'Ficha Cadastral GLPI' },
+          { id: 'live_preview', label: 'Documentação Viva & Técnica' }
+        ]}
+        value={viewMode}
+        onChange={setViewMode}
+      />
 
       {/* VIEW MODE 1: Standard GLPI Asset Form View */}
       {viewMode === 'edit' && (
         <div className="bg-white border border-grey-200 rounded-lg shadow-xs overflow-hidden">
           {/* GLPI Header Bar */}
-          <div className="bg-grey-100 border-b border-grey-200 px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="bg-grey-100 border-b border-grey-200 px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Building className="w-4 h-4 text-grey-600" />
               <span className="font-semibold text-grey-800 text-sm">Dados Principais do Ativo (GLPI)</span>
+              <Badge className="bg-info-50 text-info-700 border-info-200 font-mono">
+                ID: {project.assetId}
+              </Badge>
+              <Badge className="bg-brand-lighter text-brand-dark border-brand-light">
+                Chamado: {project.glpiTicketId}
+              </Badge>
             </div>
             <div className="flex items-center gap-3 text-xs text-grey-500">
               <button
                 onClick={() => setViewMode('live_preview')}
-                className="text-brand-dark hover:text-brand-dark font-semibold flex items-center gap-1"
+                className="text-brand-dark hover:text-brand-main font-semibold flex items-center gap-1"
               >
                 <Eye className="w-3.5 h-3.5" /> Ver Documentação Viva Completa
               </button>
@@ -251,168 +210,73 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Left Side: GLPI Form Inputs */}
               <div className="lg:col-span-9 space-y-5">
-                {/* Row 1: Nome & Status */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                  <label className="md:col-span-3 text-right font-medium text-grey-700 text-sm">
-                    Nome
-                  </label>
-                  <div className="md:col-span-4">
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm bg-white border border-grey-300 rounded-lg focus:ring-2 focus:ring-brand-main focus:outline-hidden"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Nome">
+                    <Input value={name} onChange={(e) => setName(e.target.value)} />
+                  </Field>
 
-                  <label className="md:col-span-2 text-right font-medium text-grey-700 text-sm">
-                    Status
-                  </label>
-                  <div className="md:col-span-3">
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as any)}
-                      className="w-full px-3 py-1.5 text-sm bg-white border border-grey-300 rounded-lg focus:ring-2 focus:ring-brand-main focus:outline-hidden"
-                    >
+                  <Field label="Status">
+                    <Select value={status} onChange={(e) => setStatus(e.target.value as any)}>
                       <option value="Uso">Uso</option>
                       <option value="Homologação">Homologação</option>
                       <option value="Em Adequação">Em Adequação (Governança)</option>
                       <option value="Descontinuado">Descontinuado</option>
-                    </select>
-                  </div>
+                    </Select>
+                  </Field>
                 </div>
 
-                {/* Row 2: Técnico encarregado & Grupo encarregado */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                  <label className="md:col-span-3 text-right font-medium text-grey-700 text-sm flex items-center justify-end gap-1">
-                    <span>Técnico encarregado</span>
-                  </label>
-                  <div className="md:col-span-4 flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={techResponsible}
-                      onChange={(e) => setTechResponsible(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm bg-white border border-grey-300 rounded-lg focus:ring-2 focus:ring-brand-main focus:outline-hidden"
-                    />
-                    <Info className="w-4 h-4 text-grey-400 shrink-0" />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Técnico encarregado">
+                    <Input value={techResponsible} onChange={(e) => setTechResponsible(e.target.value)} />
+                  </Field>
 
-                  <label className="md:col-span-2 text-right font-medium text-grey-700 text-sm">
-                    Grupo encarregado
-                  </label>
-                  <div className="md:col-span-3">
-                    <input
-                      type="text"
-                      value={groupEncargado}
-                      onChange={(e) => setGroupEncargado(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm bg-white border border-grey-300 rounded-lg focus:ring-2 focus:ring-brand-main focus:outline-hidden"
-                    />
-                  </div>
+                  <Field label="Grupo encarregado">
+                    <Input value={groupEncargado} onChange={(e) => setGroupEncargado(e.target.value)} />
+                  </Field>
                 </div>
 
-                {/* Row 3: Usuário & Grupo */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                  <label className="md:col-span-3 text-right font-medium text-grey-700 text-sm flex items-center justify-end gap-1">
-                    <span>Usuário (Resp. Negócio)</span>
-                  </label>
-                  <div className="md:col-span-4 flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={userResponsible}
-                      onChange={(e) => setUserResponsible(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm bg-white border border-grey-300 rounded-lg focus:ring-2 focus:ring-brand-main focus:outline-hidden"
-                    />
-                    <Info className="w-4 h-4 text-grey-400 shrink-0" />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Usuário (Resp. Negócio)">
+                    <Input value={userResponsible} onChange={(e) => setUserResponsible(e.target.value)} />
+                  </Field>
 
-                  <label className="md:col-span-2 text-right font-medium text-grey-700 text-sm">
-                    Grupo
-                  </label>
-                  <div className="md:col-span-3">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-grey-50 border border-grey-300 rounded-lg text-grey-800">
-                      <span className="font-semibold">{userGroup}</span>
-                    </div>
-                  </div>
+                  <Field label="Grupo">
+                    <Input value={userGroup} disabled readOnly />
+                  </Field>
                 </div>
 
-                {/* Row 4: Objetivo */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start pt-2">
-                  <label className="md:col-span-3 text-right font-medium text-grey-700 text-sm pt-2">
-                    Objetivo
-                  </label>
-                  <div className="md:col-span-9">
-                    <div className="border border-grey-300 rounded-t-md bg-grey-50 px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 text-grey-600 text-xs border-b-0">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-white border border-grey-300 rounded text-grey-700 font-medium">
-                          Simples ▾
-                        </span>
-                        <span className="font-bold cursor-pointer hover:text-black">B</span>
-                        <span className="italic cursor-pointer hover:text-black">I</span>
-                        <span className="underline cursor-pointer hover:text-black">A ▾</span>
-                        <span className="cursor-pointer hover:text-black">🖍 ▾</span>
-                        <span className="text-grey-300">|</span>
-                        <span className="cursor-pointer hover:text-black">• List</span>
-                        <span className="cursor-pointer hover:text-black">1. Num</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setViewMode('live_preview')}
-                        className="text-[11px] text-brand-dark font-semibold hover:underline"
-                      >
-                        Visualizar na Documentação Viva
-                      </button>
-                    </div>
-                    <textarea
-                      rows={6}
-                      value={objective}
-                      onChange={(e) => setObjective(e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-white border border-grey-300 rounded-b-md focus:ring-2 focus:ring-brand-main focus:outline-hidden font-sans leading-relaxed"
-                    />
+                <Field label="Objetivo">
+                  <div className="flex justify-end mb-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('live_preview')}
+                      className="text-[11px] text-brand-dark font-semibold hover:underline"
+                    >
+                      Visualizar na Documentação Viva
+                    </button>
                   </div>
-                </div>
+                  <Textarea
+                    rows={6}
+                    value={objective}
+                    onChange={(e) => setObjective(e.target.value)}
+                    className="leading-relaxed"
+                  />
+                </Field>
 
-                {/* Row 5: Documentação Inicial */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start pt-2">
-                  <label className="md:col-span-3 text-right font-medium text-grey-700 text-sm pt-2">
-                    Documentação inicial
-                  </label>
-                  <div className="md:col-span-9">
-                    <div className="border border-grey-300 rounded-t-md bg-grey-50 px-3 py-1.5 flex flex-wrap items-center gap-2 text-grey-600 text-xs border-b-0">
-                      <span className="px-2 py-0.5 bg-white border border-grey-300 rounded text-grey-700 font-medium">
-                        Simples ▾
-                      </span>
-                      <span className="font-bold cursor-pointer hover:text-black">B</span>
-                      <span className="italic cursor-pointer hover:text-black">I</span>
-                      <span className="underline cursor-pointer hover:text-black">A ▾</span>
-                    </div>
-                    <textarea
-                      rows={3}
-                      value={initialDoc}
-                      onChange={(e) => setInitialDoc(e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-white border border-grey-300 rounded-b-md focus:ring-2 focus:ring-brand-main focus:outline-hidden font-sans"
-                    />
-                  </div>
-                </div>
+                <Field label="Documentação inicial">
+                  <Textarea
+                    rows={3}
+                    value={initialDoc}
+                    onChange={(e) => setInitialDoc(e.target.value)}
+                  />
+                </Field>
               </div>
 
               {/* Right Side: QR Code, URL do Ativo & Links Rápidos */}
               <div className="lg:col-span-3 space-y-4">
-                {/* QR Code Card */}
-                <div className="border border-grey-200 rounded-lg p-4 bg-grey-50 text-center shadow-xs">
-                  <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-grey-700 mb-3">
-                    <span>URL do ativo</span>
-                    <HelpCircle className="w-3.5 h-3.5 text-grey-400" />
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-grey-300 inline-block shadow-xs">
-                    <img
-                      src={project.qrCodeUrl}
-                      alt="QR Code Ativo GLPI"
-                      className="w-36 h-36 mx-auto object-contain"
-                    />
-                  </div>
-                  <div className="mt-2 text-[11px] text-grey-500 truncate font-mono">
-                    {project.assetId} | GLPI ATTO
-                  </div>
+                {/* QR Code */}
+                <div className="border border-grey-200 rounded-lg p-4 bg-grey-50 shadow-xs">
+                  <QrCodeBlock project={project} caption={`${project.assetId} | GLPI ATTO`} />
                 </div>
 
                 {/* Connected Resources */}
@@ -469,29 +333,32 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
 
                 {/* Quick Actions */}
                 <div className="space-y-2">
-                  <button
+                  <Button
                     onClick={() => setViewMode('live_preview')}
-                    className="w-full py-2 px-3 bg-brand-dark hover:bg-brand-dark text-white text-xs font-bold rounded-full flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                    color="primary"
+                    className="w-full"
+                    leftIcon={<Eye className="w-3.5 h-3.5" />}
                   >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Acessar Documentação Viva</span>
-                  </button>
+                    Acessar Documentação Viva
+                  </Button>
 
-                  <button
+                  <Button
                     onClick={() => onNavigateTab('diagnostic')}
-                    className="w-full py-2 px-3 bg-grey-50 hover:bg-grey-100 text-grey-800 text-xs font-semibold rounded-full border border-grey-300 flex items-center justify-center gap-1.5 transition-colors"
+                    color="secondary"
+                    className="w-full"
+                    leftIcon={<Sparkles className="w-3.5 h-3.5 text-purple-600" />}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Diagnóstico IA de Risco</span>
-                  </button>
+                    Diagnóstico IA de Risco
+                  </Button>
 
-                  <button
+                  <Button
                     onClick={() => onNavigateTab('action_plan')}
-                    className="w-full py-2 px-3 bg-grey-800 hover:bg-grey-900 text-white text-xs font-semibold rounded-full flex items-center justify-center gap-1.5 transition-colors"
+                    color="secondary"
+                    className="w-full"
+                    leftIcon={<CheckCircle className="w-3.5 h-3.5" />}
                   >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Plano de Ação ({project.actionPlan.length} itens)</span>
-                  </button>
+                    Plano de Ação ({project.actionPlan.length} itens)
+                  </Button>
                 </div>
               </div>
             </div>
@@ -511,13 +378,9 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                 </span>
               )}
 
-              <button
-                onClick={handleSave}
-                className="inline-flex items-center gap-1.5 px-6 py-2 bg-brand-main hover:bg-brand-dark text-white text-sm font-semibold rounded-full shadow-xs transition-colors"
-              >
-                <Save className="w-4 h-4" />
-                <span>Salvar</span>
-              </button>
+              <Button onClick={handleSave} color="primary" leftIcon={<Save className="w-4 h-4" />}>
+                Salvar
+              </Button>
             </div>
           </div>
         </div>
@@ -529,19 +392,17 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
           {/* Action Bar for Living Doc */}
           <div className="bg-brand-dark text-white p-5 rounded-lg shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 bg-brand-dark rounded-lg">
+              <div className="p-2.5 bg-white/10 rounded-lg">
                 <FileText className="w-6 h-6 text-brand-light" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-brand-dark text-brand-light text-[10px] rounded uppercase font-extrabold tracking-wider border border-brand-dark">
+                  <Badge className="bg-white/10 text-brand-light border-white/20 text-[10px] uppercase tracking-wider">
                     Padrão ATTO Sementes
-                  </span>
+                  </Badge>
                   <span className="text-brand-light text-xs">Ficha Oficial do Ativo • GLPI 10.x</span>
                 </div>
-                <h3 className="text-lg font-bold text-white mt-0.5">
-                  Documentação Técnica e Funcional Viva
-                </h3>
+                <h3 className="text-lg font-bold text-white mt-0.5">Documentação Técnica e Funcional Viva</h3>
                 <p className="text-xs text-brand-light">
                   Visão consolidada com arquitetura, dicionário de dados interativo (31 abas), sustentação e conformidade LGPD.
                 </p>
@@ -549,30 +410,25 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
+              <Button
                 onClick={handleCopyLivingDoc}
-                className="px-3.5 py-2 bg-brand-dark hover:bg-brand-dark text-white text-xs font-bold rounded-full border border-brand-main flex items-center gap-1.5 transition-colors shadow-xs"
+                color="primary"
+                size="sm"
+                className="border border-brand-main"
+                leftIcon={copiedDoc ? <Check className="w-3.5 h-3.5 text-brand-light" /> : <Copy className="w-3.5 h-3.5" />}
               >
-                {copiedDoc ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-brand-light" />
-                    <span>Copiado (Markdown)!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copiar Doc Completa</span>
-                  </>
-                )}
-              </button>
+                {copiedDoc ? 'Copiado (Markdown)!' : 'Copiar Doc Completa'}
+              </Button>
 
-              <button
+              <Button
                 onClick={() => setViewMode('edit')}
-                className="px-3.5 py-2 bg-white text-brand-dark hover:bg-brand-lighter text-xs font-bold rounded-full shadow-xs flex items-center gap-1.5 transition-colors"
+                color="secondary"
+                size="sm"
+                className="text-brand-dark! hover:bg-brand-lighter!"
+                leftIcon={<Edit3 className="w-3.5 h-3.5 text-brand-dark" />}
               >
-                <Edit3 className="w-3.5 h-3.5 text-brand-dark" />
-                <span>Editar Ficha GLPI</span>
-              </button>
+                Editar Ficha GLPI
+              </Button>
             </div>
           </div>
 
@@ -606,51 +462,51 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
               {/* Left 2 Cols: Resumo, Escopo e Topologia */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Executive Summary Card */}
-                <div className="bg-white border border-grey-200 rounded-lg p-6 shadow-xs space-y-4">
+                <Card className="space-y-4">
                   <div className="flex items-center justify-between border-b border-grey-200 pb-3">
                     <h4 className="font-bold text-grey-900 text-sm flex items-center gap-2">
                       <Building className="w-4 h-4 text-brand-dark" />
                       <span>1. Resumo Executivo & Responsabilidades</span>
                     </h4>
-                    <span className="text-xs px-2.5 py-0.5 bg-grey-100 text-grey-700 font-semibold rounded border border-grey-200">
-                      Status: {status}
-                    </span>
+                    <Badge className="bg-grey-100 text-grey-700 border-grey-200">Status: {status}</Badge>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div className="bg-grey-50 p-3 rounded border border-grey-200">
-                      <span className="text-grey-500 block">Responsável Técnico / Desenvolvedor:</span>
-                      <strong className="text-grey-900 text-sm">{techResponsible}</strong>
-                      <span className="text-[11px] text-grey-500 block mt-0.5">{groupEncargado}</span>
-                    </div>
-
-                    <div className="bg-grey-50 p-3 rounded border border-grey-200">
-                      <span className="text-grey-500 block">Responsável de Negócio / Área:</span>
-                      <strong className="text-grey-900 text-sm">{userResponsible}</strong>
-                      <span className="text-[11px] text-grey-500 block mt-0.5">{userGroup}</span>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <StatTile
+                      label="Responsável Técnico / Desenvolvedor"
+                      value={techResponsible}
+                      subtext={groupEncargado}
+                    />
+                    <StatTile
+                      label="Responsável de Negócio / Área"
+                      value={userResponsible}
+                      subtext={userGroup}
+                    />
                   </div>
 
-                  <div className="text-xs text-grey-700 leading-relaxed space-y-2 pt-1">
+                  <div className="text-xs text-grey-700 leading-relaxed space-y-1.5 pt-1">
                     <strong className="text-grey-900 block text-xs uppercase tracking-wider">
                       Objetivo Principal da Solução:
                     </strong>
-                    <div className="p-3.5 bg-grey-50 rounded-lg border border-grey-200 text-grey-800 whitespace-pre-line leading-relaxed font-sans">
-                      {objective}
-                    </div>
+                    <p className="text-grey-800 whitespace-pre-line leading-relaxed font-sans">{objective}</p>
                   </div>
-                </div>
+                </Card>
 
                 {/* Topologia da Arquitetura */}
-                <div className="bg-white border border-grey-200 rounded-lg p-6 shadow-xs space-y-4">
+                <Card className="space-y-4">
                   <div className="flex items-center justify-between border-b border-grey-200 pb-3">
                     <h4 className="font-bold text-grey-900 text-sm flex items-center gap-2">
                       <Server className="w-4 h-4 text-brand-dark" />
                       <span>2. Topologia da Arquitetura de Software</span>
                     </h4>
-                    <span className="text-[11px] text-grey-500 font-mono">
-                      GitHub: grupoatto/portal-logistica
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {technicalDoc?.classification && (
+                        <Badge className="bg-grey-100 text-grey-700 border-grey-200 text-[10px]">
+                          {technicalDoc.classification}
+                        </Badge>
+                      )}
+                      <span className="text-[11px] text-grey-500 font-mono">GitHub: grupoatto/portal-logistica</span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -660,7 +516,8 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                         <span>Apresentação (Frontend)</span>
                       </div>
                       <p className="text-grey-600 text-[11px] leading-relaxed">
-                        {technicalDoc?.frontend || 'Web Apps em Google Workspace com interface HTML/CSS responsiva para usuários internos e externos.'}
+                        {technicalDoc?.frontend ||
+                          'Web Apps em Google Workspace com interface HTML/CSS responsiva para usuários internos e externos.'}
                       </p>
                     </div>
 
@@ -670,7 +527,8 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                         <span>Motor de Negócio (Backend)</span>
                       </div>
                       <p className="text-grey-600 text-[11px] leading-relaxed">
-                        {technicalDoc?.backend || 'Google Apps Script (~30.000 linhas de código), versionado em repositório GitHub com CI/CD.'}
+                        {technicalDoc?.backend ||
+                          'Google Apps Script (~30.000 linhas de código), versionado em repositório GitHub com CI/CD.'}
                       </p>
                     </div>
 
@@ -680,97 +538,51 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                         <span>Base de Dados & ERP</span>
                       </div>
                       <p className="text-grey-600 text-[11px] leading-relaxed">
-                        {technicalDoc?.database || 'Google Sheets estruturado em 31 abas relacionais com integração via API REST ao ERP Senior Sapiens.'}
+                        {technicalDoc?.database ||
+                          'Google Sheets estruturado em 31 abas relacionais com integração via API REST ao ERP Senior Sapiens.'}
                       </p>
                     </div>
                   </div>
-
-                  {/* Additional Technical Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-                    <div className="p-2.5 bg-grey-50 rounded border border-grey-200">
-                      <span className="text-grey-500 block text-[10px] uppercase font-bold">Geração de Documentos:</span>
-                      <span className="text-grey-800 font-medium">{technicalDoc?.pdfGeneration}</span>
-                    </div>
-                    <div className="p-2.5 bg-grey-50 rounded border border-grey-200">
-                      <span className="text-grey-500 block text-[10px] uppercase font-bold">Disparo de E-mails:</span>
-                      <span className="text-grey-800 font-medium">{technicalDoc?.emailDispatch}</span>
-                    </div>
-                    <div className="p-2.5 bg-grey-50 rounded border border-grey-200">
-                      <span className="text-grey-500 block text-[10px] uppercase font-bold">Classificação:</span>
-                      <span className="text-grey-800 font-medium">{technicalDoc?.classification}</span>
-                    </div>
-                  </div>
-                </div>
+                </Card>
               </div>
 
               {/* Right Column: Governance Summary & Badges */}
               <div className="space-y-6">
                 {/* Governance Health Card */}
-                <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-xs space-y-4">
+                <Card className="space-y-4">
                   <h4 className="font-bold text-grey-900 text-sm flex items-center gap-2 border-b border-grey-200 pb-3">
                     <ShieldCheck className="w-4 h-4 text-brand-dark" />
                     <span>Saúde & Governança do Ativo</span>
                   </h4>
 
-                  <div className="space-y-3 text-xs">
-                    <div className="flex items-center justify-between p-2 rounded bg-grey-50 border border-grey-200">
+                  <div className="divide-y divide-grey-100 text-xs">
+                    <div className="flex items-center justify-between py-2">
                       <span className="text-grey-600">Score Residual Atual:</span>
                       <strong className="text-brand-dark font-mono font-bold">{residualScore} pts</strong>
                     </div>
 
-                    <div className="flex items-center justify-between p-2 rounded bg-grey-50 border border-grey-200">
-                      <span className="text-grey-600">Controle de Versão:</span>
-                      <span className="font-mono text-brand-dark font-semibold">GitHub Ativo ✓</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2 rounded bg-grey-50 border border-grey-200">
-                      <span className="text-grey-600">Backup Automatizado:</span>
-                      <span className="text-brand-dark font-semibold">Diário (Snapshot) ✓</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2 rounded bg-grey-50 border border-grey-200">
+                    <div className="flex items-center justify-between py-2">
                       <span className="text-grey-600">Total de Abas Mapeadas:</span>
                       <span className="font-bold text-grey-800">{sheetsCatalog?.length || 31} abas</span>
                     </div>
-
-                    <div className="flex items-center justify-between p-2 rounded bg-grey-50 border border-grey-200">
-                      <span className="text-grey-600">Homologação TI:</span>
-                      <span className="text-brand-dark font-semibold">Em Acompanhamento ✓</span>
-                    </div>
                   </div>
 
-                  <div className="pt-2">
-                    <button
-                      onClick={() => onNavigateTab('action_plan')}
-                      className="w-full py-2 bg-grey-900 hover:bg-grey-800 text-white text-xs font-semibold rounded-full flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      <span>Abrir Plano de Ação ({project.actionPlan.length} itens)</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* QR Code Card */}
-                <div className="bg-white border border-grey-200 rounded-lg p-5 shadow-xs text-center space-y-3">
-                  <div className="text-xs font-semibold text-grey-700">Etiqueta & QR Code do Ativo</div>
-                  <div className="bg-grey-50 p-3 rounded-lg border border-grey-200 inline-block shadow-2xs">
-                    <img
-                      src={project.qrCodeUrl}
-                      alt="QR Code Ativo GLPI"
-                      className="w-32 h-32 mx-auto object-contain"
-                    />
-                  </div>
-                  <div className="text-[11px] text-grey-500 font-mono">
-                    {project.assetId} | Chamado {project.glpiTicketId}
-                  </div>
-                </div>
+                  <Button
+                    onClick={() => onNavigateTab('action_plan')}
+                    color="primary"
+                    className="w-full"
+                    rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                  >
+                    Abrir Plano de Ação ({project.actionPlan.length} itens)
+                  </Button>
+                </Card>
               </div>
             </div>
           )}
 
           {/* SECTION 2: Dicionário de Dados Completo (31 Abas Mapeadas) */}
           {(docSectionFilter === 'all' || docSectionFilter === 'sheets') && (
-            <div className="bg-white border border-grey-200 rounded-lg p-6 shadow-xs space-y-4">
+            <Card className="space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-grey-200 pb-4">
                 <div>
                   <h4 className="font-bold text-grey-900 text-base flex items-center gap-2">
@@ -778,48 +590,42 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     <span>Dicionário de Dados & Estrutura de Abas ({sheetsCatalog?.length || 31} Abas Mapeadas)</span>
                   </h4>
                   <p className="text-xs text-grey-500 mt-0.5">
-                    Mapeamento detalhado de cada aba da planilha base com categoria operacional, objetivo funcional e nível de sensibilidade LGPD.
+                    Mapeamento detalhado de cada aba da planilha base com categoria operacional, objetivo funcional e nível
+                    de sensibilidade LGPD.
                   </p>
                 </div>
 
-                <span className="text-xs font-semibold px-2.5 py-1 bg-brand-lighter text-brand-dark border border-brand-light rounded-full shrink-0">
+                <Badge className="bg-brand-lighter text-brand-dark border-brand-light shrink-0">
                   {filteredSheets.length} de {sheetsCatalog?.length || 31} abas exibidas
-                </span>
+                </Badge>
               </div>
 
               {/* Filters & Search Row */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                <div className="sm:col-span-8 relative">
-                  <Search className="w-4 h-4 text-grey-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
+                <div className="sm:col-span-8">
+                  <SearchInput
                     placeholder="Buscar por nome da aba ou finalidade..."
                     value={sheetSearch}
                     onChange={(e) => setSheetSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-grey-300 rounded-lg focus:ring-2 focus:ring-brand-main focus:outline-hidden"
                   />
                 </div>
 
                 <div className="sm:col-span-4">
-                  <select
-                    value={sheetCategory}
-                    onChange={(e) => setSheetCategory(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-grey-300 rounded-lg focus:ring-2 focus:ring-brand-main focus:outline-hidden font-medium"
-                  >
+                  <Select value={sheetCategory} onChange={(e) => setSheetCategory(e.target.value)}>
                     <option value="all">Todas as Categorias ({sheetsCatalog?.length || 31})</option>
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 
-              {/* Sheets Grid Table */}
+              {/* Sheets List */}
               <div className="border border-grey-200 rounded-lg overflow-hidden">
                 <div className="max-h-96 overflow-y-auto divide-y divide-grey-200">
-                  {filteredSheets.map((sheet, index) => (
+                  {filteredSheets.map((sheet) => (
                     <div
                       key={sheet.name}
                       className="p-3.5 hover:bg-grey-50 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
@@ -829,27 +635,25 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                           <span className="font-mono font-bold text-grey-900 bg-grey-100 px-2 py-0.5 rounded border border-grey-200">
                             {sheet.name}
                           </span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-info-50 text-info-700 border border-info-200">
+                          <Badge className="bg-info-50 text-info-700 border-info-200 text-[10px]">
                             {sheet.category}
-                          </span>
+                          </Badge>
                         </div>
-                        <p className="text-grey-600 text-xs leading-relaxed">
-                          {sheet.purpose}
-                        </p>
+                        <p className="text-grey-600 text-xs leading-relaxed">{sheet.purpose}</p>
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        <Badge
+                          className={`text-[10px] ${
                             sheet.sensitivity === 'Alta'
-                              ? 'bg-danger-50 text-danger-800 border border-danger-300'
+                              ? 'bg-danger-50 text-danger-800 border-danger-300'
                               : sheet.sensitivity === 'Média'
-                              ? 'bg-warning-50 text-warning-600 border border-warning-200'
-                              : 'bg-grey-100 text-grey-700 border border-grey-200'
+                              ? 'bg-warning-50 text-warning-600 border-warning-200'
+                              : 'bg-grey-100 text-grey-700 border-grey-200'
                           }`}
                         >
                           Sensibilidade: {sheet.sensitivity}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
                   ))}
@@ -861,13 +665,13 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   )}
                 </div>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* SECTION 3: Sustentação, Continuidade e Operação */}
           {(docSectionFilter === 'all' || docSectionFilter === 'ops') && (
-            <div className="bg-white border border-grey-200 rounded-lg p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-grey-200 pb-3">
+            <Card className="space-y-4">
+              <div className="border-b border-grey-200 pb-3">
                 <h4 className="font-bold text-grey-900 text-base flex items-center gap-2">
                   <Workflow className="w-5 h-5 text-brand-dark" />
                   <span>3. Sustentação, Continuidade de Negócio & Operação</span>
@@ -880,9 +684,15 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     Backup de Dados & Código
                   </span>
                   <div className="space-y-1.5 text-grey-600">
-                    <p><strong>Dados:</strong> {technicalDoc?.backupData}</p>
-                    <p><strong>Código-Fonte:</strong> {technicalDoc?.backupCode}</p>
-                    <p><strong>Versionamento:</strong> {technicalDoc?.versionControl}</p>
+                    <p>
+                      <strong>Dados:</strong> {technicalDoc?.backupData}
+                    </p>
+                    <p>
+                      <strong>Código-Fonte:</strong> {technicalDoc?.backupCode}
+                    </p>
+                    <p>
+                      <strong>Versionamento:</strong> {technicalDoc?.versionControl}
+                    </p>
                   </div>
                 </div>
 
@@ -891,26 +701,30 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     Tratamento de Incidentes & Contingência
                   </span>
                   <div className="space-y-1.5 text-grey-600">
-                    <p><strong>Incidentes:</strong> {technicalDoc?.incidentHandling}</p>
-                    <p><strong>Contingência:</strong> {technicalDoc?.contingency}</p>
-                    <p><strong>Maturidade Técnica:</strong> {technicalDoc?.maturity}</p>
+                    <p>
+                      <strong>Incidentes:</strong> {technicalDoc?.incidentHandling}
+                    </p>
+                    <p>
+                      <strong>Contingência:</strong> {technicalDoc?.contingency}
+                    </p>
+                    <p>
+                      <strong>Maturidade Técnica:</strong> {technicalDoc?.maturity}
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* SECTION 4: Segurança da Informação & LGPD */}
           {(docSectionFilter === 'all' || docSectionFilter === 'security') && (
-            <div className="bg-white border border-grey-200 rounded-lg p-6 shadow-xs space-y-4">
+            <Card className="space-y-4">
               <div className="flex items-center justify-between border-b border-grey-200 pb-3">
                 <h4 className="font-bold text-grey-900 text-base flex items-center gap-2">
                   <Lock className="w-5 h-5 text-brand-dark" />
                   <span>4. Segurança da Informação, LGPD & Gestão de Acessos</span>
                 </h4>
-                <span className="text-xs px-2.5 py-0.5 bg-brand-lighter text-brand-dark font-bold rounded">
-                  Em Conformidade
-                </span>
+                <Badge className="bg-brand-lighter text-brand-dark border-brand-light">Em Conformidade</Badge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -918,9 +732,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   <span className="font-bold text-grey-900 text-xs uppercase tracking-wider block">
                     Tratamento de Dados Pessoais
                   </span>
-                  <p className="text-grey-600 leading-relaxed">
-                    {technicalDoc?.personalDataSummary}
-                  </p>
+                  <p className="text-grey-600 leading-relaxed">{technicalDoc?.personalDataSummary}</p>
                   <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200">
                     <strong>Base Legal:</strong> {technicalDoc?.legalBasis}
                   </div>
@@ -930,9 +742,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   <span className="font-bold text-grey-900 text-xs uppercase tracking-wider block">
                     Dados Confidenciais & Retenção
                   </span>
-                  <p className="text-grey-600 leading-relaxed">
-                    {technicalDoc?.confidentialDataSummary}
-                  </p>
+                  <p className="text-grey-600 leading-relaxed">{technicalDoc?.confidentialDataSummary}</p>
                   <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200">
                     <strong>Política de Retenção:</strong> {technicalDoc?.retentionPolicy}
                   </div>
@@ -942,15 +752,13 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   <span className="font-bold text-grey-900 text-xs uppercase tracking-wider block">
                     Gestão de Acessos & Logs
                   </span>
-                  <p className="text-grey-600 leading-relaxed">
-                    {technicalDoc?.accessControlSummary}
-                  </p>
+                  <p className="text-grey-600 leading-relaxed">{technicalDoc?.accessControlSummary}</p>
                   <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200">
                     <strong>Logs:</strong> {technicalDoc?.logsSummary}
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
         </div>
       )}

@@ -30,7 +30,8 @@ export type ProjectTab = 'glpi' | 'diagnostic' | 'action_plan' | 'evolution' | '
 export type Route =
   | { name: 'portfolio' }
   | { name: 'project'; projectId: string; tab: ProjectTab }
-  | { name: 'settings' };
+  | { name: 'settings' }
+  | { name: 'new-project' };
 
 // --- Eixo 2 & Governança Low-Code / Vibe Coding ATTO ---
 export type ProjectType = 'A' | 'B' | 'C'; // A=Google Workspace/App Script · B=Container/VPS · C=No-code/externo
