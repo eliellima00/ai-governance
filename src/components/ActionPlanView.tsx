@@ -143,7 +143,7 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
     e.preventDefault();
     if (!formTitle.trim()) return;
 
-    onAddActionItem({
+    const newItemData: Omit<ActionItem, 'id'> = {
       title: formTitle,
       responsible: formResponsible || 'TI Responsável',
       deadline: formDeadline || 'A definir',
@@ -152,9 +152,13 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
       riskPointsImpact: Number(formRiskPoints) || 1,
       dimension: formDimension,
       notes: formNotes,
-      evidence: formEvidence,
-      completionDate: formStatus === 'Concluído' ? new Date().toLocaleDateString('pt-BR') : undefined
-    });
+      evidence: formEvidence
+    };
+    if (formStatus === 'Concluído') {
+      newItemData.completionDate = new Date().toLocaleDateString('pt-BR');
+    }
+
+    onAddActionItem(newItemData);
 
     setIsAddModalOpen(false);
   };
@@ -163,7 +167,7 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
     e.preventDefault();
     if (!editingAction || !formTitle.trim()) return;
 
-    onEditActionItem({
+    const updatedItem: ActionItem = {
       ...editingAction,
       title: formTitle,
       responsible: formResponsible,
@@ -173,9 +177,15 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
       riskPointsImpact: Number(formRiskPoints) || 1,
       dimension: formDimension,
       notes: formNotes,
-      evidence: formEvidence,
-      completionDate: formStatus === 'Concluído' ? (editingAction.completionDate || new Date().toLocaleDateString('pt-BR')) : undefined
-    });
+      evidence: formEvidence
+    };
+    if (formStatus === 'Concluído') {
+      updatedItem.completionDate = editingAction.completionDate || new Date().toLocaleDateString('pt-BR');
+    } else {
+      delete updatedItem.completionDate;
+    }
+
+    onEditActionItem(updatedItem);
 
     setEditingAction(null);
   };

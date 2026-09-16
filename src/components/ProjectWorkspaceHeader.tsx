@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, FileText, ShieldAlert, CheckCircle2, Layers, Clock } from 'lucide-react';
+import { FileText, ShieldAlert, CheckCircle2, Layers, Clock, FolderArchive } from 'lucide-react';
 import { GovernanceConfig, ProjectTab, SolutionProject } from '../types';
 import { getRiskColorClass, calculateRiskLevel } from '../utils/riskCalculations';
 import { Badge } from './ui/Badge';
@@ -17,9 +17,8 @@ export interface ProjectWorkspaceHeaderProps {
 }
 
 /**
- * Cabeçalho único da solução: identidade + nomenclatura completa (Tipo/Esteira) + navegação
- * entre as 5 abas de trabalho. É a única forma de trocar de aba dentro de uma solução —
- * o Sidebar não lista mais abas nem outras soluções.
+ * Cabeçalho único da solução: identidade + nomenclatura completa (Arquitetura/Esteira) + navegação
+ * entre as abas de trabalho da solução.
  */
 export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
   project,
@@ -36,14 +35,33 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
 
   const typeKey = project.projectType || 'A';
   const stageKey = project.govStage || 'E0';
-  const typeLabel = config.projectTypeInfo[typeKey]?.label || `Tipo ${typeKey}`;
+  const typeLabel =
+    config.projectTypeInfo[typeKey]?.label ||
+    (typeKey === 'A'
+      ? 'Google Workspace / Apps Script'
+      : typeKey === 'B'
+      ? 'Container / VPS / Backend'
+      : 'No-Code / Externo');
   const stageName = config.stageNames[stageKey] || stageKey;
+
+  const totalArtifactsAndMeetings =
+    (project.artifacts?.length || 0) + (project.meetingLogs?.length || 0);
 
   const tabs: TabItem<ProjectTab>[] = [
     {
       id: 'glpi',
       label: 'Ficha do Ativo & Doc Viva',
       badge: <FileText className="w-3.5 h-3.5" />
+    },
+    {
+      id: 'artifacts',
+      label: 'Artefatos & Diário de Bordo',
+      badge: (
+        <span className="flex items-center gap-1">
+          <FolderArchive className="w-3.5 h-3.5" />
+          {totalArtifactsAndMeetings}
+        </span>
+      )
     },
     {
       id: 'diagnostic',
@@ -81,7 +99,7 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
       badge: (
         <span className="flex items-center gap-1">
           <Clock className="w-3.5 h-3.5" />
-          Tipo {typeKey}
+          {typeKey === 'A' ? 'Workspace' : typeKey === 'B' ? 'Container/VPS' : 'No-Code'}
         </span>
       )
     }
@@ -89,16 +107,8 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
 
   return (
     <div className="bg-white border-b border-grey-200">
-      <div className="px-4 sm:px-6 lg:px-8 pt-4">
-        <button
-          onClick={onNavigateToPortfolio}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-main hover:text-brand-dark mb-2"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Voltar ao Portfólio</span>
-        </button>
-
-        <div className="flex flex-wrap items-start justify-between gap-3 pb-4">
+      <div className="px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 pb-3">
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-grey-900 truncate">{project.name}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-1.5">

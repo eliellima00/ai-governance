@@ -458,7 +458,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-grey-900 flex items-center gap-1.5">
               <Server className="w-4 h-4 text-brand-dark" />
-              <span>Eixo 2 — Tipo Técnico & Vibe Coding</span>
+              <span>Arquitetura da Solução & Stack Técnica</span>
             </h2>
             <span className="text-xs text-grey-500 font-mono">
               Base: {projectType === 'B' ? '19.0h' : '15.5h'}
@@ -481,7 +481,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-xs">Tipo {tKey}</span>
+                    <span className="font-extrabold text-xs">{info.label}</span>
                     {info.statusBadge && (
                       <span className="text-[10px] bg-warning-50 text-warning-600 px-1.5 py-0.5 rounded-full font-bold">
                         {info.statusBadge}

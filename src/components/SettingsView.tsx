@@ -122,20 +122,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div id="settings-governance-view" className="space-y-6 max-w-6xl mx-auto pb-12">
-      {/* Header & Breadcrumb */}
+      {/* Header & Actions */}
       <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs text-grey-500 font-medium mb-1">
-            <button
-              onClick={onNavigateToPortfolio}
-              className="flex items-center gap-1 text-brand-dark hover:text-brand-dark font-bold hover:underline"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Voltar ao Portfólio</span>
-            </button>
-            <span>/</span>
-            <span className="text-grey-800 font-semibold">Administração</span>
-          </div>
           <PageHeader
             title="Parametrização de Governança & Regras T.I"
             subtitle="Ajuste os parâmetros dos cálculos de esforço, réguas de risco e critérios de saída sem alterar código."
@@ -194,7 +183,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="flex items-center justify-between border-b border-grey-100 pb-3">
               <div>
                 <h3 className="text-sm font-extrabold text-grey-900">
-                  Esforço Base por Tipo Técnico (Eixo 2)
+                  Esforço Base por Arquitetura & Stack Técnica
                 </h3>
                 <p className="text-xs text-grey-500">
                   Horas base estimadas de envolvimento da equipe de T.I para cada arquétipo de solução.
@@ -263,7 +252,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <Badge className="bg-white border-grey-300 text-grey-800 shrink-0">
-                            Tipo {typeKey}
+                            {typeKey === 'A' ? 'Workspace' : typeKey === 'B' ? 'Container / VPS' : 'No-Code'}
                           </Badge>
                           {info.statusBadge && (
                             <span className="text-[10px] font-bold text-warning-600 bg-warning-50 px-1.5 py-0.2 rounded border border-warning-200 truncate">

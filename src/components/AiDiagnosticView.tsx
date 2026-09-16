@@ -293,7 +293,7 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-purple-100 text-purple-900 border-transparent">
-                      Sugestão de Eixo 2 (Tipo Técnico)
+                      Sugestão de Arquitetura & Stack Técnica
                     </Badge>
                     <span className="text-xs text-grey-500 font-medium">
                       Confiança: <strong>{typeSuggestion.confidence}</strong>
@@ -302,7 +302,7 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                   <div className="mt-1 text-sm font-extrabold text-grey-900">
                     Sugestão Baseada em Palavras-Chave de Tecnologia:{' '}
                     <span className="text-purple-800">
-                      Tipo {typeSuggestion.suggestedType} ({PROJECT_TYPE_INFO[typeSuggestion.suggestedType].label})
+                      {PROJECT_TYPE_INFO[typeSuggestion.suggestedType].label}
                     </span>
                   </div>
                   <p className="text-xs text-grey-600 mt-1 max-w-2xl leading-relaxed">
@@ -324,7 +324,7 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
 
               <div className="flex flex-col sm:items-end gap-2 shrink-0">
                 <div className="text-xs text-grey-500">
-                  Tipo Atual: <strong>Tipo {project.projectType || 'A'}</strong>
+                  Arquitetura Atual: <strong>{PROJECT_TYPE_INFO[project.projectType || 'A']?.label || 'Google Workspace'}</strong>
                 </div>
                 {project.projectType !== typeSuggestion.suggestedType ? (
                   <Button
@@ -339,12 +339,12 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                       )
                     }
                   >
-                    {appliedTypeSuccess ? 'Tipo Aplicado!' : `Aplicar Tipo ${typeSuggestion.suggestedType}`}
+                    {appliedTypeSuccess ? 'Stack Aplicada!' : `Aplicar ${PROJECT_TYPE_INFO[typeSuggestion.suggestedType].label}`}
                   </Button>
                 ) : (
                   <Badge className="text-brand-dark bg-brand-lighter border-brand-light">
                     <Check className="w-3.5 h-3.5 text-brand-main" />
-                    <span>Tipo Alinhado</span>
+                    <span>Stack Alinhada</span>
                   </Badge>
                 )}
               </div>

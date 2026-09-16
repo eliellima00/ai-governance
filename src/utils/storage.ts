@@ -98,12 +98,23 @@ export function loadState(): StoredAppState {
       exitCriteriaChecked: p.exitCriteriaChecked || {}
     }));
 
+    const DISCARDED_SAMPLE_IDS = new Set([
+      'conciliacao-bancaria-controladoria',
+      'calculadora-germina-lab',
+      'automacao-cte-faturas-senior',
+      'portal-produtor-cooperado'
+    ]);
+
     const seenProjectIds = new Set<string>();
-    const projects: SolutionProject[] = rawProjects.filter((p) => {
-      if (!p.id || seenProjectIds.has(p.id)) return false;
+    let projects: SolutionProject[] = rawProjects.filter((p) => {
+      if (!p.id || seenProjectIds.has(p.id) || DISCARDED_SAMPLE_IDS.has(p.id)) return false;
       seenProjectIds.add(p.id);
       return true;
     });
+
+    if (projects.length === 0) {
+      projects = getDefaultSeedProjects();
+    }
 
     let route: Route = { name: 'portfolio' };
     if (parsed.route?.name === 'settings') {

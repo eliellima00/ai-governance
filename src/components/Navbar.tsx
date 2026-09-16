@@ -1,12 +1,12 @@
 import React from 'react';
-import { ChevronRight, ArrowLeft, User, Layers } from 'lucide-react';
+import { ChevronRight, ArrowLeft, User, Layers, Database } from 'lucide-react';
 import { Route, UserRole } from '../types';
-import { AttoLogo } from './AttoLogo';
 
 interface NavbarProps {
   route: Route;
   totalProjects: number;
   userRole: UserRole;
+  dbStatus?: 'connected' | 'syncing' | 'error';
   onSetUserRole: (role: UserRole) => void;
   onNavigateToPortfolio: () => void;
   onToggleMobileSidebar: () => void;
@@ -16,17 +16,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   route,
   totalProjects,
   userRole,
+  dbStatus = 'connected',
   onSetUserRole,
   onNavigateToPortfolio,
   onToggleMobileSidebar
 }) => {
   return (
-    <header className="bg-white border-b border-grey-300 sticky top-0 z-30 shadow-xs">
+    <header className="bg-white border-b border-grey-200 sticky top-0 z-30">
       <div className="px-4 sm:px-6 lg:px-8 py-2.5">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: Breadcrumbs & Return buttons */}
+          {/* Left: Breadcrumbs / Context Path */}
           <div className="flex items-center gap-3 min-w-0">
-            {/* Toggle sidebar button on mobile for all routes */}
+            {/* Toggle sidebar button on mobile */}
             <button
               onClick={onToggleMobileSidebar}
               className="lg:hidden p-2 rounded-full bg-grey-100 hover:bg-grey-200 text-grey-600 transition-colors shrink-0"
@@ -35,85 +36,95 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Layers className="w-5 h-5" />
             </button>
 
-            <div className="min-w-0">
+            <nav className="min-w-0 flex items-center" aria-label="Navegação hierárquica">
               {route.name === 'portfolio' ? (
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs text-grey-500 font-medium">
-                    <span className="flex items-center gap-1 text-brand-wordmark font-bold">
-                      <AttoLogo className="scale-75 origin-left" isCollapsed={false} subtitle="Governança" />
-                    </span>
-                    <ChevronRight className="w-3 h-3 text-grey-400 shrink-0" />
-                    <span className="text-brand-main font-semibold truncate">
-                      Portfólio de Soluções
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                    <h1 className="text-base font-bold text-grey-900 truncate">
-                      Gestão de Demandas Departamentais
-                    </h1>
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-lighter text-brand-dark border border-brand-light">
-                      {totalProjects} Soluções Ativas
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                  <span className="text-grey-500">Governança T.I</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-grey-400 shrink-0" />
+                  <span className="text-grey-900 font-bold">Portfólio de Soluções</span>
+                  <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-lighter text-brand-dark border border-brand-light ml-1">
+                    {totalProjects} {totalProjects === 1 ? 'Solução' : 'Soluções'}
+                  </span>
                 </div>
               ) : route.name === 'settings' ? (
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs text-grey-500 font-medium">
-                    <button
-                      onClick={onNavigateToPortfolio}
-                      className="hover:text-brand-dark font-semibold transition-colors shrink-0 flex items-center gap-1 text-brand-main"
-                      title="Voltar ao Portfólio Geral"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Portfólio</span>
-                    </button>
-                    <ChevronRight className="w-3 h-3 text-grey-400 shrink-0" />
-                    <span className="text-grey-900 font-bold">Administração & Parametrização</span>
-                  </div>
-                  <h1 className="text-base font-bold text-grey-900 mt-0.5">
-                    Configuração de Regras de Governança
-                  </h1>
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                  <button
+                    onClick={onNavigateToPortfolio}
+                    className="hover:text-brand-dark font-semibold transition-colors shrink-0 flex items-center gap-1 text-brand-main"
+                    title="Voltar ao Portfólio Geral"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Portfólio</span>
+                  </button>
+                  <ChevronRight className="w-3.5 h-3.5 text-grey-400 shrink-0" />
+                  <span className="text-grey-900 font-bold">Parametrização & Regras</span>
                 </div>
               ) : route.name === 'new-project' ? (
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs text-grey-500 font-medium">
-                    <button
-                      onClick={onNavigateToPortfolio}
-                      className="hover:text-brand-dark font-semibold transition-colors shrink-0 flex items-center gap-1 text-brand-main"
-                      title="Voltar ao Portfólio Geral"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Portfólio</span>
-                    </button>
-                    <ChevronRight className="w-3 h-3 text-grey-400 shrink-0" />
-                    <span className="text-grey-900 font-bold">Cadastro de Nova Solução</span>
-                  </div>
-                  <h1 className="text-base font-bold text-grey-900 mt-0.5">
-                    Triagem & Diagnóstico Inicial
-                  </h1>
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                  <button
+                    onClick={onNavigateToPortfolio}
+                    className="hover:text-brand-dark font-semibold transition-colors shrink-0 flex items-center gap-1 text-brand-main"
+                    title="Voltar ao Portfólio Geral"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Portfólio</span>
+                  </button>
+                  <ChevronRight className="w-3.5 h-3.5 text-grey-400 shrink-0" />
+                  <span className="text-grey-900 font-bold">Cadastro de Nova Solução</span>
                 </div>
               ) : (
                 /* route.name === 'project' */
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs text-grey-500 font-medium">
-                    <button
-                      onClick={onNavigateToPortfolio}
-                      className="hover:text-brand-dark font-semibold transition-colors shrink-0 flex items-center gap-1 text-brand-main"
-                      title="Voltar ao Portfólio Geral"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Portfólio</span>
-                    </button>
-                    <ChevronRight className="w-3 h-3 text-grey-400 shrink-0" />
-                    <span className="text-grey-900 font-bold">Solução Departamental</span>
-                  </div>
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                  <button
+                    onClick={onNavigateToPortfolio}
+                    className="hover:text-brand-dark font-semibold transition-colors shrink-0 flex items-center gap-1 text-brand-main"
+                    title="Voltar ao Portfólio Geral"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Portfólio</span>
+                  </button>
+                  <ChevronRight className="w-3.5 h-3.5 text-grey-400 shrink-0" />
+                  <span className="text-grey-900 font-bold">Espaço da Solução</span>
                 </div>
               )}
-            </div>
+            </nav>
           </div>
 
-          {/* Right: Role Switcher & Header CTAs */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Right: Database Status & Role Switcher */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Database Status Indicator */}
+            {dbStatus === 'connected' ? (
+              <div
+                id="firestore-status-badge"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 border border-emerald-200 text-emerald-800"
+                title="Banco de dados Cloud Firestore conectado em tempo real"
+              >
+                <Database className="w-3 h-3 text-emerald-600" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="hidden sm:inline">Firestore Conectado</span>
+                <span className="sm:hidden">Firestore</span>
+              </div>
+            ) : dbStatus === 'syncing' ? (
+              <div
+                id="firestore-status-badge"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 border border-amber-200 text-amber-800"
+                title="Sincronizando com Firestore..."
+              >
+                <Database className="w-3 h-3 text-amber-600 animate-spin" />
+                <span className="hidden sm:inline">Sincronizando...</span>
+                <span className="sm:hidden">Sync...</span>
+              </div>
+            ) : (
+              <div
+                id="firestore-status-badge"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-grey-100 border border-grey-300 text-grey-700"
+                title="Operando com cache local"
+              >
+                <Database className="w-3 h-3 text-grey-500" />
+                <span>Cache Local</span>
+              </div>
+            )}
+
             {/* User Role Simulator Selector */}
             <div
               className="flex items-center gap-1.5 bg-grey-100 hover:bg-grey-200 px-3 py-1 rounded-full border border-grey-300 transition-colors"

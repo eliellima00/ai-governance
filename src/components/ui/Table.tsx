@@ -54,8 +54,8 @@ export interface StickyProps {
 }
 
 const STICKY_CELL_CLASSES: Record<'left' | 'right', string> = {
-  left: 'sticky left-0 z-10 shadow-[6px_0_8px_-6px_rgba(0,0,0,0.15)]',
-  right: 'sticky right-0 z-10 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.15)]'
+  left: 'sticky left-0 z-10 shadow-[4px_0_10px_-2px_rgba(0,0,0,0.12)] border-r border-grey-200/80',
+  right: 'sticky right-0 z-10 shadow-[-4px_0_10px_-2px_rgba(0,0,0,0.12)] border-l border-grey-200/80'
 };
 
 export const Th: React.FC<React.ThHTMLAttributes<HTMLTableCellElement> & StickyProps> = ({

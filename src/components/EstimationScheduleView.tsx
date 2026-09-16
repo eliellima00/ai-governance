@@ -404,7 +404,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
           subtext={
             <div className="space-y-1 pt-1.5 mt-1 border-t border-grey-100">
               <div className="flex justify-between">
-                <span>Base Tipo {currentProjectType}:</span>
+                <span>Base {currentProjectType === 'A' ? 'Workspace' : currentProjectType === 'B' ? 'Container/VPS' : 'No-Code'}:</span>
                 <span className="font-mono font-bold">{estimationResult.effortBaseHours.toFixed(1)}h</span>
               </div>
               <div className="flex justify-between text-info-700">
@@ -454,10 +454,10 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
         <div className="border-b border-grey-100 pb-3">
           <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
             <Workflow className="w-4 h-4 text-brand-dark" />
-            <span>Classificação do Eixo 2 — Arquétipo da Solução</span>
+            <span>Arquitetura da Solução & Stack Técnica</span>
           </h2>
           <p className="text-xs text-grey-500 mt-0.5">
-            Selecione o tipo técnico da solução. Cada tipo possui esforço base, lista de reuniões e critérios de teste específicos.
+            Selecione a arquitetura técnica da solução. Cada stack possui esforço base, lista de reuniões e critérios de teste específicos.
           </p>
         </div>
 
@@ -483,7 +483,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                           : 'bg-grey-100 text-grey-700 border-grey-200'
                       }`}
                     >
-                      Tipo {typeKey}
+                      {typeKey === 'A' ? 'Workspace' : typeKey === 'B' ? 'Container / VPS' : 'No-Code'}
                     </Badge>
                     {isSelected && (
                       <span className="text-brand-dark flex items-center gap-1 text-xs font-bold">

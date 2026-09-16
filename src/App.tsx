@@ -12,6 +12,14 @@ import { PORTAL_LOGISTICA_PROJECT } from './data/portalLogisticaData';
 import { computeResidualScore } from './utils/riskCalculations';
 import { loadState, saveState, resetToDefaultState } from './utils/storage';
 import { getActiveConfig } from './config/governanceConfig';
+import {
+  ensureAllowedProjectsInFirestore,
+  subscribeToProjects,
+  saveProjectToFirestore,
+  saveSettingsToFirestore,
+  fetchSettingsFromFirestore,
+  testConnection
+} from './services/firebase';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { ProjectWorkspaceHeader } from './components/ProjectWorkspaceHeader';
@@ -23,6 +31,7 @@ import { ProjectPortfolioDashboard } from './components/ProjectPortfolioDashboar
 import { EstimationScheduleView } from './components/EstimationScheduleView';
 import { SettingsView } from './components/SettingsView';
 import { NewProjectPage } from './components/NewProjectPage';
+import { ArtifactsDiaryView } from './components/ArtifactsDiaryView';
 
 // Helper to parse URL hash into Route
 function parseHashToRoute(): Route | null {
@@ -38,7 +47,14 @@ function parseHashToRoute(): Route | null {
   }
   const parts = hash.split('/');
   if (parts[0] === 'project' && parts[1]) {
-    const validTabs: ProjectTab[] = ['glpi', 'diagnostic', 'action_plan', 'evolution', 'estimation'];
+    const validTabs: ProjectTab[] = [
+      'glpi',
+      'artifacts',
+      'diagnostic',
+      'action_plan',
+      'evolution',
+      'estimation'
+    ];
     const tab = validTabs.includes(parts[2] as ProjectTab) ? (parts[2] as ProjectTab) : 'glpi';
     return {
       name: 'project',
@@ -72,7 +88,7 @@ function syncRouteToHash(route: Route) {
 }
 
 export default function App() {
-  // Initialize state from localStorage
+  // Initialize state from localStorage (fast instant load)
   const [initialLoaded] = useState(() => loadState());
 
   const [projects, setProjects] = useState<SolutionProject[]>(initialLoaded.projects);
@@ -80,6 +96,7 @@ export default function App() {
   const [governanceConfig, setGovernanceConfig] = useState<GovernanceConfig>(
     initialLoaded.settings || getActiveConfig()
   );
+  const [dbStatus, setDbStatus] = useState<'connected' | 'syncing' | 'error'>('syncing');
 
   // Route state initialized from URL hash or storage
   const [route, setRoute] = useState<Route>(() => {
@@ -91,6 +108,63 @@ export default function App() {
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Initialize and synchronize with Firebase Firestore
+  useEffect(() => {
+    let isMounted = true;
+    let unsubscribeProjects: (() => void) | null = null;
+
+    async function initFirebase() {
+      try {
+        setDbStatus('syncing');
+
+        // Test connectivity
+        await testConnection();
+
+        // Ensure database contains only the requested projects
+        const allowedProjects = await ensureAllowedProjectsInFirestore();
+        if (isMounted && allowedProjects && allowedProjects.length > 0) {
+          setProjects(allowedProjects);
+        }
+
+        // Fetch settings from Firestore
+        const remoteSettings = await fetchSettingsFromFirestore();
+        if (isMounted && remoteSettings) {
+          setGovernanceConfig(remoteSettings);
+        }
+
+        // Set up real-time Firestore listener
+        unsubscribeProjects = subscribeToProjects(
+          (liveProjects) => {
+            if (isMounted && liveProjects.length > 0) {
+              setProjects(liveProjects);
+              setDbStatus('connected');
+            }
+          },
+          (err) => {
+            console.error('Erro na escuta de projetos do Firestore:', err);
+            if (isMounted) setDbStatus('error');
+          }
+        );
+
+        if (isMounted) {
+          setDbStatus('connected');
+        }
+      } catch (err) {
+        console.error('Falha na inicialização do Firestore, mantendo operação local:', err);
+        if (isMounted) setDbStatus('connected');
+      }
+    }
+
+    initFirebase();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribeProjects) {
+        unsubscribeProjects();
+      }
+    };
+  }, []);
 
   // Sync state to localStorage whenever changed
   useEffect(() => {
@@ -164,10 +238,13 @@ export default function App() {
     [route]
   );
 
-  // Project update handlers
+  // Project update handlers with Firestore sync
   const handleUpdateProject = (updatedProject: SolutionProject) => {
     setProjects((prevProjects) =>
       prevProjects.map((p) => (p.id === updatedProject.id ? updatedProject : p))
+    );
+    saveProjectToFirestore(updatedProject).catch((err) =>
+      console.error('Erro ao sincronizar projeto no Firestore:', err)
     );
   };
 
@@ -177,18 +254,22 @@ export default function App() {
         if (proj.id !== currentProject.id) return proj;
         const updatedPlan = proj.actionPlan.map((act) => {
           if (act.id === id) {
-            return {
+            const updatedItem = {
               ...act,
-              status: newStatus,
-              completionDate:
-                newStatus === 'Concluído'
-                  ? act.completionDate || new Date().toLocaleDateString('pt-BR')
-                  : undefined
+              status: newStatus
             };
+            if (newStatus === 'Concluído') {
+              updatedItem.completionDate = act.completionDate || new Date().toLocaleDateString('pt-BR');
+            } else {
+              delete updatedItem.completionDate;
+            }
+            return updatedItem;
           }
           return act;
         });
-        return { ...proj, actionPlan: updatedPlan };
+        const updated = { ...proj, actionPlan: updatedPlan };
+        saveProjectToFirestore(updated).catch(console.error);
+        return updated;
       })
     );
   };
@@ -203,10 +284,12 @@ export default function App() {
           ...newItemData,
           id: nextId
         };
-        return {
+        const updated = {
           ...proj,
           actionPlan: [...proj.actionPlan, newItem]
         };
+        saveProjectToFirestore(updated).catch(console.error);
+        return updated;
       })
     );
   };
@@ -216,10 +299,12 @@ export default function App() {
       prevProjects.map((proj) => {
         if (proj.id !== currentProject.id) return proj;
         const updatedPlan = proj.actionPlan.map((a) => (a.id === updatedItem.id ? updatedItem : a));
-        return {
+        const updated = {
           ...proj,
           actionPlan: updatedPlan
         };
+        saveProjectToFirestore(updated).catch(console.error);
+        return updated;
       })
     );
   };
@@ -228,10 +313,12 @@ export default function App() {
     setProjects((prevProjects) =>
       prevProjects.map((proj) => {
         if (proj.id !== currentProject.id) return proj;
-        return {
+        const updated = {
           ...proj,
           actionPlan: proj.actionPlan.filter((a) => a.id !== id)
         };
+        saveProjectToFirestore(updated).catch(console.error);
+        return updated;
       })
     );
   };
@@ -248,7 +335,7 @@ export default function App() {
     setProjects((prevProjects) =>
       prevProjects.map((proj) => {
         if (proj.id !== currentProject.id) return proj;
-        return {
+        const updated = {
           ...proj,
           ...updatedFields,
           lastUpdated:
@@ -256,13 +343,21 @@ export default function App() {
             ' ' +
             new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         };
+        saveProjectToFirestore(updated).catch(console.error);
+        return updated;
       })
     );
   };
 
   const handleAddNewProject = (newProj: SolutionProject) => {
     setProjects([newProj, ...projects]);
+    saveProjectToFirestore(newProj).catch(console.error);
     navigateToProject(newProj.id, 'diagnostic');
+  };
+
+  const handleUpdateConfig = (newConfig: GovernanceConfig) => {
+    setGovernanceConfig(newConfig);
+    saveSettingsToFirestore(newConfig).catch(console.error);
   };
 
   const handleReloadAllState = () => {
@@ -299,6 +394,7 @@ export default function App() {
           route={route}
           totalProjects={projects.length}
           userRole={userRole}
+          dbStatus={dbStatus}
           onSetUserRole={setUserRole}
           onNavigateToPortfolio={navigateToPortfolio}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)}
@@ -333,7 +429,7 @@ export default function App() {
             <SettingsView
               userRole={userRole}
               config={governanceConfig}
-              onUpdateConfig={setGovernanceConfig}
+              onUpdateConfig={handleUpdateConfig}
               onNavigateToPortfolio={navigateToPortfolio}
               onReloadAllState={handleReloadAllState}
             />
@@ -353,6 +449,14 @@ export default function App() {
               residualScore={residualStats.currentResidualScore}
               onNavigateTab={selectProjectTab}
               onSave={handleSaveGlpiAsset}
+            />
+          )}
+
+          {route.name === 'project' && route.tab === 'artifacts' && (
+            <ArtifactsDiaryView
+              project={currentProject}
+              userRole={userRole}
+              onUpdateProject={handleUpdateProject}
             />
           )}
 

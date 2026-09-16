@@ -25,7 +25,7 @@ export type ExecutivePriority =
   | 'Backlog';
 
 // --- Navegação Mestre-Detalhe ---
-export type ProjectTab = 'glpi' | 'diagnostic' | 'action_plan' | 'evolution' | 'estimation';
+export type ProjectTab = 'glpi' | 'artifacts' | 'diagnostic' | 'action_plan' | 'evolution' | 'estimation';
 
 export type Route =
   | { name: 'portfolio' }
@@ -141,6 +141,55 @@ export interface ProjectActivityLog {
   details?: string;
 }
 
+export type ArtifactCategory =
+  | 'Pauta / Ata de Reunião'
+  | 'Especificação Funcional'
+  | 'Arquitetura & Segurança'
+  | 'Homologação & Evidências'
+  | 'Apresentação & Relatório'
+  | 'Código & Repositório'
+  | 'Outro';
+
+export type ArtifactFileType = 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'drive' | 'link' | 'outro';
+
+export interface ProjectArtifact {
+  id: string;
+  title: string;
+  category: ArtifactCategory;
+  fileType: ArtifactFileType;
+  url?: string; // Link direto do Google Drive, SharePoint, OneDrive, GLPI, etc.
+  fileName?: string;
+  fileSize?: string;
+  fileData?: string; // Data URI ou base64 para arquivos locais
+  version?: string;
+  author: string;
+  createdAt: string;
+  description?: string;
+}
+
+export type MeetingEntryType =
+  | 'Reunião de Alinhamento'
+  | 'Pauta Executiva'
+  | 'Homologação com Usuário'
+  | 'Ponto de Controle T.I'
+  | 'Incidente / Mudança'
+  | 'Decisão de Arquitetura';
+
+export interface MeetingDiaryEntry {
+  id: string;
+  date: string; // formato DD/MM/AAAA ou ISO
+  subject: string; // Pauta / Título do Alinhamento
+  entryType: MeetingEntryType;
+  participants: string; // Nomes / Áreas participantes
+  summary: string; // Deliberações e Decisões Acordadas
+  nextSteps?: string; // Próximos Passos e Pendências
+  registeredBy: string;
+  hoursSpent?: number;
+  linkedArtifactId?: string; // ID ou título do documento associado
+  linkedArtifactTitle?: string;
+  createdAt?: string;
+}
+
 export interface SolutionProject {
   id: string;
   name: string;
@@ -173,6 +222,8 @@ export interface SolutionProject {
   objective: string;
   initialDoc: string;
   qrCodeUrl: string;
+  artifacts?: ProjectArtifact[];
+  meetingLogs?: MeetingDiaryEntry[];
   activityLogs?: ProjectActivityLog[];
   activityLog?: ProjectActivityLog[];
   exitCriteriaChecked?: Record<string, boolean>;

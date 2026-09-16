@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "SolutionProject": {
+      "title": "SolutionProject",
+      "description": "Projeto e ativo GLPI registrado na esteira de governança de soluções da ATTO Sementes",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único do projeto"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nome da solução"
+        },
+        "glpiTicketId": {
+          "type": "string",
+          "description": "Número do chamado no GLPI"
+        },
+        "assetId": {
+          "type": "string",
+          "description": "Código do Ativo GLPI"
+        },
+        "department": {
+          "type": "string",
+          "description": "Departamento solicitante"
+        },
+        "businessResponsible": {
+          "type": "string",
+          "description": "Responsável pelo negócio"
+        },
+        "technicalResponsible": {
+          "type": "string",
+          "description": "Responsável técnico"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status operacional da solução"
+        },
+        "stage": {
+          "type": "string",
+          "description": "Fase na esteira de governança"
+        },
+        "executivePriority": {
+          "type": "string",
+          "description": "Prioridade executiva"
+        },
+        "isPriorityForManagement": {
+          "type": "boolean",
+          "description": "Indica priorização para pauta da gestão"
+        },
+        "initialScore": {
+          "type": "number",
+          "description": "Pontuação inicial de risco"
+        },
+        "initialRisk": {
+          "type": "string",
+          "description": "Nível inicial de risco"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Data e hora da última atualização"
+        }
+      },
+      "required": ["id", "name", "department"]
+    },
+    "GovernanceSettings": {
+      "title": "GovernanceSettings",
+      "description": "Configurações globais de pesos, critérios e matriz de risco de governança",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador da configuração"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "SolutionProject",
+      "description": "Coleção de projetos e soluções do portfólio"
+    },
+    "/settings/{settingId}": {
+      "schema": "GovernanceSettings",
+      "description": "Documentos de configuração do sistema de governança"
+    }
+  }
+}

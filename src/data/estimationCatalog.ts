@@ -42,20 +42,20 @@ export const PROJECT_TYPE_INFO: Record<
   { label: string; shortDesc: string; technologyHint: string; statusBadge?: string }
 > = {
   A: {
-    label: 'Tipo A — Google Workspace / Apps Script',
+    label: 'Google Workspace / Apps Script',
     shortDesc: 'Planilhas Google, formulários, automações Apps Script e portais Google Apps.',
     technologyHint: 'Apps Script, Google Sheets, Google Drive, Google Forms'
   },
   B: {
-    label: 'Tipo B — Container / VPS / Backend',
+    label: 'Container / VPS / Backend',
     shortDesc: 'Aplicações web, Docker, Node.js, Python, PostgreSQL/MySQL, AWS/Cloudflare ou VPS.',
     technologyHint: 'Docker, VPS, Node/React, Python, Fastify, Next.js, Banco de dados dedicado'
   },
   C: {
-    label: 'Tipo C — No-code / Externo (a calibrar)',
+    label: 'No-Code / Plataformas Externas',
     shortDesc: 'Plataformas como Blip, n8n, Zapier, Make, Bubble ou soluções SaaS proprietárias.',
     technologyHint: 'Blip, n8n, Make, Zapier, Bubble, Power Apps',
-    statusBadge: 'A calibrar (Base Tipo A)'
+    statusBadge: 'A calibrar (Base Workspace)'
   }
 };
 

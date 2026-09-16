@@ -340,7 +340,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       const realDate = formatPtBrDate(est.realistic.deliveryDate);
 
       text += `${idx + 1}. *${p.name}* [${p.assetId}]\n`;
-      text += `   • Eixo 2 (Técnico): Tipo ${p.projectType || 'A'} (${p.generationTool || 'Vibe Coding'})\n`;
+      text += `   • Arquitetura: ${p.projectType === 'A' ? 'Google Workspace / Apps Script' : p.projectType === 'B' ? 'Container / VPS / Backend' : 'No-Code / Externo'} (${p.generationTool || 'Desenvolvimento'})\n`;
       text += `   • Esteira T.I: ${p.govStage || 'E1'} - ${stageName}\n`;
       text += `   • Janela de Entrega: [${optDate} → ${realDate}] (${est.effortTotalHours.toFixed(1)}h T.I)\n`;
       text += `   • Responsável: ${p.businessResponsible} | Técnico: ${p.technicalResponsible}\n`;
@@ -383,56 +383,52 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
   return (
     <div id="project-portfolio-dashboard" className="space-y-6">
-      {/* Top Banner with Consultative Info */}
-      <Card className="p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge className="bg-brand-lighter text-brand-dark border-transparent text-[11px] uppercase tracking-wider">
-            <Building2 className="w-3.5 h-3.5" />
-            Portfólio Corporativo ATTO
-          </Badge>
-          <span className="text-xs text-grey-500 font-medium">
-            Governança de Soluções Departamentais & Vibe Coding
-          </span>
+      {/* Page Header & Action Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-grey-200">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-grey-900 tracking-tight">
+              Gestão de Demandas Departamentais
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-lighter text-brand-dark border border-brand-light shrink-0">
+              {projects.length} {projects.length === 1 ? 'Solução Ativa' : 'Soluções Ativas'}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-grey-600 mt-1 max-w-3xl leading-relaxed">
+            Painel executivo de esteira, prioridades da gestão, impedimentos e alinhamentos de soluções setoriais.
+          </p>
         </div>
 
-        <PageHeader
-          title="Gestão de Demandas Departamentais"
-          subtitle="Monitore todas as soluções em desenvolvimento e sustentação. Edite diretamente a etapa de cada projeto via select, anote notificações e status, marque as prioridades da gestão e acompanhe impedimentos e agendamentos."
-          actions={
-            <>
-              <Button
-                color="secondary"
-                size="sm"
-                onClick={handleCopyManagementPauta}
-                leftIcon={
-                  copiedPauta ? (
-                    <Check className="w-4 h-4 text-brand-main" />
-                  ) : (
-                    <Copy className="w-4 h-4 text-warning-600" />
-                  )
-                }
-                className="bg-warning-50 border-warning-200 hover:bg-warning-50"
-                title="Copiar pauta estruturada para alinhamento executivo no WhatsApp / Teams"
-              >
-                <span className={copiedPauta ? 'text-brand-dark' : 'text-grey-800'}>
-                  {copiedPauta ? 'Pauta Copiada!' : 'Copiar Pauta de Gestão'}
-                </span>
-              </Button>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <Button
+            color="secondary"
+            size="sm"
+            onClick={handleCopyManagementPauta}
+            leftIcon={
+              copiedPauta ? (
+                <Check className="w-4 h-4 text-brand-main" />
+              ) : (
+                <Copy className="w-4 h-4 text-warning-600" />
+              )
+            }
+            className="bg-warning-50 border-warning-200 hover:bg-warning-100 text-grey-800 font-semibold"
+            title="Copiar pauta estruturada para alinhamento executivo no WhatsApp / Teams"
+          >
+            {copiedPauta ? 'Pauta Copiada!' : 'Copiar Pauta de Gestão'}
+          </Button>
 
-              {can(userRole, 'create_solution') && (
-                <Button
-                  color="primary"
-                  size="sm"
-                  onClick={onOpenNewProjectModal}
-                  leftIcon={<Plus className="w-4 h-4" />}
-                >
-                  Nova Solução
-                </Button>
-              )}
-            </>
-          }
-        />
-      </Card>
+          {can(userRole, 'create_solution') && (
+            <Button
+              color="primary"
+              size="sm"
+              onClick={onOpenNewProjectModal}
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Nova Solução
+            </Button>
+          )}
+        </div>
+      </div>
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -588,12 +584,12 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           <Table className="text-xs">
             <Thead>
               <Tr className="hover:bg-transparent">
-                <Th className="text-center w-12" title="Marcar para pauta de gestão">
+                <Th sticky="left" className="text-center w-12 bg-grey-50" title="Marcar para pauta de gestão">
                   ⭐ Gestão
                 </Th>
                 <Th className="min-w-[200px]">Solução & Ativo GLPI</Th>
                 <Th className="min-w-[130px]">Área & Dono</Th>
-                <Th className="min-w-[130px]">Tipo Técnico & Esteira</Th>
+                <Th className="min-w-[150px]">Arquitetura & Esteira</Th>
                 <Th className="min-w-[230px]">Etapa do Ciclo</Th>
                 <Th className="min-w-[150px]">Prioridade</Th>
                 <Th className="min-w-[140px]">Impedimento / Bloqueio</Th>
@@ -611,7 +607,12 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                 return (
                   <Tr key={proj.id} className={proj.isPriorityForManagement ? 'bg-warning-50/30' : ''}>
                     {/* 1. Prioritized for Management Star */}
-                    <Td className="text-center">
+                    <Td
+                      sticky="left"
+                      className={`text-center ${
+                        proj.isPriorityForManagement ? 'bg-warning-50' : 'bg-white group-hover:bg-grey-50'
+                      }`}
+                    >
                       <button
                         onClick={() => handleTogglePrioritizeForManagement(proj)}
                         className="p-1 rounded-full hover:bg-grey-200/60 transition-transform active:scale-95"
@@ -661,13 +662,17 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
                     {/* 4. Technical Type & GovStage */}
                     <Td>
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-col gap-1">
                         <Badge className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-800 border-purple-200">
                           <Workflow className="w-2.5 h-2.5" />
-                          Tipo {proj.projectType || 'A'}
+                          {proj.projectType === 'A'
+                            ? 'Workspace'
+                            : proj.projectType === 'B'
+                            ? 'Container/VPS'
+                            : 'No-Code'}
                         </Badge>
                         <Badge className="text-[10px] px-1.5 py-0.5 bg-grey-100 text-grey-700 border-grey-200">
-                          {proj.govStage || 'E1'}
+                          {STAGE_NAMES[proj.govStage || 'E1'] || proj.govStage || 'E1'}
                         </Badge>
                       </div>
                     </Td>
@@ -870,7 +875,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
                         <div className="mt-3 pt-2 border-t border-warning-200/60 flex items-center justify-between">
                           <Badge className="text-[11px] font-bold text-purple-800 bg-purple-50 border-purple-200 px-2 py-0.5">
-                            Tipo {proj.projectType || 'A'} • Esteira {proj.govStage || 'E1'}
+                            {proj.projectType === 'A' ? 'Google Workspace' : proj.projectType === 'B' ? 'Container / VPS' : 'No-Code'} • {STAGE_NAMES[proj.govStage || 'E1'] || proj.govStage || 'E1'}
                           </Badge>
                           <button
                             onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
@@ -964,7 +969,9 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     >
                       <div className="flex items-center justify-between text-[10px] font-mono text-grey-500">
                         <span>{proj.assetId}</span>
-                        <span className="font-bold text-purple-800">Tipo {proj.projectType || 'A'}</span>
+                        <span className="font-bold text-purple-800">
+                          {proj.projectType === 'A' ? 'Workspace' : proj.projectType === 'B' ? 'Container/VPS' : 'No-Code'}
+                        </span>
                       </div>
                       <div className="text-xs font-bold text-grey-900 line-clamp-1">{proj.name}</div>
                       <div className="text-[11px] text-grey-500 truncate">{proj.businessResponsible}</div>

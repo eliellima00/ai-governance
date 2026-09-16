@@ -42,14 +42,22 @@ export interface FieldProps {
   label: string;
   htmlFor?: string;
   hint?: string;
+  required?: boolean;
   children: React.ReactNode;
 }
 
 /** Combina Label + controle + dica opcional, para reduzir repetição nos formulários. */
-export const Field: React.FC<FieldProps> = ({ label, htmlFor, hint, children }) => (
+export const Field: React.FC<FieldProps> = ({ label, htmlFor, hint, required, children }) => (
   <div>
-    <Label htmlFor={htmlFor}>{label}</Label>
+    <Label htmlFor={htmlFor}>
+      {label}
+      {required && <span className="text-danger-500 ml-1 font-bold">*</span>}
+    </Label>
     {children}
     {hint && <p className="text-xs text-grey-500 mt-1">{hint}</p>}
   </div>
 );
+
+export const FormField = Field;
+export type FormFieldProps = FieldProps;
+

@@ -20,9 +20,10 @@ import {
   ArrowRight,
   Copy,
   Check,
-  Lock
+  Lock,
+  FolderArchive
 } from 'lucide-react';
-import { SolutionProject } from '../types';
+import { SolutionProject, ProjectTab } from '../types';
 import {
   Button,
   Card,
@@ -39,7 +40,7 @@ import {
 interface GlpiAssetViewProps {
   project: SolutionProject;
   residualScore: number;
-  onNavigateTab: (tab: 'diagnostic' | 'action_plan' | 'evolution') => void;
+  onNavigateTab: (tab: ProjectTab) => void;
   onSave?: (updatedData: {
     name: string;
     status: any;
@@ -340,6 +341,15 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     leftIcon={<Eye className="w-3.5 h-3.5" />}
                   >
                     Acessar Documentação Viva
+                  </Button>
+
+                  <Button
+                    onClick={() => onNavigateTab('artifacts')}
+                    color="secondary"
+                    className="w-full"
+                    leftIcon={<FolderArchive className="w-3.5 h-3.5 text-brand-dark" />}
+                  >
+                    Artefatos & Diário de Bordo
                   </Button>
 
                   <Button
