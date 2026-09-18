@@ -10,7 +10,8 @@ import {
   Building2,
   FileText,
   ArrowRight,
-  Workflow
+  Workflow,
+  Inbox
 } from 'lucide-react';
 import {
   SolutionProject,
@@ -423,6 +424,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               size="sm"
               onClick={onOpenNewProjectModal}
               leftIcon={<Plus className="w-4 h-4" />}
+              data-tour="portfolio-new-solution-btn"
             >
               Nova Solução
             </Button>
@@ -431,7 +433,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5" data-tour="portfolio-kpis">
         <StatTile
           label="Total Projetos"
           value={
@@ -490,7 +492,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       </div>
 
       {/* View Mode Switcher and Controls */}
-      <Card className="p-4 space-y-3.5">
+      <Card className="p-4 space-y-3.5" data-tour="portfolio-view-switcher">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <Tabs<'spreadsheet' | 'executive_summary' | 'kanban'>
             items={[
@@ -578,8 +580,36 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
         </div>
       </Card>
 
+      {/* EMPTY STATE: NENHUMA SOLUÇÃO CADASTRADA AINDA */}
+      {projects.length === 0 && (
+        <Card className="p-12 sm:p-16 flex flex-col items-center justify-center text-center gap-4 border-2 border-dashed border-grey-200 bg-grey-50/60 shadow-none">
+          <div className="w-16 h-16 rounded-full bg-brand-lighter flex items-center justify-center">
+            <Inbox className="w-8 h-8 text-brand-dark" />
+          </div>
+          <div className="max-w-md">
+            <h2 className="text-base sm:text-lg font-black text-grey-900">
+              Nenhuma solução cadastrada ainda
+            </h2>
+            <p className="text-xs sm:text-sm text-grey-500 mt-1.5 leading-relaxed">
+              O portfólio está vazio. Cadastre a primeira solução ou ativo de T.I para iniciar o
+              diagnóstico de risco, o plano de ação e o acompanhamento na esteira de governança.
+            </p>
+          </div>
+          {can(userRole, 'create_solution') && (
+            <Button
+              color="primary"
+              size="sm"
+              onClick={onOpenNewProjectModal}
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Cadastrar Primeira Solução
+            </Button>
+          )}
+        </Card>
+      )}
+
       {/* VIEW 1: SPREADSHEET TABLE (EXECUTIVE GRID) */}
-      {viewMode === 'spreadsheet' && (
+      {projects.length > 0 && viewMode === 'spreadsheet' && (
         <Card className="p-0 overflow-hidden">
           <Table className="text-xs">
             <Thead>
@@ -791,7 +821,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       )}
 
       {/* VIEW 2: ALINHAMENTO DE DEMANDAS DEPARTAMENTAIS (1:1) */}
-      {viewMode === 'executive_summary' && (
+      {projects.length > 0 && viewMode === 'executive_summary' && (
         <div className="space-y-6">
           <Card className="bg-warning-50 border-warning-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-warning-600 p-4">
             <div>
@@ -947,7 +977,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       )}
 
       {/* VIEW 3: KANBAN BOARD */}
-      {viewMode === 'kanban' && (
+      {projects.length > 0 && viewMode === 'kanban' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {ALL_STAGES.slice(0, 4).map((stg) => {
             const list = filteredProjects.filter((p) => (p.stage || 'Levantamento & Ficha') === stg);

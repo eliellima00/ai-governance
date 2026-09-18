@@ -98,6 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <button
             onClick={handleGoPortfolio}
+            data-tour="sidebar-portfolio-btn"
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
               isPortfolioActive
                 ? 'bg-brand-dark text-white shadow-xs font-bold'
@@ -112,6 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={handleCreateNew}
             disabled={!canCreate}
+            data-tour="sidebar-new-solution-btn"
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
               !canCreate
                 ? 'text-grey-300 cursor-not-allowed'
@@ -131,6 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <button
             onClick={handleGoSettings}
+            data-tour="sidebar-settings-btn"
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
               route.name === 'settings'
                 ? 'bg-brand-dark text-white shadow-xs font-bold'

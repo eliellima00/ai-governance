@@ -40,6 +40,8 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
   const [businessResp, setBusinessResp] = useState('');
   const [techResp, setTechResp] = useState('');
   const [objective, setObjective] = useState('');
+  const [assetIdInput, setAssetIdInput] = useState('');
+  const [glpiTicketIdInput, setGlpiTicketIdInput] = useState('');
   const [hasLgpd, setHasLgpd] = useState(true);
   const [hasConfidential, setHasConfidential] = useState(true);
   const [hasErp, setHasErp] = useState(true);
@@ -232,7 +234,10 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       });
     }
 
-    const randomId = 'ATIVO-' + department.substring(0, 3).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900);
+    const randomId =
+      assetIdInput.trim() ||
+      'ATIVO-' + department.substring(0, 3).toUpperCase() + '-' + Math.floor(100 + Math.random() * 900);
+    const glpiTicketId = glpiTicketIdInput.trim() || `CH-2026-${Math.floor(1200 + Math.random() * 800)}`;
 
     // Preparar inputs de estimativa e descontos declarados
     const defaultEstimation = getDefaultEstimationInputs(projectType, startDate);
@@ -246,7 +251,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
     const newProject: SolutionProject = {
       id: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       name: name || 'Nova Solução Setorial',
-      glpiTicketId: `CH-2026-${Math.floor(1200 + Math.random() * 800)}`,
+      glpiTicketId,
       assetId: randomId,
       department,
       businessResponsible: businessResp || 'Não informado',
@@ -370,6 +375,37 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
               onChange={(e) => setObjective(e.target.value)}
             />
           </Field>
+
+          <div className="pt-3 border-t border-grey-200">
+            <span className="text-xs font-bold text-grey-700 block mb-2">
+              Origem no GLPI (opcional)
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Identificador do Ativo (GLPI)">
+                <Input
+                  placeholder="Ex: ATIVO-LOG-231 (deixe em branco para gerar um novo)"
+                  value={assetIdInput}
+                  onChange={(e) => setAssetIdInput(e.target.value)}
+                  className="font-mono"
+                />
+              </Field>
+
+              <Field label="Nº do Chamado GLPI de Origem">
+                <Input
+                  placeholder="Ex: CH-2024-0587 (deixe em branco para gerar um novo)"
+                  value={glpiTicketIdInput}
+                  onChange={(e) => setGlpiTicketIdInput(e.target.value)}
+                  className="font-mono"
+                />
+              </Field>
+            </div>
+            <p className="text-xs text-grey-400 mt-2 italic">
+              * Se esta solução já existe e está em andamento no GLPI e a gestão dela está migrando
+              para cá, informe o ID do ativo e o número do chamado originais para manter a
+              rastreabilidade. Deixe os dois campos em branco para uma solução nova (IDs serão
+              gerados automaticamente).
+            </p>
+          </div>
         </Card>
 
         <Card className="space-y-3">

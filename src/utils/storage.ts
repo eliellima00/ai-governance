@@ -1,6 +1,5 @@
 import { SolutionProject, Route, UserRole } from '../types';
 import { GovernanceSettings, getDefaultGovernanceSettings, setGlobalActiveSettings } from '../config/governanceConfig';
-import { PORTAL_LOGISTICA_PROJECT, OTHER_SAMPLE_PROJECTS } from '../data/portalLogisticaData';
 
 export const STORAGE_KEY = 'atto_governanca_state_v1';
 
@@ -20,36 +19,8 @@ export function getPtBrCurrentTimestamp(): string {
 }
 
 export function getDefaultSeedProjects(): SolutionProject[] {
-  // Garantir que todos os projetos tenham campos inicializados corretamente e sem IDs duplicados
-  const allInitial = [PORTAL_LOGISTICA_PROJECT, ...OTHER_SAMPLE_PROJECTS];
-  const seenIds = new Set<string>();
-  const uniqueInitial = allInitial.filter((p) => {
-    if (!p.id || seenIds.has(p.id)) return false;
-    seenIds.add(p.id);
-    return true;
-  });
-
-  return uniqueInitial.map((p) => ({
-    ...p,
-    isPriorityForManagement: p.isPriorityForManagement ?? (p as any)['isPrioritized' + 'ForBoss'] ?? false,
-    actionRequiredFromManagement: p.actionRequiredFromManagement ?? (p as any)['actionRequired' + 'FromBoss'] ?? '',
-    activityLogs: p.activityLogs || [
-      {
-        id: `act-${p.id}-1`,
-        date: p.lastUpdated || getPtBrCurrentTimestamp(),
-        description: 'Cadastro inicial e alinhamento de governança na esteira T.I.',
-        hours: 1.5,
-        stage: p.govStage || 'E0',
-        registeredBy: p.registeredBy || 'Gestão T.I'
-      }
-    ],
-    exitCriteriaChecked: p.exitCriteriaChecked || {
-      'crit-1': (p.govStage === 'E6' || p.govStage === 'Concluído'),
-      'crit-2': (p.govStage === 'E6' || p.govStage === 'Concluído'),
-      'crit-3': (p.govStage === 'Concluído'),
-      'crit-4': (p.govStage === 'Concluído')
-    }
-  }));
+  // Sem projetos de exemplo por padrão: o portfólio começa vazio para cadastro dos projetos reais.
+  return [];
 }
 
 export function getDefaultAppState(): StoredAppState {
@@ -102,7 +73,9 @@ export function loadState(): StoredAppState {
       'conciliacao-bancaria-controladoria',
       'calculadora-germina-lab',
       'automacao-cte-faturas-senior',
-      'portal-produtor-cooperado'
+      'portal-produtor-cooperado',
+      'portal-logistica-atto',
+      'bot-whatsapp-logistica-notificacoes'
     ]);
 
     const seenProjectIds = new Set<string>();

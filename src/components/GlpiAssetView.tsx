@@ -49,6 +49,8 @@ interface GlpiAssetViewProps {
     businessResponsible: string;
     objective: string;
     initialDoc: string;
+    assetId: string;
+    glpiTicketId: string;
   }) => void;
 }
 
@@ -80,6 +82,8 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   const [sheetCategory, setSheetCategory] = useState<string>('all');
 
   const [name, setName] = useState(project.name);
+  const [assetIdVal, setAssetIdVal] = useState(project.assetId);
+  const [glpiTicketIdVal, setGlpiTicketIdVal] = useState(project.glpiTicketId);
   const [status, setStatus] = useState(project.status);
   const [techResponsible, setTechResponsible] = useState(project.technicalResponsible);
   const [groupEncargado, setGroupEncargado] = useState(project.groupEncargado);
@@ -116,7 +120,9 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
         groupEncargado,
         businessResponsible: userResponsible,
         objective,
-        initialDoc
+        initialDoc,
+        assetId: assetIdVal,
+        glpiTicketId: glpiTicketIdVal
       });
     }
     setTimeout(() => setIsSavedToast(false), 3000);
@@ -223,6 +229,24 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                       <option value="Em Adequação">Em Adequação (Governança)</option>
                       <option value="Descontinuado">Descontinuado</option>
                     </Select>
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Identificador do Ativo (GLPI)">
+                    <Input
+                      value={assetIdVal}
+                      onChange={(e) => setAssetIdVal(e.target.value)}
+                      className="font-mono"
+                    />
+                  </Field>
+
+                  <Field label="Nº do Chamado GLPI de Origem">
+                    <Input
+                      value={glpiTicketIdVal}
+                      onChange={(e) => setGlpiTicketIdVal(e.target.value)}
+                      className="font-mono"
+                    />
                   </Field>
                 </div>
 

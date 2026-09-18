@@ -8,7 +8,6 @@ import {
   SolutionProject,
   UserRole
 } from './types';
-import { PORTAL_LOGISTICA_PROJECT } from './data/portalLogisticaData';
 import { computeResidualScore } from './utils/riskCalculations';
 import { loadState, saveState, resetToDefaultState } from './utils/storage';
 import { getActiveConfig } from './config/governanceConfig';
@@ -33,6 +32,7 @@ import { EstimationScheduleView } from './components/EstimationScheduleView';
 import { SettingsView } from './components/SettingsView';
 import { NewProjectPage } from './components/NewProjectPage';
 import { ArtifactsDiaryView } from './components/ArtifactsDiaryView';
+import { AppTour } from './components/tour/AppTour';
 
 // Helper to parse URL hash into Route
 function parseHashToRoute(): Route | null {
@@ -109,6 +109,7 @@ export default function App() {
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   // Initialize and synchronize with Supabase (PostgreSQL)
   useEffect(() => {
@@ -186,14 +187,12 @@ export default function App() {
 
   // Determine current project when in 'project' route
   const currentProjectId = route.name === 'project' ? route.projectId : projects[0]?.id;
-  const currentProject =
-    projects.find((p) => p.id === currentProjectId) || projects[0] || PORTAL_LOGISTICA_PROJECT;
+  const currentProject = projects.find((p) => p.id === currentProjectId) || projects[0];
 
-  // Calculate residual score for current project
-  const residualStats = computeResidualScore(
-    currentProject.initialScore,
-    currentProject.actionPlan
-  );
+  // Calculate residual score for current project (0 when the portfolio is empty)
+  const residualStats = currentProject
+    ? computeResidualScore(currentProject.initialScore, currentProject.actionPlan)
+    : computeResidualScore(0, []);
 
   // Navigation handlers
   const navigateToPortfolio = useCallback(() => {
@@ -325,6 +324,8 @@ export default function App() {
     businessResponsible: string;
     objective: string;
     initialDoc: string;
+    assetId: string;
+    glpiTicketId: string;
   }) => {
     setProjects((prevProjects) =>
       prevProjects.map((proj) => {
@@ -393,9 +394,10 @@ export default function App() {
           onSetUserRole={setUserRole}
           onNavigateToPortfolio={navigateToPortfolio}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          onStartTour={() => setIsTourOpen(true)}
         />
 
-        {route.name === 'project' && (
+        {route.name === 'project' && currentProject && (
           <ProjectWorkspaceHeader
             project={currentProject}
             activeTab={route.tab}
@@ -439,7 +441,7 @@ export default function App() {
             />
           )}
 
-          {route.name === 'project' && route.tab === 'glpi' && (
+          {route.name === 'project' && route.tab === 'glpi' && currentProject && (
             <GlpiAssetView
               project={currentProject}
               residualScore={residualStats.currentResidualScore}
@@ -448,7 +450,7 @@ export default function App() {
             />
           )}
 
-          {route.name === 'project' && route.tab === 'artifacts' && (
+          {route.name === 'project' && route.tab === 'artifacts' && currentProject && (
             <ArtifactsDiaryView
               project={currentProject}
               userRole={userRole}
@@ -456,7 +458,7 @@ export default function App() {
             />
           )}
 
-          {route.name === 'project' && route.tab === 'diagnostic' && (
+          {route.name === 'project' && route.tab === 'diagnostic' && currentProject && (
             <AiDiagnosticView
               project={currentProject}
               onNavigateHome={() => selectProjectTab('glpi')}
@@ -465,7 +467,7 @@ export default function App() {
             />
           )}
 
-          {route.name === 'project' && route.tab === 'action_plan' && (
+          {route.name === 'project' && route.tab === 'action_plan' && currentProject && (
             <ActionPlanView
               project={currentProject}
               actionList={currentProject.actionPlan}
@@ -478,7 +480,7 @@ export default function App() {
             />
           )}
 
-          {route.name === 'project' && route.tab === 'evolution' && (
+          {route.name === 'project' && route.tab === 'evolution' && currentProject && (
             <CriticalityEvolutionView
               project={currentProject}
               actionList={currentProject.actionPlan}
@@ -489,7 +491,7 @@ export default function App() {
             />
           )}
 
-          {route.name === 'project' && route.tab === 'estimation' && (
+          {route.name === 'project' && route.tab === 'estimation' && currentProject && (
             <EstimationScheduleView
               project={currentProject}
               onUpdateProject={handleUpdateProject}
@@ -512,6 +514,12 @@ export default function App() {
           </div>
         </footer>
       </div>
+
+      <AppTour
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onNavigateToPortfolio={navigateToPortfolio}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, ArrowLeft, User, Layers, Database } from 'lucide-react';
+import { ChevronRight, ArrowLeft, User, Layers, Database, Compass } from 'lucide-react';
 import { Route, UserRole } from '../types';
 
 interface NavbarProps {
@@ -11,6 +11,7 @@ interface NavbarProps {
   onSetUserRole: (role: UserRole) => void;
   onNavigateToPortfolio: () => void;
   onToggleMobileSidebar: () => void;
+  onStartTour: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -21,7 +22,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   dbProvider = 'supabase',
   onSetUserRole,
   onNavigateToPortfolio,
-  onToggleMobileSidebar
+  onToggleMobileSidebar,
+  onStartTour
 }) => {
   return (
     <header className="bg-white border-b border-grey-200 sticky top-0 z-30">
@@ -92,12 +94,24 @@ export const Navbar: React.FC<NavbarProps> = ({
             </nav>
           </div>
 
-          {/* Right: Database Status & Role Switcher */}
+          {/* Right: Tour Trigger, Database Status & Role Switcher */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Guided Tour Trigger */}
+            <button
+              onClick={onStartTour}
+              data-tour="navbar-start-tour-btn"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-brand-lighter border-brand-light text-brand-dark hover:bg-brand-light transition-colors"
+              title="Iniciar tour guiado pela aplicação"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Tour Guiado</span>
+            </button>
+
             {/* Database Status Indicator */}
             {dbStatus === 'connected' ? (
               <div
                 id="database-status-badge"
+                data-tour="navbar-db-status"
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-teal-50 border-teal-300 text-teal-850"
                 title="Banco relacional Supabase (PostgreSQL) conectado em tempo real"
               >
@@ -109,6 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : dbStatus === 'syncing' ? (
               <div
                 id="database-status-badge"
+                data-tour="navbar-db-status"
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 border border-amber-200 text-amber-800"
                 title="Sincronizando com Supabase..."
               >
@@ -119,6 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <div
                 id="database-status-badge"
+                data-tour="navbar-db-status"
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-grey-100 border border-grey-300 text-grey-700"
                 title="Operando com cache local"
               >
@@ -129,6 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* User Role Simulator Selector */}
             <div
+              data-tour="navbar-role-switch"
               className="flex items-center gap-1.5 bg-grey-100 hover:bg-grey-200 px-3 py-1 rounded-full border border-grey-300 transition-colors"
               title="Simulação de perfil de acesso"
             >

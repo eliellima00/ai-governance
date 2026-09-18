@@ -1,6 +1,5 @@
 import { SolutionProject } from '../types';
 import { GovernanceSettings } from '../config/governanceConfig';
-import { PORTAL_LOGISTICA_PROJECT, BOT_WHATSAPP_PROJECT } from '../data/portalLogisticaData';
 import {
   isSupabaseConfigured,
   fetchProjectsFromSupabase,
@@ -12,10 +11,7 @@ import {
   testSupabaseConnection
 } from './supabase';
 
-export const INITIAL_PROJECTS: SolutionProject[] = [
-  PORTAL_LOGISTICA_PROJECT,
-  BOT_WHATSAPP_PROJECT
-];
+export const INITIAL_PROJECTS: SolutionProject[] = [];
 
 export type DbProvider = 'supabase';
 
