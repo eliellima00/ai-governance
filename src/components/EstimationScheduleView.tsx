@@ -322,7 +322,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                 <div className="text-[10px] uppercase font-bold text-grey-500">Etapa Atual da Esteira</div>
                 <div className="text-xs font-extrabold text-brand-dark flex items-center justify-end gap-1 mt-0.5">
                   <span className="w-2 h-2 rounded-full bg-brand-main animate-pulse"></span>
-                  <span>{currentGovStage}: {STAGE_NAMES[currentGovStage]}</span>
+                  <span>{STAGE_NAMES[currentGovStage] || currentGovStage}</span>
                 </div>
               </div>
             </>
@@ -335,10 +335,10 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
         <Info className="w-4 h-4 text-warning-600 shrink-0 mt-0.5" />
         <div className="flex-1 leading-relaxed">
           <span className="font-bold text-warning-600">Princípio de Governança: </span>
-          Estimativa a partir do cadastro; confirmar na reunião de entendimento (E1). O cadastro inicial é uma declaração do usuário mantenedor, não um fato consumado.
+          Estimativa a partir do cadastro; confirmar na reunião de diagnóstico e entendimento. O cadastro inicial é uma declaração do usuário mantenedor, não um fato consumado.
           {currentGovStage === 'E0' && (
             <span className="block mt-1 font-semibold text-warning-600 bg-warning-50/80 px-2 py-0.5 rounded border border-warning-200/80 w-fit">
-              ⚠️ Projeto em E0 — Caixas de "Confirmado" ficam desabilitadas até a Reunião de Entendimento (E1).
+              ⚠️ Projeto em Cadastro Inicial — Caixas de "Confirmado" ficam desabilitadas até a Reunião de Diagnóstico.
             </span>
           )}
         </div>
@@ -556,25 +556,25 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
         </div>
       </Card>
 
-      {/* Seção 2: Esteira de Governança (E0..E6) com Stepper Interativo */}
+      {/* Seção 2: Esteira de Governança com Stepper Interativo */}
       <Card className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-grey-100 pb-3">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-brand-dark" />
-              <span>Esteira Oficial de Governança (E0 à E6)</span>
+              <span>Esteira Oficial de Governança de Soluções</span>
             </h2>
             <p className="text-xs text-grey-500 mt-0.5">
-              Clique em qualquer etapa para avançar o projeto na esteira. Ao avançar para homologação final ou conclusão, os critérios de saída são validados.
+              Clique na etapa correspondente para avançar o projeto na esteira. Ao avançar para a homologação final, os critérios de saída são validados.
             </p>
           </div>
-          <Badge className="font-mono bg-brand-lighter text-brand-dark border-brand-light self-start sm:self-auto">
-            Etapa Atual: {currentGovStage}
+          <Badge className="bg-brand-lighter text-brand-dark border-brand-light font-semibold self-start sm:self-auto">
+            Etapa Atual: {STAGE_NAMES[currentGovStage] || currentGovStage}
           </Badge>
         </div>
 
-        {/* Stepper visual — bespoke: cada clique passa por handleRequestStageChange (gate de critérios de saída), não é um tab switcher simples */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-5">
+        {/* Stepper visual com nomes claros das etapas */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-2 mb-5">
           {GOV_STAGES_CATALOG.map((stageKey, idx) => {
             const isCurrent = currentGovStage === stageKey;
             const currentIndex = GOV_STAGES_CATALOG.indexOf(currentGovStage);
@@ -585,25 +585,25 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                 key={stageKey}
                 type="button"
                 onClick={() => handleRequestStageChange(stageKey)}
-                className={`text-left p-2.5 rounded-full border transition-all relative ${
+                className={`text-left p-3 rounded-xl border transition-all relative flex flex-col justify-between min-h-[72px] ${
                   isCurrent
-                    ? 'border-brand-main bg-brand-main text-white shadow-sm ring-2 ring-brand-main/30'
+                    ? 'border-brand-main bg-brand-main text-white shadow-md ring-2 ring-brand-main/30'
                     : isPassed
-                    ? 'border-brand-light bg-brand-lighter/70 text-brand-dark hover:bg-brand-lighter/70'
-                    : 'border-grey-200 bg-grey-50/70 text-grey-600 hover:bg-grey-100/70'
+                    ? 'border-brand-light bg-brand-lighter/70 text-brand-dark hover:bg-brand-lighter'
+                    : 'border-grey-200 bg-white text-grey-700 hover:bg-grey-50'
                 }`}
               >
-                <div className="flex items-center justify-between text-[10px] font-bold mb-1">
-                  <span>{stageKey}</span>
+                <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
+                  <span className={isCurrent ? 'text-brand-light' : isPassed ? 'text-brand-main' : 'text-grey-400'}>
+                    Etapa {idx + 1}
+                  </span>
                   {isPassed ? (
-                    <CheckCircle2 className="w-3 h-3 text-brand-main" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-brand-main shrink-0" />
                   ) : isCurrent ? (
-                    <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                  ) : (
-                    <span className="text-[9px] text-grey-400">#{idx}</span>
-                  )}
+                    <span className="w-2 h-2 rounded-full bg-white animate-ping shrink-0" />
+                  ) : null}
                 </div>
-                <div className={`text-[11px] font-bold truncate ${isCurrent ? 'text-white' : 'text-grey-800'}`}>
+                <div className={`text-xs font-bold leading-tight ${isCurrent ? 'text-white' : 'text-grey-900'}`}>
                   {STAGE_NAMES[stageKey]}
                 </div>
               </button>
@@ -614,7 +614,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
         {/* Informações da Etapa Selecionada */}
         <div className="bg-grey-50 p-3.5 rounded-lg border border-grey-200 text-xs text-grey-700 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <span className="font-extrabold text-grey-900">Objetivo da Etapa {currentGovStage}: </span>
+            <span className="font-extrabold text-grey-900">Objetivo de {STAGE_NAMES[currentGovStage]}: </span>
             <span>{STAGE_DESCRIPTIONS[currentGovStage] || 'Esteira finalizada e ativo homologado em produção.'}</span>
           </div>
           {currentGovStage === 'E1' && (
@@ -775,8 +775,8 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-bold text-grey-900">{disc.label}</div>
                         <p className="text-[11px] text-grey-500 mt-0.5">{disc.description}</p>
-                        <span className="text-[10px] text-grey-400 font-mono">
-                          Impacto: -{disc.hours}h na etapa {disc.stageId}
+                        <span className="text-[10px] text-grey-500 font-medium">
+                          Impacto: -{disc.hours}h em {STAGE_NAMES[disc.stageId] || disc.stageId}
                         </span>
                       </div>
                     </div>
@@ -790,7 +790,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                         <span className="text-xs text-grey-700 font-medium">Declarado no Cadastro</span>
                       </ChecklistItem>
 
-                      {/* Checkbox 2: Confirmado na E1 */}
+                      {/* Checkbox 2: Confirmado na Reunião de Diagnóstico */}
                       <div title={confirmTitle}>
                         <ChecklistItem
                           checked={itemState.confirmed}
@@ -798,7 +798,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                           onToggle={() => handleToggleDiscount(disc.id, 'confirmed')}
                         >
                           <span className={`text-xs font-bold ${canConfirm ? 'text-brand-dark' : 'text-grey-400'}`}>
-                            Confirmado T.I (E1)
+                            Confirmado na Reunião T.I
                           </span>
                         </ChecklistItem>
                       </div>
@@ -850,10 +850,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                   className={isCurrentStage ? 'bg-brand-lighter/50 font-bold' : ''}
                 >
                   <Td className="flex items-center gap-2">
-                    <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-grey-100 border border-grey-200 text-grey-800 font-bold">
-                      {stg.stageId}
-                    </span>
-                    <span className="whitespace-nowrap">{stg.stageName}</span>
+                    <span className="font-semibold text-grey-900 whitespace-nowrap">{stg.stageName}</span>
                   </Td>
                   <Td className="text-right font-mono">{stg.baseHours}h</Td>
                   <Td className="text-right font-mono text-info-700">

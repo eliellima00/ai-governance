@@ -7,6 +7,7 @@ interface NavbarProps {
   totalProjects: number;
   userRole: UserRole;
   dbStatus?: 'connected' | 'syncing' | 'error';
+  dbProvider?: 'supabase';
   onSetUserRole: (role: UserRole) => void;
   onNavigateToPortfolio: () => void;
   onToggleMobileSidebar: () => void;
@@ -17,6 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   totalProjects,
   userRole,
   dbStatus = 'connected',
+  dbProvider = 'supabase',
   onSetUserRole,
   onNavigateToPortfolio,
   onToggleMobileSidebar
@@ -95,20 +97,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Database Status Indicator */}
             {dbStatus === 'connected' ? (
               <div
-                id="firestore-status-badge"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 border border-emerald-200 text-emerald-800"
-                title="Banco de dados Cloud Firestore conectado em tempo real"
+                id="database-status-badge"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-teal-50 border-teal-300 text-teal-850"
+                title="Banco relacional Supabase (PostgreSQL) conectado em tempo real"
               >
-                <Database className="w-3 h-3 text-emerald-600" />
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="hidden sm:inline">Firestore Conectado</span>
-                <span className="sm:hidden">Firestore</span>
+                <Database className="w-3 h-3 text-teal-600" />
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-teal-500" />
+                <span className="hidden sm:inline">Supabase (PostgreSQL)</span>
+                <span className="sm:hidden">Supabase</span>
               </div>
             ) : dbStatus === 'syncing' ? (
               <div
-                id="firestore-status-badge"
+                id="database-status-badge"
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 border border-amber-200 text-amber-800"
-                title="Sincronizando com Firestore..."
+                title="Sincronizando com Supabase..."
               >
                 <Database className="w-3 h-3 text-amber-600 animate-spin" />
                 <span className="hidden sm:inline">Sincronizando...</span>
@@ -116,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             ) : (
               <div
-                id="firestore-status-badge"
+                id="database-status-badge"
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-grey-100 border border-grey-300 text-grey-700"
                 title="Operando com cache local"
               >

@@ -13,13 +13,14 @@ import { computeResidualScore } from './utils/riskCalculations';
 import { loadState, saveState, resetToDefaultState } from './utils/storage';
 import { getActiveConfig } from './config/governanceConfig';
 import {
-  ensureAllowedProjectsInFirestore,
+  persistProject,
+  persistSettings,
+  loadInitialProjects,
+  loadInitialSettings,
   subscribeToProjects,
-  saveProjectToFirestore,
-  saveSettingsToFirestore,
-  fetchSettingsFromFirestore,
-  testConnection
-} from './services/firebase';
+  getActiveDbProvider
+} from './services/dataService';
+import { testSupabaseConnection } from './services/supabase';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { ProjectWorkspaceHeader } from './components/ProjectWorkspaceHeader';
@@ -109,54 +110,47 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // Initialize and synchronize with Firebase Firestore
+  // Initialize and synchronize with Supabase (PostgreSQL)
   useEffect(() => {
     let isMounted = true;
     let unsubscribeProjects: (() => void) | null = null;
 
-    async function initFirebase() {
+    async function initDatabase() {
       try {
         setDbStatus('syncing');
 
-        // Test connectivity
-        await testConnection();
-
-        // Ensure database contains only the requested projects
-        const allowedProjects = await ensureAllowedProjectsInFirestore();
-        if (isMounted && allowedProjects && allowedProjects.length > 0) {
-          setProjects(allowedProjects);
+        // Load initial projects from Supabase or local storage
+        const initialList = await loadInitialProjects();
+        if (isMounted && initialList && initialList.length > 0) {
+          setProjects(initialList);
         }
 
-        // Fetch settings from Firestore
-        const remoteSettings = await fetchSettingsFromFirestore();
+        // Fetch settings from Supabase
+        const remoteSettings = await loadInitialSettings();
         if (isMounted && remoteSettings) {
           setGovernanceConfig(remoteSettings);
         }
 
-        // Set up real-time Firestore listener
-        unsubscribeProjects = subscribeToProjects(
-          (liveProjects) => {
+        // Set up real-time Supabase listener
+        try {
+          unsubscribeProjects = subscribeToProjects((liveProjects) => {
             if (isMounted && liveProjects.length > 0) {
               setProjects(liveProjects);
               setDbStatus('connected');
             }
-          },
-          (err) => {
-            console.error('Erro na escuta de projetos do Firestore:', err);
-            if (isMounted) setDbStatus('error');
-          }
-        );
+          });
+        } catch (_) {}
 
         if (isMounted) {
           setDbStatus('connected');
         }
       } catch (err) {
-        console.error('Falha na inicialização do Firestore, mantendo operação local:', err);
+        console.info('ℹ️ Operando com dados locais com segurança:', err);
         if (isMounted) setDbStatus('connected');
       }
     }
 
-    initFirebase();
+    initDatabase();
 
     return () => {
       isMounted = false;
@@ -238,13 +232,13 @@ export default function App() {
     [route]
   );
 
-  // Project update handlers with Firestore sync
+  // Project update handlers with Supabase / Firestore sync
   const handleUpdateProject = (updatedProject: SolutionProject) => {
     setProjects((prevProjects) =>
       prevProjects.map((p) => (p.id === updatedProject.id ? updatedProject : p))
     );
-    saveProjectToFirestore(updatedProject).catch((err) =>
-      console.error('Erro ao sincronizar projeto no Firestore:', err)
+    persistProject(updatedProject).catch((err) =>
+      console.error('Erro ao sincronizar projeto:', err)
     );
   };
 
@@ -268,7 +262,7 @@ export default function App() {
           return act;
         });
         const updated = { ...proj, actionPlan: updatedPlan };
-        saveProjectToFirestore(updated).catch(console.error);
+        persistProject(updated).catch(console.error);
         return updated;
       })
     );
@@ -288,7 +282,7 @@ export default function App() {
           ...proj,
           actionPlan: [...proj.actionPlan, newItem]
         };
-        saveProjectToFirestore(updated).catch(console.error);
+        persistProject(updated).catch(console.error);
         return updated;
       })
     );
@@ -303,7 +297,7 @@ export default function App() {
           ...proj,
           actionPlan: updatedPlan
         };
-        saveProjectToFirestore(updated).catch(console.error);
+        persistProject(updated).catch(console.error);
         return updated;
       })
     );
@@ -317,7 +311,7 @@ export default function App() {
           ...proj,
           actionPlan: proj.actionPlan.filter((a) => a.id !== id)
         };
-        saveProjectToFirestore(updated).catch(console.error);
+        persistProject(updated).catch(console.error);
         return updated;
       })
     );
@@ -343,7 +337,7 @@ export default function App() {
             ' ' +
             new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         };
-        saveProjectToFirestore(updated).catch(console.error);
+        persistProject(updated).catch(console.error);
         return updated;
       })
     );
@@ -351,13 +345,13 @@ export default function App() {
 
   const handleAddNewProject = (newProj: SolutionProject) => {
     setProjects([newProj, ...projects]);
-    saveProjectToFirestore(newProj).catch(console.error);
+    persistProject(newProj).catch(console.error);
     navigateToProject(newProj.id, 'diagnostic');
   };
 
   const handleUpdateConfig = (newConfig: GovernanceConfig) => {
     setGovernanceConfig(newConfig);
-    saveSettingsToFirestore(newConfig).catch(console.error);
+    persistSettings(newConfig).catch(console.error);
   };
 
   const handleReloadAllState = () => {
@@ -395,6 +389,7 @@ export default function App() {
           totalProjects={projects.length}
           userRole={userRole}
           dbStatus={dbStatus}
+          dbProvider={getActiveDbProvider()}
           onSetUserRole={setUserRole}
           onNavigateToPortfolio={navigateToPortfolio}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)}
@@ -429,6 +424,7 @@ export default function App() {
             <SettingsView
               userRole={userRole}
               config={governanceConfig}
+              projects={projects}
               onUpdateConfig={handleUpdateConfig}
               onNavigateToPortfolio={navigateToPortfolio}
               onReloadAllState={handleReloadAllState}

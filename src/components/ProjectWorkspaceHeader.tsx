@@ -116,8 +116,8 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
                 {project.assetId}
               </Badge>
               <Badge className="bg-purple-50 text-purple-800 border-purple-200">{typeLabel}</Badge>
-              <Badge className="bg-grey-100 text-grey-700 border-grey-300">
-                {stageKey} — {stageName}
+              <Badge className="bg-grey-100 text-grey-800 border-grey-300 font-medium">
+                {stageName}
               </Badge>
             </div>
           </div>

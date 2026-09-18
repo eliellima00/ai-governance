@@ -1,0 +1,136 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Project {
+  id                      String   @id @db.VarChar(100)
+  name                    String   @db.VarChar(255)
+  glpiTicketId            String?  @map("glpi_ticket_id") @db.VarChar(50)
+  assetId                 String?  @map("asset_id") @db.VarChar(50)
+  department              String   @db.VarChar(100)
+  businessResponsible     String?  @map("business_responsible") @db.VarChar(150)
+  technicalResponsible    String?  @map("technical_responsible") @db.VarChar(150)
+  status                  String?  @default("Diagnóstico") @db.VarChar(50)
+  stage                   String?  @default("E0 - Triagem") @db.VarChar(50)
+  projectType             String?  @default("A") @map("project_type") @db.VarChar(10)
+  govStage                String?  @default("E0") @map("gov_stage") @db.VarChar(10)
+  executivePriority       String?  @default("P2 - Média Prioridade") @map("executive_priority") @db.VarChar(50)
+  isPriorityForManagement Boolean? @default(false) @map("is_priority_for_management")
+  hasImpediment           Boolean? @default(false) @map("has_impediment")
+  scheduledDate           String?  @map("scheduled_date") @db.VarChar(50)
+  scheduledSubject        String?  @map("scheduled_subject") @db.Text
+  registeredBy            String?  @map("registered_by") @db.VarChar(150)
+  groupEncargado          String?  @map("group_encargado") @db.VarChar(150)
+  userGroup               String?  @map("user_group") @db.VarChar(150)
+  notes                   String?  @db.Text
+  objective               String?  @db.Text
+  initialDoc              String?  @map("initial_doc") @db.Text
+  notificationStatus      String?  @map("notification_status") @db.Text
+  qrCodeUrl               String?  @map("qr_code_url") @db.Text
+  initialScore            Decimal? @default(0) @map("initial_score") @db.Decimal
+  initialRisk             String?  @default("BAIXO") @map("initial_risk") @db.VarChar(50)
+  dimensionsInitial       Json?    @default("{}") @map("dimensions_initial")
+  links                   Json?    @default("{}")
+  technicalDoc            Json?    @default("{}") @map("technical_doc")
+  sheetsCatalog           Json?    @default("[]") @map("sheets_catalog")
+  customHourlyRate        Decimal? @map("custom_hourly_rate") @db.Decimal
+  createdAt               DateTime? @default(now()) @map("created_at") @db.Timestamptz
+  lastUpdated             String?  @map("last_updated") @db.VarChar(50)
+
+  criteria                ProjectCriterion[]
+  actions                 ProjectAction[]
+  artifacts               ProjectArtifact[]
+  meetingLogs             ProjectMeetingLog[]
+
+  @@map("projects")
+}
+
+model ProjectCriterion {
+  id                   String   @id @db.VarChar(100)
+  projectId            String   @map("project_id") @db.VarChar(100)
+  criterion            String   @db.Text
+  evidence             String?  @db.Text
+  points               Decimal  @default(1) @db.Decimal
+  dimension            String   @db.VarChar(50)
+  mitigatedByActionIds Json?    @default("[]") @map("mitigated_by_action_ids")
+
+  project              Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId], map: "idx_criteria_project")
+  @@map("project_criteria")
+}
+
+model ProjectAction {
+  id                Int      @id @default(autoincrement())
+  projectId         String   @map("project_id") @db.VarChar(100)
+  title             String   @db.VarChar(255)
+  responsible       String   @db.VarChar(150)
+  deadline          String   @db.VarChar(50)
+  priority          String   @default("Média") @db.VarChar(50)
+  status            String   @default("Pendente") @db.VarChar(50)
+  riskPointsImpact  Decimal? @default(1) @map("risk_points_impact") @db.Decimal
+  dimension         String   @db.VarChar(50)
+  notes             String?  @db.Text
+  evidence          String?  @db.Text
+  completionDate    String?  @map("completion_date") @db.VarChar(50)
+
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId], map: "idx_actions_project")
+  @@map("project_actions")
+}
+
+model ProjectArtifact {
+  id          String   @id @db.VarChar(100)
+  projectId   String   @map("project_id") @db.VarChar(100)
+  title       String   @db.VarChar(255)
+  category    String   @db.VarChar(100)
+  fileType    String   @map("file_type") @db.VarChar(50)
+  url         String?  @db.Text
+  fileName    String?  @map("file_name") @db.VarChar(255)
+  fileSize    String?  @map("file_size") @db.VarChar(50)
+  fileData    String?  @map("file_data") @db.Text
+  version     String?  @default("v1.0") @db.VarChar(50)
+  author      String   @db.VarChar(150)
+  createdAt   String   @map("created_at") @db.VarChar(50)
+  description String?  @db.Text
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId], map: "idx_artifacts_project")
+  @@map("project_artifacts")
+}
+
+model ProjectMeetingLog {
+  id                  String    @id @db.VarChar(100)
+  projectId           String    @map("project_id") @db.VarChar(100)
+  date                String    @db.VarChar(50)
+  subject             String    @db.VarChar(255)
+  entryType           String    @map("entry_type") @db.VarChar(100)
+  participants        String?   @db.Text
+  summary             String    @db.Text
+  nextSteps           String?   @map("next_steps") @db.Text
+  registeredBy        String    @map("registered_by") @db.VarChar(150)
+  hoursSpent          Decimal?  @default(1) @map("hours_spent") @db.Decimal
+  linkedArtifactId    String?   @map("linked_artifact_id") @db.VarChar(100)
+  linkedArtifactTitle String?   @map("linked_artifact_title") @db.VarChar(255)
+  createdAt           DateTime? @default(now()) @map("created_at") @db.Timestamptz
+
+  project             Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId], map: "idx_meetings_project")
+  @@map("project_meeting_logs")
+}
+
+model GovernanceSettings {
+  id        String    @id @db.VarChar(50)
+  data      Json
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@map("governance_settings")
+}
