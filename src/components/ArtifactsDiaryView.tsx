@@ -604,8 +604,10 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredArtifacts.map((art) => {
-                const catColor = CATEGORY_COLORS[art.category] || CATEGORY_COLORS['Outro'];
-                const fileConfig = FILE_TYPE_CONFIG[art.fileType] || FILE_TYPE_CONFIG['outro'];
+                const defaultCat = { bg: 'bg-grey-100', text: 'text-grey-800', border: 'border-grey-300' };
+                const catColor = (art.category && CATEGORY_COLORS[art.category]) || CATEGORY_COLORS['Outro'] || defaultCat;
+                const defaultFileConfig = { label: 'Arquivo / Documento', iconColor: 'text-grey-600', bgColor: 'bg-grey-100' };
+                const fileConfig = (art.fileType && FILE_TYPE_CONFIG[art.fileType]) || FILE_TYPE_CONFIG['outro'] || defaultFileConfig;
 
                 return (
                   <div

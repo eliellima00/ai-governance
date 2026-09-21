@@ -154,6 +154,76 @@ const PRIORITY_CONFIG: Record<
   }
 };
 
+const DEFAULT_STAGE_STYLE = {
+  bg: 'bg-grey-100',
+  text: 'text-grey-700',
+  border: 'border-grey-300',
+  label: 'Levantamento & Ficha'
+};
+
+export function getStageStyle(stage?: string | null) {
+  if (!stage) return DEFAULT_STAGE_STYLE;
+  if (STAGE_CONFIG[stage as ProjectStage]) {
+    return STAGE_CONFIG[stage as ProjectStage];
+  }
+  const normalized = stage.toLowerCase();
+  if (normalized.includes('diagnóstico') || normalized.includes('diagnostico')) {
+    return STAGE_CONFIG['Diagnóstico de Risco'];
+  }
+  if (normalized.includes('plano') || normalized.includes('adequação') || normalized.includes('adequacao')) {
+    return STAGE_CONFIG['Plano de Ação / Adequação'];
+  }
+  if (normalized.includes('homologação') || normalized.includes('homologacao')) {
+    return STAGE_CONFIG['Homologação TI'];
+  }
+  if (
+    normalized.includes('produção') ||
+    normalized.includes('producao') ||
+    normalized.includes('operação') ||
+    normalized.includes('operacao')
+  ) {
+    return STAGE_CONFIG['Em Produção / Operação'];
+  }
+  if (normalized.includes('sustentação') || normalized.includes('sustentacao')) {
+    return STAGE_CONFIG['Sustentação'];
+  }
+  if (normalized.includes('bloqueado') || normalized.includes('aguardando')) {
+    return STAGE_CONFIG['Bloqueado / Aguardando'];
+  }
+  return DEFAULT_STAGE_STYLE;
+}
+
+const DEFAULT_PRIORITY_STYLE = {
+  bg: 'bg-grey-100',
+  text: 'text-grey-700',
+  border: 'border-grey-300',
+  label: 'P2 - Média'
+};
+
+export function getPriorityStyle(priority?: string | null) {
+  if (!priority) return DEFAULT_PRIORITY_STYLE;
+  if (PRIORITY_CONFIG[priority as ExecutivePriority]) {
+    return PRIORITY_CONFIG[priority as ExecutivePriority];
+  }
+  const lower = priority.toLowerCase();
+  if (lower.includes('p0') || lower.includes('urgente') || lower.includes('crítica') || lower.includes('critica')) {
+    return PRIORITY_CONFIG['P0 - Urgente'];
+  }
+  if (lower.includes('p1') || lower.includes('alta')) {
+    return PRIORITY_CONFIG['P1 - Alta'];
+  }
+  if (lower.includes('p2') || lower.includes('média') || lower.includes('media')) {
+    return PRIORITY_CONFIG['P2 - Média'];
+  }
+  if (lower.includes('p3') || lower.includes('baixa')) {
+    return PRIORITY_CONFIG['P3 - Baixa'];
+  }
+  if (lower.includes('backlog')) {
+    return PRIORITY_CONFIG['Backlog'];
+  }
+  return DEFAULT_PRIORITY_STYLE;
+}
+
 export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps> = ({
   projects,
   userRole = 'admin',
@@ -631,8 +701,8 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             </Thead>
             <Tbody>
               {filteredProjects.map((proj) => {
-                const stageStyle = STAGE_CONFIG[proj.stage || 'Levantamento & Ficha'];
-                const priorityStyle = PRIORITY_CONFIG[proj.executivePriority || 'P2 - Média'];
+                const stageStyle = getStageStyle(proj.stage);
+                const priorityStyle = getPriorityStyle(proj.executivePriority);
 
                 return (
                   <Tr key={proj.id} className={proj.isPriorityForManagement ? 'bg-warning-50/30' : ''}>
@@ -710,7 +780,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     {/* 5. Stage Select (Interactive) */}
                     <Td>
                       <select
-                        value={proj.stage || 'Levantamento & Ficha'}
+                        value={proj.stage && ALL_STAGES.includes(proj.stage) ? proj.stage : 'Levantamento & Ficha'}
                         onChange={(e) => handleStageChange(proj, e.target.value as ProjectStage)}
                         className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
                       >
@@ -725,7 +795,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     {/* 6. Priority Select */}
                     <Td>
                       <select
-                        value={proj.executivePriority || 'P2 - Média'}
+                        value={
+                          proj.executivePriority && PRIORITY_CONFIG[proj.executivePriority]
+                            ? proj.executivePriority
+                            : 'P2 - Média'
+                        }
                         onChange={(e) => handlePriorityChange(proj, e.target.value as ExecutivePriority)}
                         className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
                       >
@@ -733,6 +807,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         <option value="P1 - Alta">P1 - Alta</option>
                         <option value="P2 - Média">P2 - Média</option>
                         <option value="P3 - Baixa">P3 - Baixa</option>
+                        <option value="Backlog">Backlog</option>
                       </select>
                     </Td>
 

@@ -276,6 +276,9 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       projectType,
       generationTool,
       govStage: 'E0',
+      stage: 'Levantamento & Ficha',
+      executivePriority: 'P2 - Média',
+      isPriorityForManagement: false,
       estimation: defaultEstimation,
       technicalDoc: {
         version: '1.0.0',
