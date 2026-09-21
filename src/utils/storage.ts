@@ -48,7 +48,7 @@ export function loadState(): StoredAppState {
     }
 
     const parsed = JSON.parse(raw);
-    if (!parsed || !Array.isArray(parsed.projects) || parsed.projects.length === 0) {
+    if (!parsed || !Array.isArray(parsed.projects)) {
       const defaultState = getDefaultAppState();
       saveState(defaultState);
       return defaultState;
