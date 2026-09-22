@@ -11,7 +11,8 @@ import {
   FileText,
   ArrowRight,
   Workflow,
-  Inbox
+  Inbox,
+  Clock
 } from 'lucide-react';
 import {
   SolutionProject,
@@ -23,6 +24,7 @@ import {
 } from '../types';
 import {
   computeEstimation,
+  daysSince,
   formatPtBrDate,
   getDefaultEstimationInputs
 } from '../utils/estimation';
@@ -42,6 +44,7 @@ import { Modal, ModalFooter } from './ui/Modal';
 import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
 import { StatTile } from './ui/StatTile';
 import { SearchInput } from './ui/SearchInput';
+import { PortfolioGanttView } from './PortfolioGanttView';
 
 interface ProjectPortfolioDashboardProps {
   projects: SolutionProject[];
@@ -231,7 +234,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   onSelectProjectAndNavigate,
   onOpenNewProjectModal
 }) => {
-  const [viewMode, setViewMode] = useState<'spreadsheet' | 'executive_summary' | 'kanban'>('spreadsheet');
+  const [viewMode, setViewMode] = useState<'spreadsheet' | 'executive_summary' | 'kanban' | 'gantt'>('spreadsheet');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStage, setFilterStage] = useState('all');
@@ -302,6 +305,16 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     filterProjectType
   ]);
 
+  // Estimativa/cronograma por projeto (reutilizado no Kanban e usado como base para o Gantt)
+  const estimationByProjectId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof computeEstimation>>();
+    filteredProjects.forEach((p) => {
+      const inputs = p.estimation || getDefaultEstimationInputs(p.projectType || 'A');
+      map.set(p.id, computeEstimation(inputs));
+    });
+    return map;
+  }, [filteredProjects]);
+
   // General KPI Statistics
   const stats = useMemo(() => {
     const total = projects.length;
@@ -324,6 +337,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     onUpdateProject({
       ...project,
       stage: newStage,
+      stageEnteredAt: new Date().toISOString().split('T')[0],
       lastUpdated: new Date().toLocaleDateString('pt-BR')
     });
   };
@@ -564,7 +578,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       {/* View Mode Switcher and Controls */}
       <Card className="p-4 space-y-3.5" data-tour="portfolio-view-switcher">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <Tabs<'spreadsheet' | 'executive_summary' | 'kanban'>
+          <Tabs<'spreadsheet' | 'executive_summary' | 'kanban' | 'gantt'>
             items={[
               {
                 id: 'spreadsheet' as const,
@@ -588,6 +602,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               {
                 id: 'kanban' as const,
                 label: 'Funil de Etapas (Kanban)'
+              },
+              {
+                id: 'gantt' as const,
+                label: 'Cronograma (Gantt)'
               }
             ]}
             value={viewMode}
@@ -1053,11 +1071,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
       {/* VIEW 3: KANBAN BOARD */}
       {projects.length > 0 && viewMode === 'kanban' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {ALL_STAGES.slice(0, 4).map((stg) => {
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {ALL_STAGES.map((stg) => {
             const list = filteredProjects.filter((p) => (p.stage || 'Levantamento & Ficha') === stg);
             return (
-              <Card key={stg} className="bg-grey-50 p-3.5 space-y-3">
+              <Card key={stg} className="bg-grey-50 p-3.5 space-y-3 w-72 shrink-0">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-grey-800">{stg}</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-grey-600 border border-grey-200">
@@ -1066,27 +1084,69 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                 </div>
 
                 <div className="space-y-2">
-                  {list.map((proj) => (
-                    <Card
-                      key={proj.id}
-                      onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
-                      className="p-3 hover:border-brand-main cursor-pointer transition-all space-y-2"
-                    >
-                      <div className="flex items-center justify-between text-[10px] font-mono text-grey-500">
-                        <span>{proj.assetId}</span>
-                        <span className="font-bold text-purple-800">
-                          {proj.projectType === 'A' ? 'Workspace' : proj.projectType === 'B' ? 'Container/VPS' : 'No-Code'}
-                        </span>
-                      </div>
-                      <div className="text-xs font-bold text-grey-900 line-clamp-1">{proj.name}</div>
-                      <div className="text-[11px] text-grey-500 truncate">{proj.businessResponsible}</div>
-                    </Card>
-                  ))}
+                  {list.map((proj) => {
+                    const priorityStyle = getPriorityStyle(proj.executivePriority);
+                    const est = estimationByProjectId.get(proj.id);
+
+                    return (
+                      <Card
+                        key={proj.id}
+                        onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
+                        className={`p-3 hover:border-brand-main cursor-pointer transition-all space-y-2 ${
+                          proj.hasImpediment ? 'border-danger-300' : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] font-mono text-grey-500">
+                          <span>{proj.assetId}</span>
+                          <span className="font-bold text-purple-800">
+                            {proj.projectType === 'A' ? 'Workspace' : proj.projectType === 'B' ? 'Container/VPS' : 'No-Code'}
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-grey-900 line-clamp-1">{proj.name}</div>
+                        <div className="text-[11px] text-grey-500 truncate">{proj.businessResponsible}</div>
+
+                        <div className="flex flex-wrap items-center gap-1 pt-1.5 border-t border-grey-100">
+                          <Badge className="text-[9px] px-1.5 py-0 bg-grey-100 text-grey-700 border-grey-200">
+                            {proj.govStage || 'E1'} · {STAGE_NAMES[proj.govStage || 'E1'] || proj.govStage}
+                          </Badge>
+                          <Badge className={`text-[9px] px-1.5 py-0 ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border}`}>
+                            {priorityStyle.label}
+                          </Badge>
+                          {proj.hasImpediment && (
+                            <Badge className="text-[9px] px-1.5 py-0 bg-danger-50 text-danger-800 border-danger-300">
+                              <AlertTriangle className="w-2.5 h-2.5" />
+                              Bloqueado
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px] text-grey-500 pt-1">
+                          <span className="flex items-center gap-1" title="Dias nesta etapa do ciclo">
+                            <Clock className="w-3 h-3" />
+                            {daysSince(proj.stageEnteredAt)}d nesta etapa
+                          </span>
+                          {est && (
+                            <span title="Previsão de entrega (cenário realista)">
+                              Prev.: {formatPtBrDate(est.realistic.deliveryDate)}
+                            </span>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
               </Card>
             );
           })}
         </div>
+      )}
+
+      {/* VIEW 4: GANTT DE CRONOGRAMA */}
+      {projects.length > 0 && viewMode === 'gantt' && (
+        <PortfolioGanttView
+          projects={filteredProjects}
+          onSelectProjectAndNavigate={onSelectProjectAndNavigate}
+        />
       )}
 
       {/* MODAL 1: EDITAR ANOTAÇÕES */}

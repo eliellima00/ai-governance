@@ -8,23 +8,43 @@ import {
 import { getActiveConfig } from '../config/governanceConfig';
 
 /**
+ * Faz o parse de uma data em YYYY-MM-DD ou DD/MM/YYYY (com ou sem horário anexado)
+ * para um objeto Date local.
+ */
+export function parseFlexibleDate(dateStr: string): Date {
+  const datePart = (dateStr || new Date().toISOString().split('T')[0]).split(' ')[0];
+  if (datePart.includes('/')) {
+    const [day, month, year] = datePart.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const parts = datePart.split('-').map(Number);
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+/**
+ * Diferença em dias corridos entre duas datas (YYYY-MM-DD ou DD/MM/YYYY).
+ */
+export function diffDays(fromDateStr: string, toDateStr: string): number {
+  const from = parseFlexibleDate(fromDateStr);
+  const to = parseFlexibleDate(toDateStr);
+  return Math.round((to.setHours(0, 0, 0, 0) - from.setHours(0, 0, 0, 0)) / 86400000);
+}
+
+/**
+ * Quantidade de dias corridos entre uma data (YYYY-MM-DD ou DD/MM/YYYY) e hoje.
+ */
+export function daysSince(dateStr?: string): number {
+  if (!dateStr) return 0;
+  const todayIso = new Date().toISOString().split('T')[0];
+  return Math.max(0, diffDays(dateStr, todayIso));
+}
+
+/**
  * Pula fins de semana (sábado e domingo).
  * Se o start cair em fim de semana, avança para a próxima segunda-feira.
  */
 export function addWorkingDays(startDateStr: string, daysToAdd: number): string {
-  if (!startDateStr) {
-    startDateStr = new Date().toISOString().split('T')[0];
-  }
-
-  // Parse YYYY-MM-DD or DD/MM/YYYY
-  let date: Date;
-  if (startDateStr.includes('/')) {
-    const [day, month, year] = startDateStr.split('/').map(Number);
-    date = new Date(year, month - 1, day);
-  } else {
-    const parts = startDateStr.split('-').map(Number);
-    date = new Date(parts[0], parts[1] - 1, parts[2]);
-  }
+  const date = parseFlexibleDate(startDateStr);
 
   // If initial date falls on Saturday (6) or Sunday (0), move to Monday
   while (date.getDay() === 0 || date.getDay() === 6) {

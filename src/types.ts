@@ -200,6 +200,7 @@ export interface SolutionProject {
   technicalResponsible: string;
   status: 'Uso' | 'Homologação' | 'Em Adequação' | 'Descontinuado';
   stage?: ProjectStage;
+  stageEnteredAt?: string;
   // Novo Eixo 2 e Governança
   projectType?: ProjectType;
   generationTool?: GenerationTool;

@@ -66,7 +66,8 @@ export function loadState(): StoredAppState {
       isPriorityForManagement: p.isPriorityForManagement ?? p['isPrioritized' + 'ForBoss'] ?? false,
       actionRequiredFromManagement: p.actionRequiredFromManagement ?? p['actionRequired' + 'FromBoss'] ?? '',
       activityLogs: p.activityLogs || [],
-      exitCriteriaChecked: p.exitCriteriaChecked || {}
+      exitCriteriaChecked: p.exitCriteriaChecked || {},
+      stageEnteredAt: p.stageEnteredAt || p.createdAt
     }));
 
     const DISCARDED_SAMPLE_IDS = new Set([
@@ -194,7 +195,8 @@ export function parseImportedJson(jsonString: string): StoredAppState {
     isPriorityForManagement: p.isPriorityForManagement ?? p['isPrioritized' + 'ForBoss'] ?? false,
     actionRequiredFromManagement: p.actionRequiredFromManagement ?? p['actionRequired' + 'FromBoss'] ?? '',
     activityLogs: p.activityLogs || [],
-    exitCriteriaChecked: p.exitCriteriaChecked || {}
+    exitCriteriaChecked: p.exitCriteriaChecked || {},
+    stageEnteredAt: p.stageEnteredAt || p.createdAt
   }));
 
   const role: UserRole = data.role === 'padrao' ? 'padrao' : 'admin';

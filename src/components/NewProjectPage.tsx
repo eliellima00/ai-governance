@@ -259,6 +259,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       status: 'Em Adequação',
       createdAt: new Date().toLocaleDateString('pt-BR') + ' 10:00',
       lastUpdated: new Date().toLocaleDateString('pt-BR') + ' 10:00',
+      stageEnteredAt: new Date().toISOString().split('T')[0],
       registeredBy: 'Triagem Automática GLPI + IA',
       groupEncargado: 'T.I - Sistemas Corporativos & Governança',
       userGroup: `Dir. Operacional > ${department}`,
