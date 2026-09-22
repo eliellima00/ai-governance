@@ -9,15 +9,12 @@ import {
   Server,
   FileCheck,
   HelpCircle,
-  Workflow,
-  Check,
   Sparkles,
   Sliders,
   AlertTriangle
 } from 'lucide-react';
-import { SolutionProject, RiskCriterion, ProjectType } from '../types';
+import { SolutionProject, RiskCriterion } from '../types';
 import { getRiskColorClass } from '../utils/riskCalculations';
-import { PROJECT_TYPE_INFO } from '../data/estimationCatalog';
 import {
   Button,
   Badge,
@@ -41,111 +38,14 @@ interface AiDiagnosticViewProps {
   project: SolutionProject;
   onNavigateHome?: () => void;
   onNavigateToActionPlan: () => void;
-  onUpdateProject?: (updatedProject: SolutionProject) => void;
 }
 
 export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
   project,
   onNavigateHome,
-  onNavigateToActionPlan,
-  onUpdateProject
+  onNavigateToActionPlan
 }) => {
   const [activeTab, setActiveTab] = useState<'official' | 'simulator'>('official');
-  const [appliedTypeSuccess, setAppliedTypeSuccess] = useState(false);
-
-  // Deterministic Keyword-based Project Type Detection (No LLM)
-  const typeSuggestion = useMemo(() => {
-    const fullText = `${project.name} ${project.objective} ${project.initialDoc} ${
-      project.technicalDoc?.backend || ''
-    } ${project.technicalDoc?.database || ''} ${project.technicalDoc?.classification || ''} ${
-      project.technicalDoc?.frontend || ''
-    } ${project.technicalDoc?.integrations || ''}`.toLowerCase();
-
-    const typeBKeywords = [
-      'docker',
-      'vps',
-      'linux',
-      'node',
-      'fastify',
-      'express',
-      'python',
-      'django',
-      'fastapi',
-      'postgres',
-      'postgresql',
-      'sql',
-      'supabase',
-      'cloud run',
-      'api rest'
-    ];
-    const typeCKeywords = [
-      'whatsapp',
-      'bot',
-      'blip',
-      'z-api',
-      'meta cloud',
-      'webhook',
-      'n8n',
-      'make',
-      'zapier',
-      'bubble',
-      'power automate',
-      'chatbot'
-    ];
-    const typeAKeywords = [
-      'sheets',
-      'planilha',
-      'apps script',
-      'excel',
-      'vba',
-      'google drive',
-      'appsheet',
-      'macros'
-    ];
-
-    const matchedB = typeBKeywords.filter((k) => fullText.includes(k));
-    const matchedC = typeCKeywords.filter((k) => fullText.includes(k));
-    const matchedA = typeAKeywords.filter((k) => fullText.includes(k));
-
-    if (matchedC.length > 0 && matchedC.length >= matchedB.length) {
-      return {
-        suggestedType: 'C' as ProjectType,
-        confidence: matchedC.length >= 2 ? 'Alta' : 'Média',
-        matchedKeywords: matchedC,
-        explanation:
-          'Detectados componentes de bots, mensageria (WhatsApp/Meta), webhooks ou ferramentas de integração Low-Code.'
-      };
-    }
-
-    if (matchedB.length > 0) {
-      return {
-        suggestedType: 'B' as ProjectType,
-        confidence: matchedB.length >= 2 ? 'Alta' : 'Média',
-        matchedKeywords: matchedB,
-        explanation:
-          'Detectada pilha com código customizado (Node/Python/Docker/VPS), banco relacional ou APIs nativas.'
-      };
-    }
-
-    return {
-      suggestedType: 'A' as ProjectType,
-      confidence: matchedA.length > 0 ? 'Alta' : 'Média',
-      matchedKeywords: matchedA.length > 0 ? matchedA : ['planilhas / scripts de escritório'],
-      explanation:
-        'Detectada arquitetura leve baseada em Google Sheets, Google Apps Script, macros ou automações departamentais.'
-    };
-  }, [project]);
-
-  const handleApplySuggestedType = () => {
-    if (onUpdateProject) {
-      onUpdateProject({
-        ...project,
-        projectType: typeSuggestion.suggestedType
-      });
-      setAppliedTypeSuccess(true);
-      setTimeout(() => setAppliedTypeSuccess(false), 2500);
-    }
-  };
 
   // Deterministic Rules Simulator (Without LLM)
   const [simText, setSimText] = useState(
@@ -281,74 +181,6 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
               value={<span className="text-brand-dark">Necessária</span>}
               subtext="Controle de acessos, segregação de credenciais e proteção LGPD."
             />
-          </div>
-
-          {/* Eixo 2 Technical Type Suggestion Box */}
-          <div className="bg-white border border-purple-200 rounded-lg p-5 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 shrink-0">
-                  <Workflow className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-purple-100 text-purple-900 border-transparent">
-                      Sugestão de Arquitetura & Stack Técnica
-                    </Badge>
-                    <span className="text-xs text-grey-500 font-medium">
-                      Confiança: <strong>{typeSuggestion.confidence}</strong>
-                    </span>
-                  </div>
-                  <div className="mt-1 text-sm font-extrabold text-grey-900">
-                    Sugestão Baseada em Palavras-Chave de Tecnologia:{' '}
-                    <span className="text-purple-800">
-                      {PROJECT_TYPE_INFO[typeSuggestion.suggestedType].label}
-                    </span>
-                  </div>
-                  <p className="text-xs text-grey-600 mt-1 max-w-2xl leading-relaxed">
-                    {typeSuggestion.explanation}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    <span className="text-[11px] text-grey-500 font-medium">Termos identificados:</span>
-                    {typeSuggestion.matchedKeywords.map((kw, i) => (
-                      <Badge
-                        key={i}
-                        className="bg-purple-50 text-purple-800 border-purple-200 font-mono text-[10px]"
-                      >
-                        {kw}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:items-end gap-2 shrink-0">
-                <div className="text-xs text-grey-500">
-                  Arquitetura Atual: <strong>{PROJECT_TYPE_INFO[project.projectType || 'A']?.label || 'Google Workspace'}</strong>
-                </div>
-                {project.projectType !== typeSuggestion.suggestedType ? (
-                  <Button
-                    size="sm"
-                    onClick={handleApplySuggestedType}
-                    className="bg-purple-700! hover:bg-purple-800! shadow-2xs"
-                    leftIcon={
-                      appliedTypeSuccess ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <Workflow className="w-3.5 h-3.5" />
-                      )
-                    }
-                  >
-                    {appliedTypeSuccess ? 'Stack Aplicada!' : `Aplicar ${PROJECT_TYPE_INFO[typeSuggestion.suggestedType].label}`}
-                  </Button>
-                ) : (
-                  <Badge className="text-brand-dark bg-brand-lighter border-brand-light">
-                    <Check className="w-3.5 h-3.5 text-brand-main" />
-                    <span>Stack Alinhada</span>
-                  </Badge>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Detailed Dimensions Breakdown */}

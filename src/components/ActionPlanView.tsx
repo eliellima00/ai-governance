@@ -10,7 +10,8 @@ import {
   Trash2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ActionItem, ActionPriority, ActionStatus, SolutionProject } from '../types';
+import { ActionItem, ActionPriority, ActionStatus, SolutionProject, UserRole } from '../types';
+import { can } from '../utils/permissions';
 import {
   Badge,
   Button,
@@ -34,6 +35,7 @@ import {
 interface ActionPlanViewProps {
   project: SolutionProject;
   actionList: ActionItem[];
+  userRole: UserRole;
   onNavigateHome?: () => void;
   onToggleActionStatus: (id: number, newStatus: ActionStatus) => void;
   onAddActionItem: (item: Omit<ActionItem, 'id'>) => void;
@@ -59,6 +61,7 @@ const STATUS_BUTTON_CLASSES: Record<ActionStatus, string> = {
 export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
   project,
   actionList,
+  userRole,
   onNavigateHome,
   onToggleActionStatus,
   onAddActionItem,
@@ -66,6 +69,7 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
   onDeleteActionItem,
   onNavigateToEvolution
 }) => {
+  const canEditActions = can(userRole, 'toggle_action_item');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterDimension, setFilterDimension] = useState<string>('all');
@@ -236,9 +240,11 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
                 </div>
               </div>
 
-              <Button color="primary" size="md" leftIcon={<Plus className="w-4 h-4" />} onClick={handleOpenAddModal}>
-                Nova Ação
-              </Button>
+              {canEditActions && (
+                <Button color="primary" size="md" leftIcon={<Plus className="w-4 h-4" />} onClick={handleOpenAddModal}>
+                  Nova Ação
+                </Button>
+              )}
 
               <Button
                 color="secondary"
@@ -403,8 +409,15 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
                   <Td className="text-center">
                     <button
                       onClick={() => handleStatusChange(item.id, item.status)}
-                      title="Clique para alternar: Aguardando -> Em andamento -> Concluído"
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 border transition-transform active:scale-95 cursor-pointer shadow-2xs ${STATUS_BUTTON_CLASSES[item.status]}`}
+                      disabled={!canEditActions}
+                      title={
+                        canEditActions
+                          ? 'Clique para alternar: Aguardando -> Em andamento -> Concluído'
+                          : 'Somente leitura para o seu perfil'
+                      }
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 border transition-transform shadow-2xs ${STATUS_BUTTON_CLASSES[item.status]} ${
+                        canEditActions ? 'active:scale-95 cursor-pointer' : 'opacity-70 cursor-default'
+                      }`}
                     >
                       {item.status === 'Concluído' ? (
                         <>
@@ -431,20 +444,24 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <button
-                        onClick={() => handleOpenEditModal(item)}
-                        title="Editar ação"
-                        className="p-1 text-grey-500 hover:text-grey-900 hover:bg-grey-100 rounded transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setDeletingActionId(item.id)}
-                        title="Excluir ação"
-                        className="p-1 text-danger-500 hover:text-danger-800 hover:bg-danger-50 rounded transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {canEditActions && (
+                        <>
+                          <button
+                            onClick={() => handleOpenEditModal(item)}
+                            title="Editar ação"
+                            className="p-1 text-grey-500 hover:text-grey-900 hover:bg-grey-100 rounded transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingActionId(item.id)}
+                            title="Excluir ação"
+                            className="p-1 text-danger-500 hover:text-danger-800 hover:bg-danger-50 rounded transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => setSelectedAction(item)}
                         title="Ver detalhes"
@@ -732,15 +749,17 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
             <Button color="secondary" onClick={() => setSelectedAction(null)}>
               Fechar
             </Button>
-            <Button
-              color="primary"
-              onClick={() => {
-                handleStatusChange(selectedAction.id, selectedAction.status);
-                setSelectedAction(null);
-              }}
-            >
-              Alternar Status
-            </Button>
+            {canEditActions && (
+              <Button
+                color="primary"
+                onClick={() => {
+                  handleStatusChange(selectedAction.id, selectedAction.status);
+                  setSelectedAction(null);
+                }}
+              >
+                Alternar Status
+              </Button>
+            )}
           </ModalFooter>
         </Modal>
       )}

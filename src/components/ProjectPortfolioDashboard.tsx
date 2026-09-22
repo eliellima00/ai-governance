@@ -236,6 +236,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   onOpenNewProjectModal
 }) => {
   const { priorities: priorityOptions } = getActiveConfig().auxiliaryLists;
+  const canManageImpediment = can(userRole, 'manage_impediment');
+  const canTogglePriority = can(userRole, 'toggle_priority');
+  const canAdvanceStage = can(userRole, 'advance_stage');
+  const canAnnotate = can(userRole, 'add_notes');
 
   const [viewMode, setViewMode] = useState<'spreadsheet' | 'executive_summary' | 'kanban' | 'gantt'>('spreadsheet');
   const [searchTerm, setSearchTerm] = useState('');
@@ -337,6 +341,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
   // Handlers for Inline Modifications
   const handleStageChange = (project: SolutionProject, newStage: ProjectStage) => {
+    if (!canAdvanceStage) return;
     onUpdateProject({
       ...project,
       stage: newStage,
@@ -346,6 +351,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   };
 
   const handleGovStageChange = (project: SolutionProject, newGovStage: GovStage) => {
+    if (!canAdvanceStage) return;
     onUpdateProject({
       ...project,
       govStage: newGovStage,
@@ -354,6 +360,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   };
 
   const handlePriorityChange = (project: SolutionProject, newPriority: ExecutivePriority) => {
+    if (!canTogglePriority) return;
     onUpdateProject({
       ...project,
       executivePriority: newPriority
@@ -361,6 +368,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   };
 
   const handleTogglePrioritizeForManagement = (project: SolutionProject) => {
+    if (!canTogglePriority) return;
     onUpdateProject({
       ...project,
       isPriorityForManagement: !project.isPriorityForManagement
@@ -368,6 +376,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   };
 
   const handleNotificationChange = (project: SolutionProject, text: string) => {
+    if (!canAnnotate) return;
     onUpdateProject({
       ...project,
       notificationStatus: text
@@ -375,6 +384,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   };
 
   const handleSaveNotes = (project: SolutionProject, notes: string) => {
+    if (!canAnnotate) return;
     onUpdateProject({
       ...project,
       notes
@@ -388,6 +398,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     details: string,
     actionFromManagement: string
   ) => {
+    if (!canManageImpediment) return;
     onUpdateProject({
       ...project,
       hasImpediment,
@@ -402,6 +413,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     date: string,
     subject: string
   ) => {
+    if (!canAnnotate) return;
     onUpdateProject({
       ...project,
       scheduledDate: date,
@@ -737,9 +749,14 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     >
                       <button
                         onClick={() => handleTogglePrioritizeForManagement(proj)}
-                        className="p-1 rounded-full hover:bg-grey-200/60 transition-transform active:scale-95"
+                        disabled={!canTogglePriority}
+                        className={`p-1 rounded-full transition-transform ${
+                          canTogglePriority ? 'hover:bg-grey-200/60 active:scale-95' : 'cursor-default'
+                        }`}
                         title={
-                          proj.isPriorityForManagement
+                          !canTogglePriority
+                            ? 'Somente leitura para o seu perfil'
+                            : proj.isPriorityForManagement
                             ? 'Priorizado para apresentar à Gestão (Clique para desmarcar)'
                             : 'Clique para marcar e priorizar na pauta da Gestão'
                         }
@@ -804,7 +821,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                       <select
                         value={proj.stage && ALL_STAGES.includes(proj.stage) ? proj.stage : 'Levantamento & Ficha'}
                         onChange={(e) => handleStageChange(proj, e.target.value as ProjectStage)}
-                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
+                        disabled={!canAdvanceStage}
+                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main ${
+                          canAdvanceStage ? 'cursor-pointer' : 'cursor-default opacity-80'
+                        }`}
                       >
                         {ALL_STAGES.map((stg) => (
                           <option key={stg} value={stg} className="bg-white text-grey-900">
@@ -823,7 +843,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                             : 'P2 - Média'
                         }
                         onChange={(e) => handlePriorityChange(proj, e.target.value as ExecutivePriority)}
-                        className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
+                        disabled={!canTogglePriority}
+                        className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main ${
+                          canTogglePriority ? 'cursor-pointer' : 'cursor-default opacity-80'
+                        }`}
                       >
                         {priorityOptions.map((p) => (
                           <option key={p} value={p}>
@@ -977,13 +1000,15 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                               <p className="text-xs text-grey-500 mt-1 line-clamp-2">{proj.objective}</p>
                             </div>
 
-                            <button
-                              onClick={() => handleTogglePrioritizeForManagement(proj)}
-                              className="p-1 text-warning-600 hover:text-warning-600"
-                              title="Remover da pauta de gestão"
-                            >
-                              <Star className="w-4 h-4 fill-warning-500 text-warning-500" />
-                            </button>
+                            {canTogglePriority && (
+                              <button
+                                onClick={() => handleTogglePrioritizeForManagement(proj)}
+                                className="p-1 text-warning-600 hover:text-warning-600"
+                                title="Remover da pauta de gestão"
+                              >
+                                <Star className="w-4 h-4 fill-warning-500 text-warning-500" />
+                              </button>
+                            )}
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-warning-200/60 text-xs">
@@ -1165,20 +1190,23 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             defaultValue={activeNotesModalProject.notes || ''}
             id="modal-notes-textarea"
             placeholder="Digite anotações ou observações internas sobre o andamento desta demanda..."
+            disabled={!canAnnotate}
           />
           <ModalFooter>
             <Button color="secondary" onClick={() => setActiveNotesModalProject(null)}>
-              Cancelar
+              {canAnnotate ? 'Cancelar' : 'Fechar'}
             </Button>
-            <Button
-              color="primary"
-              onClick={() => {
-                const val = (document.getElementById('modal-notes-textarea') as HTMLTextAreaElement)?.value || '';
-                handleSaveNotes(activeNotesModalProject, val);
-              }}
-            >
-              Salvar Anotações
-            </Button>
+            {canAnnotate && (
+              <Button
+                color="primary"
+                onClick={() => {
+                  const val = (document.getElementById('modal-notes-textarea') as HTMLTextAreaElement)?.value || '';
+                  handleSaveNotes(activeNotesModalProject, val);
+                }}
+              >
+                Salvar Anotações
+              </Button>
+            )}
           </ModalFooter>
         </Modal>
       )}
@@ -1196,6 +1224,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               type="checkbox"
               id="modal-has-impediment"
               defaultChecked={activeImpedimentModalProject.hasImpediment}
+              disabled={!canManageImpediment}
               className="w-4 h-4 rounded text-danger-500 focus:ring-danger-500 border-grey-300"
             />
             <span>Projeto atualmente com impedimento / bloqueio</span>
@@ -1207,6 +1236,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               id="modal-impediment-details"
               defaultValue={activeImpedimentModalProject.impedimentDetails || ''}
               placeholder="Ex: Aguardando liberação de porta de banco no firewall ou aprovação da área jurídica..."
+              disabled={!canManageImpediment}
             />
           </Field>
 
@@ -1216,24 +1246,27 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               id="modal-action-management"
               defaultValue={activeImpedimentModalProject.actionRequiredFromManagement || ''}
               placeholder="Ex: Cobrar área de Infraestrutura para priorizar ticket de rede..."
+              disabled={!canManageImpediment}
             />
           </Field>
 
           <ModalFooter>
             <Button color="secondary" onClick={() => setActiveImpedimentModalProject(null)}>
-              Cancelar
+              {canManageImpediment ? 'Cancelar' : 'Fechar'}
             </Button>
-            <Button
-              color="danger"
-              onClick={() => {
-                const has = (document.getElementById('modal-has-impediment') as HTMLInputElement)?.checked || false;
-                const det = (document.getElementById('modal-impediment-details') as HTMLTextAreaElement)?.value || '';
-                const act = (document.getElementById('modal-action-management') as HTMLTextAreaElement)?.value || '';
-                handleSaveImpediment(activeImpedimentModalProject, has, det, act);
-              }}
-            >
-              Salvar Bloqueio
-            </Button>
+            {canManageImpediment && (
+              <Button
+                color="danger"
+                onClick={() => {
+                  const has = (document.getElementById('modal-has-impediment') as HTMLInputElement)?.checked || false;
+                  const det = (document.getElementById('modal-impediment-details') as HTMLTextAreaElement)?.value || '';
+                  const act = (document.getElementById('modal-action-management') as HTMLTextAreaElement)?.value || '';
+                  handleSaveImpediment(activeImpedimentModalProject, has, det, act);
+                }}
+              >
+                Salvar Bloqueio
+              </Button>
+            )}
           </ModalFooter>
         </Modal>
       )}
@@ -1252,6 +1285,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               id="modal-schedule-date"
               defaultValue={activeScheduleModalProject.scheduledDate || ''}
               className="font-mono font-bold"
+              disabled={!canAnnotate}
             />
           </Field>
 
@@ -1261,23 +1295,26 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
               id="modal-schedule-subject"
               defaultValue={activeScheduleModalProject.scheduledSubject || ''}
               placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
+              disabled={!canAnnotate}
             />
           </Field>
 
           <ModalFooter>
             <Button color="secondary" onClick={() => setActiveScheduleModalProject(null)}>
-              Cancelar
+              {canAnnotate ? 'Cancelar' : 'Fechar'}
             </Button>
-            <Button
-              color="primary"
-              onClick={() => {
-                const date = (document.getElementById('modal-schedule-date') as HTMLInputElement)?.value || '';
-                const sub = (document.getElementById('modal-schedule-subject') as HTMLInputElement)?.value || '';
-                handleSaveSchedule(activeScheduleModalProject, date, sub);
-              }}
-            >
-              Salvar Agendamento
-            </Button>
+            {canAnnotate && (
+              <Button
+                color="primary"
+                onClick={() => {
+                  const date = (document.getElementById('modal-schedule-date') as HTMLInputElement)?.value || '';
+                  const sub = (document.getElementById('modal-schedule-subject') as HTMLInputElement)?.value || '';
+                  handleSaveSchedule(activeScheduleModalProject, date, sub);
+                }}
+              >
+                Salvar Agendamento
+              </Button>
+            )}
           </ModalFooter>
         </Modal>
       )}

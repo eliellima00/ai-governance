@@ -8,6 +8,7 @@ import {
   getDefaultEstimationInputs,
   parseFlexibleDate
 } from '../utils/estimation';
+import { STAGE_NAMES } from '../data/estimationCatalog';
 import { Card } from './ui/Card';
 
 interface PortfolioGanttViewProps {
@@ -212,7 +213,7 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
                   {project.name}
                 </div>
                 <div className="text-[10px] text-grey-500 truncate flex items-center gap-1">
-                  <span>{project.govStage === 'Concluído' ? 'Concluído' : project.govStage || 'E0'}</span>
+                  <span>{STAGE_NAMES[project.govStage || 'E0']}</span>
                   <span>·</span>
                   <span>
                     {doneActions}/{totalActions} ações do plano

@@ -759,7 +759,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
               <h3 className="text-sm font-extrabold text-grey-900">Listas & Categorias</h3>
               <p className="text-xs text-grey-500">
                 Valores que aparecem nos selects do app (Novo Projeto, Ficha GLPI, filtros do Portfólio,
-                Artefatos e Diário de Bordo). Adicione, renomeie, reordene ou remova sem alterar código —
+                Artefatos e Acompanhamento). Adicione, renomeie, reordene ou remova sem alterar código —
                 remover um item daqui não apaga nada de projetos que já usam aquele valor.
               </p>
             </div>
@@ -843,8 +843,8 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
 
             <Card>
               <ListCrudEditor
-                label="Tipo de Registro do Diário"
-                description="Usado na aba Artefatos & Diário (Diário de Bordo)."
+                label="Tipo de Registro do Acompanhamento"
+                description="Usado na aba Artefatos & Acompanhamento."
                 items={formData.auxiliaryLists.meetingEntryTypes}
                 disabled={!isAdmin}
                 onChange={(items) =>

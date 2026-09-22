@@ -37,12 +37,9 @@ export function can(arg1?: string, arg2?: string): boolean {
   if (action === 'manage_settings') action = 'edit_settings';
   if (action === 'create_solution') action = 'create_project';
 
-  // Perfil Padrão: consulta e anotações/marcações operacionais
+  // Perfil Padrão: apenas consulta (somente leitura)
   switch (action) {
     case 'view_project':
-    case 'toggle_action_item':
-    case 'add_activity_log':
-    case 'add_notes':
       return true;
 
     case 'edit_settings':
@@ -53,6 +50,9 @@ export function can(arg1?: string, arg2?: string): boolean {
     case 'edit_project_glpi':
     case 'advance_stage':
     case 'edit_estimation':
+    case 'toggle_action_item':
+    case 'add_activity_log':
+    case 'add_notes':
     case 'toggle_priority':
     case 'manage_impediment':
     default:

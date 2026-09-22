@@ -55,7 +55,7 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
     },
     {
       id: 'artifacts',
-      label: 'Artefatos & Diário de Bordo',
+      label: 'Artefatos & Acompanhamento',
       badge: (
         <span className="flex items-center gap-1">
           <FolderArchive className="w-3.5 h-3.5" />

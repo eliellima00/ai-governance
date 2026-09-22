@@ -21,8 +21,10 @@ import {
   ProjectType,
   GenerationTool,
   SolutionProject,
-  ProjectActivityLog
+  ProjectActivityLog,
+  UserRole
 } from '../types';
+import { can } from '../utils/permissions';
 import {
   CRITICAL_FINDINGS_CHECKLIST,
   DISCOUNTS_CATALOG,
@@ -53,16 +55,20 @@ import { SelectableCard } from './ui/SelectableCard';
 
 interface EstimationScheduleViewProps {
   project: SolutionProject;
+  userRole: UserRole;
   onUpdateProject: (updated: SolutionProject) => void;
   onNavigateToGlpi?: () => void;
 }
 
 export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   project,
+  userRole,
   onUpdateProject,
   onNavigateToGlpi
 }) => {
   const { generationTools: generationToolOptions } = getActiveConfig().auxiliaryLists;
+  const canEditEstimation = can(userRole, 'edit_estimation');
+  const canAdvanceStage = can(userRole, 'advance_stage');
 
   // Modal states
   const [isGlpiModalOpen, setIsGlpiModalOpen] = useState(false);
@@ -104,6 +110,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
 
   // Atualizador de inputs
   const handleUpdateInputs = (newInputs: typeof currentInputs) => {
+    if (!canEditEstimation) return;
     const updatedProject: SolutionProject = {
       ...project,
       projectType: newInputs.projectType,
@@ -114,6 +121,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   };
 
   const handleToggleExitCriteria = (critId: string) => {
+    if (!canAdvanceStage) return;
     const nextChecked = {
       ...exitCriteriaChecked,
       [critId]: !exitCriteriaChecked[critId]
@@ -126,7 +134,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   };
 
   const handleRequestStageChange = (newStage: GovStage) => {
-    if (newStage === currentGovStage) return;
+    if (!canAdvanceStage || newStage === currentGovStage) return;
 
     // Se estiver avançando para E6 ou Concluído, validar os 4 critérios de saída
     const isAdvancingToCompletion = newStage === 'E6' || newStage === 'Concluído';
@@ -156,8 +164,8 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
       timestamp: nowStr,
       author: project.technicalResponsible || 'T.I Governança',
       registeredBy: project.technicalResponsible || 'T.I Governança',
-      action: `Avanço de etapa da esteira: ${currentGovStage} → ${newStage}`,
-      description: `Avanço de etapa da esteira: ${currentGovStage} → ${newStage}`,
+      action: `Avanço de etapa da esteira: ${STAGE_NAMES[currentGovStage]} → ${STAGE_NAMES[newStage]}`,
+      description: `Avanço de etapa da esteira: ${STAGE_NAMES[currentGovStage]} → ${STAGE_NAMES[newStage]}`,
       details: justification ? `Justificativa informada: ${justification}` : `Transição direta de etapa para ${STAGE_NAMES[newStage]}`,
       stage: newStage,
       hours: 0.5
@@ -475,6 +483,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                 key={typeKey}
                 selected={isSelected}
                 onClick={() => handleTypeChange(typeKey)}
+                disabled={!canEditEstimation}
                 className="flex flex-col justify-between h-full"
               >
                 <div>
@@ -530,6 +539,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               value={currentInputs.startDate}
               onChange={(e) => handleStartDateChange(e.target.value)}
               className="text-xs font-mono font-bold text-grey-800"
+              disabled={!canEditEstimation}
             />
           </Field>
 
@@ -538,6 +548,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               value={currentGenerationTool}
               onChange={(e) => handleToolChange(e.target.value as GenerationTool)}
               className="text-xs font-bold text-grey-800"
+              disabled={!canEditEstimation}
             >
               {generationToolOptions.map((tool) => (
                 <option key={tool} value={tool}>
@@ -587,7 +598,10 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                 key={stageKey}
                 type="button"
                 onClick={() => handleRequestStageChange(stageKey)}
+                disabled={!canAdvanceStage}
                 className={`text-left p-3 rounded-xl border transition-all relative flex flex-col justify-between min-h-[72px] ${
+                  !canAdvanceStage ? 'cursor-default opacity-90' : ''
+                } ${
                   isCurrent
                     ? 'border-brand-main bg-brand-main text-white shadow-md ring-2 ring-brand-main/30'
                     : isPassed
@@ -654,6 +668,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                   <ChecklistItem
                     checked={isChecked}
                     onToggle={() => handleToggleExitCriteria(crit.id)}
+                    disabled={!canAdvanceStage}
                     trailing={
                       isChecked && (
                         <span className="text-[10px] font-mono text-brand-light font-bold shrink-0">✓ Atendido</span>
@@ -706,9 +721,10 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                     <ChecklistItem
                       checked={isApplied}
                       onToggle={() => handleToggleModule(mod.id)}
+                      disabled={!canEditEstimation}
                       trailing={
                         <span className="text-xs font-mono font-bold text-info-700 shrink-0 bg-white px-1.5 py-0.5 rounded border border-info-200">
-                          +{mod.hours}h ({mod.stageId})
+                          +{mod.hours}h ({STAGE_NAMES[mod.stageId] || mod.stageId})
                         </span>
                       }
                     >
@@ -788,6 +804,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                       <ChecklistItem
                         checked={itemState.declared}
                         onToggle={() => handleToggleDiscount(disc.id, 'declared')}
+                        disabled={!canEditEstimation}
                       >
                         <span className="text-xs text-grey-700 font-medium">Declarado no Cadastro</span>
                       </ChecklistItem>
@@ -796,7 +813,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                       <div title={confirmTitle}>
                         <ChecklistItem
                           checked={itemState.confirmed}
-                          disabled={!canConfirm}
+                          disabled={!canEditEstimation || !canConfirm}
                           onToggle={() => handleToggleDiscount(disc.id, 'confirmed')}
                         >
                           <span className={`text-xs font-bold ${canConfirm ? 'text-brand-dark' : 'text-grey-400'}`}>
@@ -975,12 +992,12 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
           <div className="flex items-center gap-2 text-warning-600 -mt-1">
             <AlertOctagon className="w-5 h-5" />
             <span className="text-xs font-semibold">
-              Avançando para a etapa {pendingStageModal.targetStage}
+              Avançando para a etapa {STAGE_NAMES[pendingStageModal.targetStage]}
             </span>
           </div>
 
           <p className="text-xs text-grey-600">
-            Você está avançando para a etapa <strong>{pendingStageModal.targetStage}</strong>, mas os seguintes critérios de saída da governança ainda não foram validados:
+            Você está avançando para a etapa <strong>{STAGE_NAMES[pendingStageModal.targetStage]}</strong>, mas os seguintes critérios de saída da governança ainda não foram validados:
           </p>
 
           <div className="p-3 bg-warning-50 rounded-lg border border-warning-200 space-y-1.5 text-xs text-warning-600 font-medium">

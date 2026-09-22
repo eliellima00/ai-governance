@@ -23,8 +23,9 @@ import {
   Lock,
   FolderArchive
 } from 'lucide-react';
-import { SolutionProject, ProjectTab } from '../types';
+import { SolutionProject, ProjectTab, UserRole } from '../types';
 import { getActiveConfig } from '../config/governanceConfig';
+import { can } from '../utils/permissions';
 import {
   Button,
   Card,
@@ -41,6 +42,7 @@ import {
 interface GlpiAssetViewProps {
   project: SolutionProject;
   residualScore: number;
+  userRole: UserRole;
   onNavigateTab: (tab: ProjectTab) => void;
   onSave?: (updatedData: {
     name: string;
@@ -72,11 +74,13 @@ const QrCodeBlock: React.FC<{ project: SolutionProject; caption: string }> = ({ 
 export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   project,
   residualScore,
+  userRole,
   onNavigateTab,
   onSave
 }) => {
   const { auxiliaryLists, featureFlags } = getActiveConfig();
   const showDataDictionary = !!featureFlags?.dataDictionary;
+  const canEdit = can(userRole, 'edit_project_glpi');
 
   const [viewMode, setViewMode] = useState<'edit' | 'live_preview'>('edit');
   const [docSectionFilter, setDocSectionFilter] = useState<'all' | 'overview' | 'sheets' | 'ops' | 'security'>(
@@ -227,11 +231,11 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
               <div className="lg:col-span-9 space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Nome">
-                    <Input value={name} onChange={(e) => setName(e.target.value)} />
+                    <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit} />
                   </Field>
 
                   <Field label="Status">
-                    <Select value={status} onChange={(e) => setStatus(e.target.value as any)}>
+                    <Select value={status} onChange={(e) => setStatus(e.target.value as any)} disabled={!canEdit}>
                       {auxiliaryLists.statuses.map((s) => (
                         <option key={s} value={s}>
                           {s}
@@ -247,6 +251,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                       value={assetIdVal}
                       onChange={(e) => setAssetIdVal(e.target.value)}
                       className="font-mono"
+                      disabled={!canEdit}
                     />
                   </Field>
 
@@ -255,23 +260,24 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                       value={glpiTicketIdVal}
                       onChange={(e) => setGlpiTicketIdVal(e.target.value)}
                       className="font-mono"
+                      disabled={!canEdit}
                     />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Técnico encarregado">
-                    <Input value={techResponsible} onChange={(e) => setTechResponsible(e.target.value)} />
+                    <Input value={techResponsible} onChange={(e) => setTechResponsible(e.target.value)} disabled={!canEdit} />
                   </Field>
 
                   <Field label="Grupo encarregado">
-                    <Input value={groupEncargado} onChange={(e) => setGroupEncargado(e.target.value)} />
+                    <Input value={groupEncargado} onChange={(e) => setGroupEncargado(e.target.value)} disabled={!canEdit} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Usuário (Resp. Negócio)">
-                    <Input value={userResponsible} onChange={(e) => setUserResponsible(e.target.value)} />
+                    <Input value={userResponsible} onChange={(e) => setUserResponsible(e.target.value)} disabled={!canEdit} />
                   </Field>
 
                   <Field label="Grupo">
@@ -294,6 +300,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     value={objective}
                     onChange={(e) => setObjective(e.target.value)}
                     className="leading-relaxed"
+                    disabled={!canEdit}
                   />
                 </Field>
 
@@ -302,6 +309,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     rows={3}
                     value={initialDoc}
                     onChange={(e) => setInitialDoc(e.target.value)}
+                    disabled={!canEdit}
                   />
                 </Field>
               </div>
@@ -382,7 +390,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     className="w-full"
                     leftIcon={<FolderArchive className="w-3.5 h-3.5 text-brand-dark" />}
                   >
-                    Artefatos & Diário de Bordo
+                    Artefatos & Acompanhamento
                   </Button>
 
                   <Button
@@ -421,9 +429,15 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                 </span>
               )}
 
-              <Button onClick={handleSave} color="primary" leftIcon={<Save className="w-4 h-4" />}>
-                Salvar
-              </Button>
+              {canEdit ? (
+                <Button onClick={handleSave} color="primary" leftIcon={<Save className="w-4 h-4" />}>
+                  Salvar
+                </Button>
+              ) : (
+                <span className="text-xs text-grey-400 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5" /> Somente leitura para o seu perfil
+                </span>
+              )}
             </div>
           </div>
         </div>

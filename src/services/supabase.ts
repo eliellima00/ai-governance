@@ -382,7 +382,7 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
       );
     }
 
-    // 5. Atualizar diário de bordo / atas
+    // 5. Atualizar acompanhamento / atas
     await client.from('project_meeting_logs').delete().eq('project_id', project.id);
     if (project.meetingLogs && project.meetingLogs.length > 0) {
       await client.from('project_meeting_logs').insert(

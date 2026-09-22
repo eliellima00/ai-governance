@@ -9,6 +9,7 @@ import {
   UserRole
 } from './types';
 import { computeResidualScore } from './utils/riskCalculations';
+import { can } from './utils/permissions';
 import { loadState, saveState, resetToDefaultState } from './utils/storage';
 import { getActiveConfig } from './config/governanceConfig';
 import {
@@ -31,7 +32,7 @@ import { ProjectPortfolioDashboard } from './components/ProjectPortfolioDashboar
 import { EstimationScheduleView } from './components/EstimationScheduleView';
 import { SettingsView } from './components/SettingsView';
 import { NewProjectPage } from './components/NewProjectPage';
-import { ArtifactsDiaryView } from './components/ArtifactsDiaryView';
+import { ProjectFollowUpView } from './components/ProjectFollowUpView';
 import { AppTour } from './components/tour/AppTour';
 
 // Helper to parse URL hash into Route
@@ -184,6 +185,16 @@ export default function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Bloqueia acesso direto (via hash ou downgrade de perfil) a rotas restritas ao perfil padrão
+  useEffect(() => {
+    if (route.name === 'settings' && !can(userRole, 'edit_settings')) {
+      setRoute({ name: 'portfolio' });
+    }
+    if (route.name === 'new-project' && !can(userRole, 'create_project')) {
+      setRoute({ name: 'portfolio' });
+    }
+  }, [route, userRole]);
 
   // Determine current project when in 'project' route
   const currentProjectId = route.name === 'project' ? route.projectId : projects[0]?.id;
@@ -445,13 +456,14 @@ export default function App() {
             <GlpiAssetView
               project={currentProject}
               residualScore={residualStats.currentResidualScore}
+              userRole={userRole}
               onNavigateTab={selectProjectTab}
               onSave={handleSaveGlpiAsset}
             />
           )}
 
           {route.name === 'project' && route.tab === 'artifacts' && currentProject && (
-            <ArtifactsDiaryView
+            <ProjectFollowUpView
               project={currentProject}
               userRole={userRole}
               onUpdateProject={handleUpdateProject}
@@ -463,7 +475,6 @@ export default function App() {
               project={currentProject}
               onNavigateHome={() => selectProjectTab('glpi')}
               onNavigateToActionPlan={() => selectProjectTab('action_plan')}
-              onUpdateProject={handleUpdateProject}
             />
           )}
 
@@ -471,6 +482,7 @@ export default function App() {
             <ActionPlanView
               project={currentProject}
               actionList={currentProject.actionPlan}
+              userRole={userRole}
               onNavigateHome={() => selectProjectTab('glpi')}
               onToggleActionStatus={handleToggleActionStatus}
               onAddActionItem={handleAddActionItem}
@@ -494,6 +506,7 @@ export default function App() {
           {route.name === 'project' && route.tab === 'estimation' && currentProject && (
             <EstimationScheduleView
               project={currentProject}
+              userRole={userRole}
               onUpdateProject={handleUpdateProject}
               onNavigateToGlpi={() => selectProjectTab('glpi')}
             />

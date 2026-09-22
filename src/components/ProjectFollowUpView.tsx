@@ -34,9 +34,10 @@ import {
   UserRole
 } from '../types';
 import { getActiveConfig } from '../config/governanceConfig';
+import { can } from '../utils/permissions';
 import { Card, Badge, Button, Modal, FormField, SearchInput } from './ui';
 
-interface ArtifactsDiaryViewProps {
+interface ProjectFollowUpViewProps {
   project: SolutionProject;
   userRole: UserRole;
   onUpdateProject: (updatedProject: SolutionProject) => Promise<void> | void;
@@ -65,13 +66,15 @@ const FILE_TYPE_CONFIG: Record<
   outro: { label: 'Arquivo / Documento', iconColor: 'text-grey-600', bgColor: 'bg-grey-100' }
 };
 
-export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
+export const ProjectFollowUpView: React.FC<ProjectFollowUpViewProps> = ({
   project,
   userRole,
   onUpdateProject
 }) => {
   // Listas parametrizáveis (Configurações > Listas & Categorias)
   const { artifactCategories, meetingEntryTypes } = getActiveConfig().auxiliaryLists;
+  const canManageArtifacts = can(userRole, 'add_notes');
+  const canManageFollowUp = can(userRole, 'add_activity_log');
 
   // Navigation between the two main sections
   const [activeSection, setActiveSection] = useState<'artifacts' | 'diary'>('artifacts');
@@ -245,7 +248,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
   };
 
   const handleSaveArtifact = async () => {
-    if (!artifactForm.title.trim()) return;
+    if (!canManageArtifacts || !artifactForm.title.trim()) return;
 
     let updatedList: ProjectArtifact[];
 
@@ -305,7 +308,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
   };
 
   const handleDeleteArtifact = async (id: string) => {
-    if (!confirm('Deseja realmente remover este artefato?')) return;
+    if (!canManageArtifacts || !confirm('Deseja realmente remover este artefato?')) return;
     const updatedList = artifacts.filter((a) => a.id !== id);
     const updatedProject = {
       ...project,
@@ -364,7 +367,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
   };
 
   const handleSaveDiaryEntry = async () => {
-    if (!diaryForm.subject.trim() || !diaryForm.summary.trim()) return;
+    if (!canManageFollowUp || !diaryForm.subject.trim() || !diaryForm.summary.trim()) return;
 
     let updatedList: MeetingDiaryEntry[];
     const linkedArt = artifacts.find((a) => a.id === diaryForm.linkedArtifactId);
@@ -421,7 +424,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
   };
 
   const handleDeleteDiaryEntry = async (id: string) => {
-    if (!confirm('Deseja realmente remover este registro do diário de bordo?')) return;
+    if (!canManageFollowUp || !confirm('Deseja realmente remover este registro de acompanhamento?')) return;
     const updatedList = meetingLogs.filter((e) => e.id !== id);
     const updatedProject = {
       ...project,
@@ -451,7 +454,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
   };
 
   return (
-    <div id="artifacts-diary-container" className="space-y-6">
+    <div id="project-follow-up-container" className="space-y-6">
       {/* Top Banner & Mode Switcher */}
       <div className="bg-white border border-grey-200 rounded-xl p-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -468,7 +471,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                 <h2 className="text-lg font-bold text-grey-900">
                   {activeSection === 'artifacts'
                     ? 'Central de Ativos, Documentos & Artefatos'
-                    : 'Diário de Bordo & Atas de Reuniões'}
+                    : 'Acompanhamento & Atas de Reuniões'}
                 </h2>
                 <p className="text-xs text-grey-500">
                   {activeSection === 'artifacts'
@@ -505,7 +508,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Diário de Bordo</span>
+              <span>Acompanhamento</span>
               <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-grey-200 text-grey-700 font-mono">
                 {meetingLogs.length}
               </span>
@@ -570,14 +573,16 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
               </select>
             </div>
 
-            <Button
-              color="primary"
-              size="sm"
-              onClick={handleOpenNewArtifactModal}
-              leftIcon={<Plus className="w-4 h-4" />}
-            >
-              Adicionar Artefato / Documento
-            </Button>
+            {canManageArtifacts && (
+              <Button
+                color="primary"
+                size="sm"
+                onClick={handleOpenNewArtifactModal}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Adicionar Artefato / Documento
+              </Button>
+            )}
           </div>
 
           {/* Artifacts Grid */}
@@ -593,14 +598,16 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                     ? 'Tente ajustar os filtros de busca para encontrar o documento.'
                     : 'Cadastre os documentos da solução (PDFs de homologação, DOCX de atas, links de Google Drive ou diagramas técnicos).'}
                 </p>
-                <Button
-                  color="primary"
-                  size="sm"
-                  onClick={handleOpenNewArtifactModal}
-                  leftIcon={<Plus className="w-4 h-4" />}
-                >
-                  Cadastrar Primeiro Artefato
-                </Button>
+                {canManageArtifacts && (
+                  <Button
+                    color="primary"
+                    size="sm"
+                    onClick={handleOpenNewArtifactModal}
+                    leftIcon={<Plus className="w-4 h-4" />}
+                  >
+                    Cadastrar Primeiro Artefato
+                  </Button>
+                )}
               </div>
             </Card>
           ) : (
@@ -703,21 +710,25 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                           </a>
                         ) : null}
 
-                        <button
-                          onClick={() => handleOpenEditArtifactModal(art)}
-                          className="p-1.5 rounded-md hover:bg-grey-100 text-grey-600 transition-colors"
-                          title="Editar artefato"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                        {canManageArtifacts && (
+                          <>
+                            <button
+                              onClick={() => handleOpenEditArtifactModal(art)}
+                              className="p-1.5 rounded-md hover:bg-grey-100 text-grey-600 transition-colors"
+                              title="Editar artefato"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
 
-                        <button
-                          onClick={() => handleDeleteArtifact(art.id)}
-                          className="p-1.5 rounded-md hover:bg-danger-50 text-danger-600 transition-colors"
-                          title="Excluir artefato"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                            <button
+                              onClick={() => handleDeleteArtifact(art.id)}
+                              className="p-1.5 rounded-md hover:bg-danger-50 text-danger-600 transition-colors"
+                              title="Excluir artefato"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -729,7 +740,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* SECTION 2: DIÁRIO DE BORDO & ATAS DE REUNIÕES */}
+      {/* SECTION 2: ACOMPANHAMENTO & ATAS DE REUNIÕES */}
       {/* ==================================================================== */}
       {activeSection === 'diary' && (
         <div className="space-y-4">
@@ -758,14 +769,16 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
               </select>
             </div>
 
-            <Button
-              color="primary"
-              size="sm"
-              onClick={handleOpenNewDiaryModal}
-              leftIcon={<Plus className="w-4 h-4" />}
-            >
-              Registrar Alinhamento / Pauta
-            </Button>
+            {canManageFollowUp && (
+              <Button
+                color="primary"
+                size="sm"
+                onClick={handleOpenNewDiaryModal}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Registrar Alinhamento / Pauta
+              </Button>
+            )}
           </div>
 
           {/* Timeline View of Diary Entries */}
@@ -779,16 +792,18 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                 <p className="text-xs text-grey-500 mb-4">
                   {diarySearch || selectedDiaryType !== 'all'
                     ? 'Nenhum registro corresponde aos filtros selecionados.'
-                    : 'Utilize o Diário de Bordo para registrar as reuniões executivas, pautas de alinhamento e decisões com os stakeholders.'}
+                    : 'Utilize o Acompanhamento para registrar as reuniões executivas, pautas de alinhamento e decisões com os stakeholders.'}
                 </p>
-                <Button
-                  color="primary"
-                  size="sm"
-                  onClick={handleOpenNewDiaryModal}
-                  leftIcon={<Plus className="w-4 h-4" />}
-                >
-                  Registrar Primeiro Alinhamento
-                </Button>
+                {canManageFollowUp && (
+                  <Button
+                    color="primary"
+                    size="sm"
+                    onClick={handleOpenNewDiaryModal}
+                    leftIcon={<Plus className="w-4 h-4" />}
+                  >
+                    Registrar Primeiro Alinhamento
+                  </Button>
+                )}
               </div>
             </Card>
           ) : (
@@ -842,21 +857,25 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                           </span>
                         </Button>
 
-                        <button
-                          onClick={() => handleOpenEditDiaryModal(entry)}
-                          className="p-1.5 rounded-md hover:bg-grey-100 text-grey-600 transition-colors"
-                          title="Editar alinhamento"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                        {canManageFollowUp && (
+                          <>
+                            <button
+                              onClick={() => handleOpenEditDiaryModal(entry)}
+                              className="p-1.5 rounded-md hover:bg-grey-100 text-grey-600 transition-colors"
+                              title="Editar alinhamento"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
 
-                        <button
-                          onClick={() => handleDeleteDiaryEntry(entry.id)}
-                          className="p-1.5 rounded-md hover:bg-danger-50 text-danger-600 transition-colors"
-                          title="Excluir alinhamento"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                            <button
+                              onClick={() => handleDeleteDiaryEntry(entry.id)}
+                              className="p-1.5 rounded-md hover:bg-danger-50 text-danger-600 transition-colors"
+                              title="Excluir alinhamento"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -1105,12 +1124,12 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
       </Modal>
 
       {/* ==================================================================== */}
-      {/* MODAL: REGISTRAR ALINHAMENTO / PAUTA NO DIÁRIO DE BORDO */}
+      {/* MODAL: REGISTRAR ALINHAMENTO / PAUTA NO ACOMPANHAMENTO */}
       {/* ==================================================================== */}
       <Modal
         isOpen={isDiaryModalOpen}
         onClose={() => setIsDiaryModalOpen(false)}
-        title={editingDiary ? 'Editar Registro no Diário de Bordo' : 'Registrar Reunião / Alinhamento'}
+        title={editingDiary ? 'Editar Registro em Acompanhamento' : 'Registrar Reunião / Alinhamento'}
         size="lg"
       >
         <div className="space-y-4 pt-1">
