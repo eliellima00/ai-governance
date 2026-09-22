@@ -16,13 +16,9 @@ export type ProjectStage =
   | 'Sustentação'
   | 'Bloqueado / Aguardando';
 
-export type ExecutivePriority =
-  | 'P0 - Urgente'
-  | 'P1 - Alta'
-  | 'P1 - Alta Prioridade'
-  | 'P2 - Média'
-  | 'P3 - Baixa'
-  | 'Backlog';
+// Lista de valores possíveis é parametrizável em Configurações > Listas & Categorias
+// (GovernanceSettings.auxiliaryLists.priorities); mantido como string livre.
+export type ExecutivePriority = string;
 
 // --- Navegação Mestre-Detalhe ---
 export type ProjectTab = 'glpi' | 'artifacts' | 'diagnostic' | 'action_plan' | 'evolution' | 'estimation';
@@ -35,7 +31,9 @@ export type Route =
 
 // --- Eixo 2 & Governança Low-Code / Vibe Coding ATTO ---
 export type ProjectType = 'A' | 'B' | 'C'; // A=Google Workspace/App Script · B=Container/VPS · C=No-code/externo
-export type GenerationTool = 'Codex' | 'Claude Code' | 'Gemini (copia-e-cola)' | 'ChatGPT' | 'Manual' | 'Outro';
+// Lista de valores possíveis é parametrizável em Configurações > Listas & Categorias
+// (GovernanceSettings.auxiliaryLists.generationTools); mantido como string livre.
+export type GenerationTool = string;
 export type GovStage = 'E0' | 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6' | 'Concluído';
 
 export interface ModuleToggle {
@@ -141,14 +139,9 @@ export interface ProjectActivityLog {
   details?: string;
 }
 
-export type ArtifactCategory =
-  | 'Pauta / Ata de Reunião'
-  | 'Especificação Funcional'
-  | 'Arquitetura & Segurança'
-  | 'Homologação & Evidências'
-  | 'Apresentação & Relatório'
-  | 'Código & Repositório'
-  | 'Outro';
+// Lista de valores possíveis é parametrizável em Configurações > Listas & Categorias
+// (GovernanceSettings.auxiliaryLists.artifactCategories); mantido como string livre.
+export type ArtifactCategory = string;
 
 export type ArtifactFileType = 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'drive' | 'link' | 'outro';
 
@@ -167,13 +160,9 @@ export interface ProjectArtifact {
   description?: string;
 }
 
-export type MeetingEntryType =
-  | 'Reunião de Alinhamento'
-  | 'Pauta Executiva'
-  | 'Homologação com Usuário'
-  | 'Ponto de Controle T.I'
-  | 'Incidente / Mudança'
-  | 'Decisão de Arquitetura';
+// Lista de valores possíveis é parametrizável em Configurações > Listas & Categorias
+// (GovernanceSettings.auxiliaryLists.meetingEntryTypes); mantido como string livre.
+export type MeetingEntryType = string;
 
 export interface MeetingDiaryEntry {
   id: string;
@@ -198,7 +187,9 @@ export interface SolutionProject {
   department: string;
   businessResponsible: string;
   technicalResponsible: string;
-  status: 'Uso' | 'Homologação' | 'Em Adequação' | 'Descontinuado';
+  // Lista de valores possíveis é parametrizável em Configurações > Listas & Categorias
+  // (GovernanceSettings.auxiliaryLists.statuses); mantido como string livre.
+  status: string;
   stage?: ProjectStage;
   // Novo Eixo 2 e Governança
   projectType?: ProjectType;

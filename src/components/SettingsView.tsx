@@ -36,6 +36,7 @@ import { Input, Textarea } from './ui/FormField';
 import { PageHeader } from './ui/PageHeader';
 import { Tabs, TabItem } from './ui/Tabs';
 import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
+import { ListCrudEditor } from './ui/ListCrudEditor';
 
 const EDITABLE_STAGES = GOV_STAGES_CATALOG.filter((s) => s !== 'Concluído');
 
@@ -48,12 +49,14 @@ interface SettingsViewProps {
   onReloadAllState: () => void;
 }
 
-type SubTab = 'estimation' | 'risk' | 'checklists' | 'backup' | 'database';
+type SubTab = 'estimation' | 'risk' | 'checklists' | 'lists' | 'flags' | 'backup' | 'database';
 
 const SUB_TABS: TabItem<SubTab>[] = [
   { id: 'estimation', label: 'Motor de Estimativa & Eixo 2' },
   { id: 'risk', label: 'Réguas de Risco & Corte' },
   { id: 'checklists', label: 'Critérios de Saída (Checklist)' },
+  { id: 'lists', label: 'Listas & Categorias' },
+  { id: 'flags', label: 'Funcionalidades (Beta)' },
   { id: 'database', label: 'Banco Relacional (Supabase)' },
   { id: 'backup', label: 'Backup Técnico (JSON)' }
 ];
@@ -744,6 +747,188 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                 />
               </div>
             ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Sub-tab: Listas & Categorias (auxiliaryLists parametrizáveis) */}
+      {activeSubTab === 'lists' && (
+        <div className="space-y-6">
+          <Card>
+            <div className="border-b border-grey-100 pb-3 mb-1">
+              <h3 className="text-sm font-extrabold text-grey-900">Listas & Categorias</h3>
+              <p className="text-xs text-grey-500">
+                Valores que aparecem nos selects do app (Novo Projeto, Ficha GLPI, filtros do Portfólio,
+                Artefatos e Diário de Bordo). Adicione, renomeie, reordene ou remova sem alterar código —
+                remover um item daqui não apaga nada de projetos que já usam aquele valor.
+              </p>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <ListCrudEditor
+                label="Área / Departamento"
+                description="Usado em Novo Projeto e no filtro de Área do Portfólio."
+                items={formData.auxiliaryLists.departments}
+                disabled={!isAdmin}
+                onChange={(items) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    auxiliaryLists: { ...prev.auxiliaryLists, departments: items }
+                  }))
+                }
+              />
+            </Card>
+
+            <Card>
+              <ListCrudEditor
+                label="Status do Projeto"
+                description="Usado na Ficha GLPI (campo Status)."
+                items={formData.auxiliaryLists.statuses}
+                disabled={!isAdmin}
+                onChange={(items) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    auxiliaryLists: { ...prev.auxiliaryLists, statuses: items }
+                  }))
+                }
+              />
+            </Card>
+
+            <Card>
+              <ListCrudEditor
+                label="Prioridade Executiva"
+                description="Usado no Portfólio (filtro e prioridade por card)."
+                items={formData.auxiliaryLists.priorities}
+                disabled={!isAdmin}
+                onChange={(items) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    auxiliaryLists: { ...prev.auxiliaryLists, priorities: items }
+                  }))
+                }
+              />
+            </Card>
+
+            <Card>
+              <ListCrudEditor
+                label="Ferramenta de Geração / IA"
+                description="Usado em Novo Projeto e na aba Estimativa."
+                items={formData.auxiliaryLists.generationTools}
+                disabled={!isAdmin}
+                onChange={(items) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    auxiliaryLists: { ...prev.auxiliaryLists, generationTools: items }
+                  }))
+                }
+              />
+            </Card>
+
+            <Card>
+              <ListCrudEditor
+                label="Categoria de Artefato"
+                description="Usado na aba Artefatos & Diário (Documentos & Artefatos)."
+                items={formData.auxiliaryLists.artifactCategories}
+                disabled={!isAdmin}
+                onChange={(items) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    auxiliaryLists: { ...prev.auxiliaryLists, artifactCategories: items }
+                  }))
+                }
+              />
+            </Card>
+
+            <Card>
+              <ListCrudEditor
+                label="Tipo de Registro do Diário"
+                description="Usado na aba Artefatos & Diário (Diário de Bordo)."
+                items={formData.auxiliaryLists.meetingEntryTypes}
+                disabled={!isAdmin}
+                onChange={(items) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    auxiliaryLists: { ...prev.auxiliaryLists, meetingEntryTypes: items }
+                  }))
+                }
+              />
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-tab: Feature Flags */}
+      {activeSubTab === 'flags' && (
+        <Card className="space-y-4">
+          <div className="border-b border-grey-100 pb-3">
+            <h3 className="text-sm font-extrabold text-grey-900">Funcionalidades (Beta)</h3>
+            <p className="text-xs text-grey-500">
+              Telas avançadas desligadas por padrão para manter o módulo de gestão sucinto (Ficha,
+              Apontamentos, Artefatos e Plano de Ação). O código continua no projeto — reative aqui
+              quando quiser voltar a usá-las, sem precisar de deploy.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <label
+              className={`flex items-start gap-3 p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 ${
+                isAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'
+              }`}
+            >
+              <input
+                type="checkbox"
+                disabled={!isAdmin}
+                checked={!!formData.featureFlags.dataDictionary}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    featureFlags: { ...prev.featureFlags, dataDictionary: e.target.checked }
+                  }))
+                }
+                className="mt-0.5 rounded text-brand-main"
+              />
+              <span>
+                <span className="text-xs font-bold text-grey-900 block">
+                  Dicionário de Dados (catálogo de abas de planilha)
+                </span>
+                <span className="text-[11px] text-grey-500">
+                  Mostra, na Ficha GLPI, a seção com o mapeamento de cada aba da planilha base (categoria,
+                  finalidade e sensibilidade LGPD). Só faz sentido para soluções baseadas em Google Sheets
+                  com múltiplas abas mapeadas.
+                </span>
+              </span>
+            </label>
+
+            <label
+              className={`flex items-start gap-3 p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 ${
+                isAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'
+              }`}
+            >
+              <input
+                type="checkbox"
+                disabled={!isAdmin}
+                checked={!!formData.featureFlags.detailedEvolution}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    featureFlags: { ...prev.featureFlags, detailedEvolution: e.target.checked }
+                  }))
+                }
+                className="mt-0.5 rounded text-brand-main"
+              />
+              <span>
+                <span className="text-xs font-bold text-grey-900 block">
+                  Evolução detalhada (burn-down + simulador "what-if")
+                </span>
+                <span className="text-[11px] text-grey-500">
+                  Mostra, na aba Evolução, o gráfico cronológico de queda de risco e o simulador
+                  interativo para apresentações. Por padrão a aba mostra só o resumo (score inicial,
+                  residual e evolução por dimensão).
+                </span>
+              </span>
+            </label>
           </div>
         </Card>
       )}

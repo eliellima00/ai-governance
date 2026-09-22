@@ -55,6 +55,15 @@ export interface GovernanceSettings {
     statuses: string[];
     priorities: string[];
     generationTools: string[];
+    artifactCategories: string[];
+    meetingEntryTypes: string[];
+  };
+  /** Funcionalidades avançadas desligadas por padrão (visão sucinta); reativáveis aqui sem alterar código. */
+  featureFlags: {
+    /** Aba "Dicionário de Dados" (catálogo de abas de planilha) dentro da Ficha GLPI. */
+    dataDictionary: boolean;
+    /** Gráfico de burn-down e simulador "what-if" na aba Evolução (além do resumo sucinto padrão). */
+    detailedEvolution: boolean;
   };
 }
 
@@ -97,8 +106,29 @@ export function getDefaultGovernanceSettings(): GovernanceSettings {
         'T.I & Governança'
       ],
       statuses: ['Uso', 'Homologação', 'Em Adequação', 'Descontinuado'],
-      priorities: ['P1 - Alta Prioridade', 'P2 - Média', 'P3 - Baixa', 'Backlog'],
-      generationTools: ['Codex', 'Claude Code', 'ChatGPT', 'Manual', 'Outro']
+      priorities: ['P0 - Urgente', 'P1 - Alta', 'P2 - Média', 'P3 - Baixa', 'Backlog'],
+      generationTools: ['Codex', 'Claude Code', 'Gemini (copia-e-cola)', 'ChatGPT', 'Manual', 'Outro'],
+      artifactCategories: [
+        'Pauta / Ata de Reunião',
+        'Especificação Funcional',
+        'Arquitetura & Segurança',
+        'Homologação & Evidências',
+        'Apresentação & Relatório',
+        'Código & Repositório',
+        'Outro'
+      ],
+      meetingEntryTypes: [
+        'Reunião de Alinhamento',
+        'Pauta Executiva',
+        'Homologação com Usuário',
+        'Ponto de Controle T.I',
+        'Incidente / Mudança',
+        'Decisão de Arquitetura'
+      ]
+    },
+    featureFlags: {
+      dataDictionary: false,
+      detailedEvolution: false
     }
   };
 }

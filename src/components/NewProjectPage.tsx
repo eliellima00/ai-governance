@@ -12,6 +12,7 @@ import { calculateRiskLevel } from '../utils/riskCalculations';
 import { getDefaultEstimationInputs } from '../utils/estimation';
 import { PROJECT_TYPE_INFO, DISCOUNTS_CATALOG } from '../data/estimationCatalog';
 import { can } from '../utils/permissions';
+import { getActiveConfig } from '../config/governanceConfig';
 import { Card, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { Field, Input, Select, Textarea } from './ui/FormField';
@@ -30,13 +31,15 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
   onNavigateToPortfolio
 }) => {
   const canCreate = can('create_project', userRole);
+  const { departments: departmentOptions, generationTools: generationToolOptions } =
+    getActiveConfig().auxiliaryLists;
 
   useEffect(() => {
     if (!canCreate) onNavigateToPortfolio();
   }, [canCreate, onNavigateToPortfolio]);
 
   const [name, setName] = useState('');
-  const [department, setDepartment] = useState('Controladoria');
+  const [department, setDepartment] = useState(departmentOptions[0] || 'Controladoria & Finanças');
   const [businessResp, setBusinessResp] = useState('');
   const [techResp, setTechResp] = useState('');
   const [objective, setObjective] = useState('');
@@ -52,7 +55,9 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
 
   // Eixo 2: Tipo Técnico & Vibe Coding
   const [projectType, setProjectType] = useState<ProjectType>('A');
-  const [generationTool, setGenerationTool] = useState<GenerationTool>('Gemini (copia-e-cola)');
+  const [generationTool, setGenerationTool] = useState<GenerationTool>(
+    generationToolOptions[0] || 'Gemini (copia-e-cola)'
+  );
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [declaredDiscounts, setDeclaredDiscounts] = useState<Record<string, boolean>>({
     D1: false,
@@ -338,13 +343,11 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
 
             <Field label="Área Demandante">
               <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
-                <option value="Logística / Expedição">Logística / Expedição</option>
-                <option value="Controladoria & Finanças">Controladoria & Finanças</option>
-                <option value="P&D / Laboratório Qualidade">P&D / Laboratório Qualidade</option>
-                <option value="Agronomia / Produção de Campo">Agronomia / Produção de Campo</option>
-                <option value="Comercial & Vendas (CTVs)">Comercial & Vendas (CTVs)</option>
-                <option value="Suprimentos & Compras">Suprimentos & Compras</option>
-                <option value="Recursos Humanos">Recursos Humanos</option>
+                {departmentOptions.map((dep) => (
+                  <option key={dep} value={dep}>
+                    {dep}
+                  </option>
+                ))}
               </Select>
             </Field>
           </div>
@@ -539,12 +542,11 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
                 value={generationTool}
                 onChange={(e) => setGenerationTool(e.target.value as GenerationTool)}
               >
-                <option value="Codex">Codex</option>
-                <option value="Claude Code">Claude Code</option>
-                <option value="Gemini (copia-e-cola)">Gemini (copia-e-cola)</option>
-                <option value="ChatGPT">ChatGPT</option>
-                <option value="Manual">Manual</option>
-                <option value="Outro">Outro</option>
+                {generationToolOptions.map((tool) => (
+                  <option key={tool} value={tool}>
+                    {tool}
+                  </option>
+                ))}
               </Select>
             </Field>
 

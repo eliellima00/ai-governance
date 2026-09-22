@@ -24,6 +24,7 @@ import {
   FolderArchive
 } from 'lucide-react';
 import { SolutionProject, ProjectTab } from '../types';
+import { getActiveConfig } from '../config/governanceConfig';
 import {
   Button,
   Card,
@@ -74,6 +75,9 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   onNavigateTab,
   onSave
 }) => {
+  const { auxiliaryLists, featureFlags } = getActiveConfig();
+  const showDataDictionary = !!featureFlags?.dataDictionary;
+
   const [viewMode, setViewMode] = useState<'edit' | 'live_preview'>('edit');
   const [docSectionFilter, setDocSectionFilter] = useState<'all' | 'overview' | 'sheets' | 'ops' | 'security'>(
     'overview'
@@ -163,10 +167,14 @@ ${initialDoc}
 - Dados Confidenciais: ${technicalDoc?.confidentialDataSummary || 'Valores de fretes e contratos comerciais'}
 - Política de Retenção: ${technicalDoc?.retentionPolicy || '5 anos para auditoria fiscal'}
 - Controle de Acesso: ${technicalDoc?.accessControlSummary || 'Autenticação Google Workspace'}
-
+${
+  showDataDictionary
+    ? `
 ## 6. DICIONÁRIO DE DADOS & CATÁLOGO DE ABAS (${sheetsCatalog?.length || 31} ABAS)
 ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: ${s.sensitivity}): ${s.purpose}`).join('\n')}
-`;
+`
+    : ''
+}`;
     navigator.clipboard.writeText(text);
     setCopiedDoc(true);
     setTimeout(() => setCopiedDoc(false), 2500);
@@ -224,10 +232,11 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
 
                   <Field label="Status">
                     <Select value={status} onChange={(e) => setStatus(e.target.value as any)}>
-                      <option value="Uso">Uso</option>
-                      <option value="Homologação">Homologação</option>
-                      <option value="Em Adequação">Em Adequação (Governança)</option>
-                      <option value="Descontinuado">Descontinuado</option>
+                      {auxiliaryLists.statuses.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
                     </Select>
                   </Field>
                 </div>
@@ -472,7 +481,9 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             {[
               { id: 'all', label: 'Visão Geral Completa' },
               { id: 'overview', label: '1. Resumo & Arquitetura' },
-              { id: 'sheets', label: `2. Dicionário de Dados (${sheetsCatalog?.length || 31} Abas)` },
+              ...(showDataDictionary
+                ? [{ id: 'sheets', label: `2. Dicionário de Dados (${sheetsCatalog?.length || 31} Abas)` }]
+                : []),
               { id: 'ops', label: '3. Sustentação & Operação' },
               { id: 'security', label: '4. Segurança & LGPD' }
             ].map((sec) => (
@@ -614,8 +625,8 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             </div>
           )}
 
-          {/* SECTION 2: Dicionário de Dados Completo (31 Abas Mapeadas) */}
-          {(docSectionFilter === 'all' || docSectionFilter === 'sheets') && (
+          {/* SECTION 2: Dicionário de Dados Completo — atrás da feature flag (Configurações > Funcionalidades) */}
+          {showDataDictionary && (docSectionFilter === 'all' || docSectionFilter === 'sheets') && (
             <Card className="space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-grey-200 pb-4">
                 <div>

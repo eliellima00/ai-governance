@@ -33,6 +33,7 @@ import {
   MeetingEntryType,
   UserRole
 } from '../types';
+import { getActiveConfig } from '../config/governanceConfig';
 import { Card, Badge, Button, Modal, FormField, SearchInput } from './ui';
 
 interface ArtifactsDiaryViewProps {
@@ -69,6 +70,9 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
   userRole,
   onUpdateProject
 }) => {
+  // Listas parametrizáveis (Configurações > Listas & Categorias)
+  const { artifactCategories, meetingEntryTypes } = getActiveConfig().auxiliaryLists;
+
   // Navigation between the two main sections
   const [activeSection, setActiveSection] = useState<'artifacts' | 'diary'>('artifacts');
 
@@ -100,7 +104,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
     description: string;
   }>({
     title: '',
-    category: 'Pauta / Ata de Reunião',
+    category: artifactCategories[0] || 'Outro',
     fileType: 'pdf',
     sourceMode: 'link',
     url: '',
@@ -128,7 +132,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
   }>({
     date: new Date().toLocaleDateString('pt-BR'),
     subject: '',
-    entryType: 'Reunião de Alinhamento',
+    entryType: meetingEntryTypes[0] || 'Reunião de Alinhamento',
     participants: `${project.businessResponsible || 'Negócio'}, ${project.technicalResponsible || 'TI Dev'}`,
     summary: '',
     nextSteps: '',
@@ -174,7 +178,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
     setEditingArtifact(null);
     setArtifactForm({
       title: '',
-      category: 'Pauta / Ata de Reunião',
+      category: artifactCategories[0] || 'Outro',
       fileType: 'pdf',
       sourceMode: 'link',
       url: '',
@@ -332,7 +336,7 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
     setDiaryForm({
       date: new Date().toLocaleDateString('pt-BR'),
       subject: '',
-      entryType: 'Reunião de Alinhamento',
+      entryType: meetingEntryTypes[0] || 'Reunião de Alinhamento',
       participants: `${project.businessResponsible || 'Negócio'}, ${project.technicalResponsible || 'TI Dev'}`,
       summary: '',
       nextSteps: '',
@@ -558,13 +562,11 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                 className="text-xs bg-white border border-grey-300 rounded-lg px-3 py-2 text-grey-800 focus:outline-hidden font-medium"
               >
                 <option value="all">Todas as Categorias</option>
-                <option value="Pauta / Ata de Reunião">Pauta / Ata de Reunião</option>
-                <option value="Especificação Funcional">Especificação Funcional</option>
-                <option value="Arquitetura & Segurança">Arquitetura & Segurança</option>
-                <option value="Homologação & Evidências">Homologação & Evidências</option>
-                <option value="Apresentação & Relatório">Apresentação & Relatório</option>
-                <option value="Código & Repositório">Código & Repositório</option>
-                <option value="Outro">Outros</option>
+                {artifactCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -748,12 +750,11 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                 className="text-xs bg-white border border-grey-300 rounded-lg px-3 py-2 text-grey-800 focus:outline-hidden font-medium"
               >
                 <option value="all">Todos os Tipos de Alinhamento</option>
-                <option value="Reunião de Alinhamento">Reunião de Alinhamento</option>
-                <option value="Pauta Executiva">Pauta Executiva</option>
-                <option value="Homologação com Usuário">Homologação com Usuário</option>
-                <option value="Ponto de Controle T.I">Ponto de Controle T.I</option>
-                <option value="Incidente / Mudança">Incidente / Mudança</option>
-                <option value="Decisão de Arquitetura">Decisão de Arquitetura</option>
+                {meetingEntryTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -942,13 +943,11 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                 }
                 className="w-full text-xs border border-grey-300 rounded-lg px-3 py-2 text-grey-900 focus:outline-hidden"
               >
-                <option value="Pauta / Ata de Reunião">Pauta / Ata de Reunião</option>
-                <option value="Especificação Funcional">Especificação Funcional</option>
-                <option value="Arquitetura & Segurança">Arquitetura & Segurança</option>
-                <option value="Homologação & Evidências">Homologação & Evidências</option>
-                <option value="Apresentação & Relatório">Apresentação & Relatório</option>
-                <option value="Código & Repositório">Código & Repositório</option>
-                <option value="Outro">Outro</option>
+                {artifactCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </FormField>
 
@@ -1134,12 +1133,11 @@ export const ArtifactsDiaryView: React.FC<ArtifactsDiaryViewProps> = ({
                 }
                 className="w-full text-xs border border-grey-300 rounded-lg px-3 py-2 text-grey-900 focus:outline-hidden"
               >
-                <option value="Reunião de Alinhamento">Reunião de Alinhamento</option>
-                <option value="Pauta Executiva">Pauta Executiva</option>
-                <option value="Homologação com Usuário">Homologação com Usuário</option>
-                <option value="Ponto de Controle T.I">Ponto de Controle T.I</option>
-                <option value="Incidente / Mudança">Incidente / Mudança</option>
-                <option value="Decisão de Arquitetura">Decisão de Arquitetura</option>
+                {meetingEntryTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
               </select>
             </FormField>
 

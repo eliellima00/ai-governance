@@ -11,6 +11,23 @@ export interface StoredAppState {
   savedAt: string;
 }
 
+/**
+ * Combina settings salvos com os padrões de fábrica. Usa merge raso no nível principal (padrão já
+ * existente), mas faz merge dedicado para `auxiliaryLists` e `featureFlags`: como são objetos
+ * aninhados, um merge raso simples substituiria a lista/flag inteira por uma versão salva antiga
+ * (sem os campos novos adicionados depois), fazendo os itens novos desaparecerem silenciosamente.
+ */
+function mergeGovernanceSettings(saved: Partial<GovernanceSettings> | undefined): GovernanceSettings {
+  const defaults = getDefaultGovernanceSettings();
+  if (!saved) return defaults;
+  return {
+    ...defaults,
+    ...saved,
+    auxiliaryLists: { ...defaults.auxiliaryLists, ...saved.auxiliaryLists },
+    featureFlags: { ...defaults.featureFlags, ...saved.featureFlags }
+  };
+}
+
 export function getPtBrCurrentTimestamp(): string {
   const now = new Date();
   const date = now.toLocaleDateString('pt-BR');
@@ -55,9 +72,7 @@ export function loadState(): StoredAppState {
     }
 
     // Normalizar settings
-    const settings: GovernanceSettings = parsed.settings
-      ? { ...getDefaultGovernanceSettings(), ...parsed.settings }
-      : getDefaultGovernanceSettings();
+    const settings: GovernanceSettings = mergeGovernanceSettings(parsed.settings);
     setGlobalActiveSettings(settings);
 
     // Normalizar rota e compatibilidade de projetos (e desduplicar por ID)
@@ -184,10 +199,7 @@ export function parseImportedJson(jsonString: string): StoredAppState {
     throw new Error('Formato de arquivo JSON inválido. A lista de projetos não foi encontrada.');
   }
 
-  const defaultSettings = getDefaultGovernanceSettings();
-  const settings: GovernanceSettings = data.settings
-    ? { ...defaultSettings, ...data.settings }
-    : defaultSettings;
+  const settings: GovernanceSettings = mergeGovernanceSettings(data.settings);
 
   const projects: SolutionProject[] = data.projects.map((p: any) => ({
     ...p,

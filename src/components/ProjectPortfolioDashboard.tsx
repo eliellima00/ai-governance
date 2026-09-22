@@ -32,6 +32,7 @@ import {
   STAGE_NAMES
 } from '../data/estimationCatalog';
 import { can } from '../utils/permissions';
+import { getActiveConfig } from '../config/governanceConfig';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -231,6 +232,8 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   onSelectProjectAndNavigate,
   onOpenNewProjectModal
 }) => {
+  const { priorities: priorityOptions } = getActiveConfig().auxiliaryLists;
+
   const [viewMode, setViewMode] = useState<'spreadsheet' | 'executive_summary' | 'kanban'>('spreadsheet');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
@@ -642,10 +645,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             className="text-xs py-1.5 bg-grey-50"
           >
             <option value="all">Todas as Prioridades</option>
-            <option value="P0 - Urgente">P0 - Urgente</option>
-            <option value="P1 - Alta">P1 - Alta</option>
-            <option value="P2 - Média">P2 - Média</option>
-            <option value="P3 - Baixa">P3 - Baixa</option>
+            {priorityOptions.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
           </Select>
         </div>
       </Card>
@@ -803,11 +807,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         onChange={(e) => handlePriorityChange(proj, e.target.value as ExecutivePriority)}
                         className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors cursor-pointer w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
                       >
-                        <option value="P0 - Urgente">P0 - Urgente</option>
-                        <option value="P1 - Alta">P1 - Alta</option>
-                        <option value="P2 - Média">P2 - Média</option>
-                        <option value="P3 - Baixa">P3 - Baixa</option>
-                        <option value="Backlog">Backlog</option>
+                        {priorityOptions.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
                       </select>
                     </Td>
 

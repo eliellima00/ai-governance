@@ -12,3 +12,4 @@ export * from './SearchInput';
 export * from './ProgressBar';
 export * from './ChecklistItem';
 export * from './SelectableCard';
+export * from './ListCrudEditor';

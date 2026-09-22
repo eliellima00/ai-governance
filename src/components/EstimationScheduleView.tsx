@@ -39,6 +39,7 @@ import {
   formatPtBrDate,
   getDefaultEstimationInputs
 } from '../utils/estimation';
+import { getActiveConfig } from '../config/governanceConfig';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -61,6 +62,8 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   onUpdateProject,
   onNavigateToGlpi
 }) => {
+  const { generationTools: generationToolOptions } = getActiveConfig().auxiliaryLists;
+
   // Modal states
   const [isGlpiModalOpen, setIsGlpiModalOpen] = useState(false);
   const [copiedGlpiNote, setCopiedGlpiNote] = useState(false);
@@ -536,12 +539,11 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
               onChange={(e) => handleToolChange(e.target.value as GenerationTool)}
               className="text-xs font-bold text-grey-800"
             >
-              <option value="Claude Code">Claude Code</option>
-              <option value="Codex">Codex</option>
-              <option value="ChatGPT">ChatGPT</option>
-              <option value="Gemini (copia-e-cola)">Gemini (copia-e-cola)</option>
-              <option value="Manual">Manual</option>
-              <option value="Outro">Outro</option>
+              {generationToolOptions.map((tool) => (
+                <option key={tool} value={tool}>
+                  {tool}
+                </option>
+              ))}
             </Select>
           </Field>
 

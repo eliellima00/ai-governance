@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   TrendingDown,
   AlertTriangle,
@@ -22,7 +22,32 @@ import {
 } from 'recharts';
 import { ActionItem, RiskLevel, SolutionProject } from '../types';
 import { calculateRiskLevel, getRiskColorClass } from '../utils/riskCalculations';
+import { getActiveConfig } from '../config/governanceConfig';
 import { Card, Badge, StatTile, ChecklistItem, PageHeader } from './ui';
+
+const RISK_LABELS: Record<RiskLevel, string> = {
+  BAIXO: 'Baixo',
+  MEDIO: 'Médio',
+  ALTO: 'Alto',
+  CRITICO: 'Crítico'
+};
+
+/**
+ * Datas no app são texto livre em pt-BR (`toLocaleDateString('pt-BR')`, ex.: "16/09/2026"), com
+ * alguns registros legados em ISO. Tenta as duas formas; retorna null se não for possível
+ * interpretar, para que o burn-down ignore com segurança pontos sem data confiável.
+ */
+function parseAppDate(value?: string): Date | null {
+  if (!value) return null;
+  const brMatch = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (brMatch) {
+    const [, day, month, year] = brMatch;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    return isNaN(date.getTime()) ? null : date;
+  }
+  const iso = new Date(value);
+  return isNaN(iso.getTime()) ? null : iso;
+}
 
 interface CriticalityEvolutionViewProps {
   project: SolutionProject;
@@ -41,6 +66,8 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
   onToggleAction,
   onNavigateToActionPlan
 }) => {
+  const detailedEvolution = !!getActiveConfig().featureFlags?.detailedEvolution;
+
   // What-if simulation overrides
   const [simulatedCompletedIds, setSimulatedCompletedIds] = useState<number[]>([]);
 
@@ -57,100 +84,73 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
   const effectiveRiskLevel = calculateRiskLevel(effectiveSimScore);
   const riskColor = getRiskColorClass(effectiveRiskLevel);
 
-  // Display-only helpers: initial score status is always presented as "Crítico".
-  const initialRiskColor = getRiskColorClass('CRITICO');
+  // Score/risco inicial real do projeto (não mais fixo em "Crítico").
+  const initialRiskColor = getRiskColorClass(project.initialRisk);
 
-  // Display-only helper mirroring the residual score status bands used below
-  // (kept identical to the original inline conclusions, just split into a
-  // plain label + a RiskLevel used purely for badge coloring).
-  const residualLevel: RiskLevel = residualScore <= 12 ? 'MEDIO' : residualScore <= 20 ? 'ALTO' : 'CRITICO';
-  const residualLabel = residualScore <= 12 ? 'Médio' : residualScore <= 20 ? 'Alto' : 'Crítico';
+  const residualLevel: RiskLevel = calculateRiskLevel(residualScore);
+  const residualLabel = RISK_LABELS[residualLevel];
   const residualColor = getRiskColorClass(residualLevel);
 
-  // Timeline data for the Burn-down chart
-  // `level` is a display-only addition (not used in any calculation) so the
-  // chart tooltip can render a proper Badge instead of baked-in emoji.
-  const timelineData: {
-    date: string;
-    label: string;
-    score: number;
-    target: number;
-    status: string;
-    level: RiskLevel;
-    color: string;
-    event: string;
-  }[] = [
-    {
-      date: '23/06/2026',
-      label: 'Intake Inicial GLPI',
-      score: 34,
-      target: 4,
-      status: 'Crítico',
-      level: 'CRITICO',
-      color: '#18181b',
-      event: 'Triagem inicial com IA apontando criticidade 34'
-    },
-    {
-      date: '10/07/2026',
-      label: 'Reunião de Alinhamento TI',
-      score: 28,
-      target: 4,
-      status: 'Crítico',
-      level: 'CRITICO',
-      color: '#18181b',
-      event: 'Restore validado, RACI sustentação e fluxo homologação'
-    },
-    {
-      date: '13/07/2026',
-      label: 'Backup Automático',
-      score: 26,
-      target: 4,
-      status: 'Crítico',
-      level: 'CRITICO',
-      color: '#18181b',
-      event: 'Rotina de snapshots diários em Drive corporativo'
-    },
-    {
-      date: '29/07/2026',
-      label: 'Acesso ti.dev & Script',
-      score: 24,
-      target: 4,
-      status: 'Crítico',
-      level: 'CRITICO',
-      color: '#18181b',
-      event: 'Auditoria de código e migração para conta corporativa'
-    },
-    {
-      date: 'Hoje (Atual)',
-      label: 'Cenário Atual (Mitigado)',
+  // Timeline do burn-down: calculada a partir do Plano de Ação real do projeto, não mais
+  // fabricada com datas/eventos fixos do caso Portal Logística.
+  const timelineData = useMemo(() => {
+    type TimelinePoint = {
+      date: string;
+      label: string;
+      score: number;
+      status: string;
+      level: RiskLevel;
+      event: string;
+    };
+
+    const startDate =
+      parseAppDate(project.createdAt) ||
+      (project.meetingLogs || [])
+        .map((m) => parseAppDate(m.date))
+        .filter((d): d is Date => !!d)
+        .sort((a, b) => a.getTime() - b.getTime())[0] ||
+      null;
+
+    const startPoint: TimelinePoint = {
+      date: startDate ? startDate.toLocaleDateString('pt-BR') : 'Início',
+      label: 'Situação Inicial',
+      score: project.initialScore,
+      status: RISK_LABELS[project.initialRisk],
+      level: project.initialRisk,
+      event: 'Diagnóstico inicial de criticidade'
+    };
+
+    const datedCompleted = completedActions
+      .map((a) => ({ action: a, date: parseAppDate(a.completionDate) }))
+      .filter((a): a is { action: ActionItem; date: Date } => !!a.date)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    const midPoints: TimelinePoint[] = [];
+    let runningScore = project.initialScore;
+    datedCompleted.forEach(({ action, date }) => {
+      runningScore = Math.max(0, runningScore - action.riskPointsImpact);
+      const level = calculateRiskLevel(runningScore);
+      midPoints.push({
+        date: date.toLocaleDateString('pt-BR'),
+        label: action.title,
+        score: runningScore,
+        status: RISK_LABELS[level],
+        level,
+        event: `Ação concluída: ${action.title}`
+      });
+    });
+
+    const currentPoint: TimelinePoint = {
+      date: 'Atual',
+      label: 'Cenário Atual',
       score: residualScore,
-      target: 4,
       status: residualLabel,
       level: residualLevel,
-      color: residualScore <= 12 ? '#f59e0b' : residualScore <= 20 ? '#f43f5e' : '#18181b',
-      event: `${completedActions.length} ações concluídas com sucesso`
-    },
-    {
-      date: 'Próxima Onda',
-      label: 'Token ERP + Acessos + CI/CD',
-      score: Math.min(residualScore, 11),
-      target: 4,
-      status: 'Médio',
-      level: 'MEDIO',
-      color: '#f59e0b',
-      event: 'Remoção de token hardcoded + controle de login'
-    },
-    {
-      date: 'Meta Final',
-      label: 'Governança Plena',
-      score: 3,
-      target: 4,
-      status: 'Baixo',
-      level: 'BAIXO',
-      color: '#10b981',
-      event: 'Conformidade LGPD, descarte automático e domínio'
-    }
-  ];
+      event: `${completedActions.length} ${completedActions.length === 1 ? 'ação concluída' : 'ações concluídas'} até o momento`
+    };
+
+    return [startPoint, ...midPoints, currentPoint];
+  }, [project, completedActions, residualScore, residualLevel, residualLabel]);
 
   // Dimensions comparison data
   const dimensionsComparison = [
@@ -222,7 +222,7 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
               <StatTile
                 label="Score Inicial"
                 value={`${project.initialScore} pts`}
-                subtext={<Badge className={initialRiskColor.badge}>Crítico</Badge>}
+                subtext={<Badge className={initialRiskColor.badge}>{RISK_LABELS[project.initialRisk]}</Badge>}
                 icon={<AlertTriangle className="w-4 h-4" />}
                 iconClassName="bg-grey-100 text-grey-600"
                 className="w-36"
@@ -252,7 +252,8 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
         />
       </Card>
 
-      {/* Main Chart Card */}
+      {/* Main Chart Card — versão detalhada, atrás da feature flag (Configurações > Funcionalidades) */}
+      {detailedEvolution && (
       <Card className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-grey-200 pb-3">
           <div>
@@ -261,7 +262,7 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
               <span>Gráfico de Desescalada de Criticidade (Burn-Down de Risco)</span>
             </h3>
             <p className="text-xs text-grey-500 mt-0.5">
-              Acompanhamento cronológico da pontuação de risco conforme as 17 ações do plano são implantadas.
+              Acompanhamento cronológico da pontuação de risco conforme as {actionList.length} ações do plano são implantadas.
             </p>
           </div>
           <div className="flex items-center gap-3 text-xs">
@@ -329,11 +330,12 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
           </ResponsiveContainer>
         </div>
       </Card>
+      )}
 
-      {/* Two-Column: Dimensions Reduction & "What-If" Simulator */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Dimensões (sempre visível) + Simulador "What-If" (atrás da feature flag) */}
+      <div className={detailedEvolution ? 'grid grid-cols-1 lg:grid-cols-12 gap-6' : ''}>
         {/* Dimensions Bar Chart Comparison */}
-        <Card className="lg:col-span-6 space-y-3">
+        <Card className={detailedEvolution ? 'lg:col-span-6 space-y-3' : 'space-y-3'}>
           <h3 className="text-sm font-bold text-grey-900 flex items-center gap-2">
             <BarChart2 className="w-4 h-4 text-grey-600" />
             <span>Evolução por Dimensão de Risco (Antes x Agora x Meta)</span>
@@ -356,6 +358,7 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
         </Card>
 
         {/* "What-If" Interactive Simulator for Coordinator */}
+        {detailedEvolution && (
         <Card className="lg:col-span-6 space-y-4">
           <div className="flex items-center justify-between border-b border-grey-200 pb-2">
             <div>
@@ -440,6 +443,7 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
             </button>
           </div>
         </Card>
+        )}
       </div>
     </div>
   );
