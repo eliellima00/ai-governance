@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS projects (
     dimensions_initial JSONB DEFAULT '{}'::jsonb,
     links JSONB DEFAULT '{}'::jsonb,
     technical_doc JSONB DEFAULT '{}'::jsonb,
-    sheets_catalog JSONB DEFAULT '[]'::jsonb,
+    estimation JSONB DEFAULT '{}'::jsonb,
     custom_hourly_rate NUMERIC,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_updated VARCHAR(50)
@@ -872,35 +872,6 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
           </div>
 
           <div className="space-y-3">
-            <label
-              className={`flex items-start gap-3 p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 ${
-                isAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'
-              }`}
-            >
-              <input
-                type="checkbox"
-                disabled={!isAdmin}
-                checked={!!formData.featureFlags.dataDictionary}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    featureFlags: { ...prev.featureFlags, dataDictionary: e.target.checked }
-                  }))
-                }
-                className="mt-0.5 rounded text-brand-main"
-              />
-              <span>
-                <span className="text-xs font-bold text-grey-900 block">
-                  Dicionário de Dados (catálogo de abas de planilha)
-                </span>
-                <span className="text-[11px] text-grey-500">
-                  Mostra, na Ficha GLPI, a seção com o mapeamento de cada aba da planilha base (categoria,
-                  finalidade e sensibilidade LGPD). Só faz sentido para soluções baseadas em Google Sheets
-                  com múltiplas abas mapeadas.
-                </span>
-              </span>
-            </label>
-
             <label
               className={`flex items-start gap-3 p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 ${
                 isAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'

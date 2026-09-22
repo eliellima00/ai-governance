@@ -35,8 +35,7 @@ import {
   Select,
   Textarea,
   Tabs,
-  StatTile,
-  SearchInput
+  StatTile
 } from './ui';
 
 interface GlpiAssetViewProps {
@@ -55,6 +54,7 @@ interface GlpiAssetViewProps {
     assetId: string;
     glpiTicketId: string;
     technicalDoc: SolutionProject['technicalDoc'];
+    links: SolutionProject['links'];
   }) => void;
 }
 
@@ -157,6 +157,16 @@ const TECH_DOC_GROUPS: { title: string; fields: TechDocKey[] }[] = [
   }
 ];
 
+type LinkKey = keyof SolutionProject['links'];
+
+const LINK_FIELDS: { key: LinkKey; label: string; placeholder: string }[] = [
+  { key: 'spreadsheet', label: 'Planilha Base (Google Sheets)', placeholder: 'https://docs.google.com/spreadsheets/...' },
+  { key: 'script', label: 'Script (Apps Script)', placeholder: 'https://script.google.com/...' },
+  { key: 'githubRepo', label: 'Repositório (GitHub)', placeholder: 'https://github.com/org/repositorio' },
+  { key: 'internalPanel', label: 'Painel Interno (uso ATTO)', placeholder: 'https://.../exec?page=interno' },
+  { key: 'externalPortal', label: 'Portal Externo (terceiros)', placeholder: 'https://.../exec' }
+];
+
 export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   project,
   residualScore,
@@ -164,16 +174,13 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   onNavigateTab,
   onSave
 }) => {
-  const { auxiliaryLists, featureFlags } = getActiveConfig();
-  const showDataDictionary = !!featureFlags?.dataDictionary;
+  const { auxiliaryLists } = getActiveConfig();
   const canEdit = can(userRole, 'edit_project_glpi');
 
   const [viewMode, setViewMode] = useState<'edit' | 'live_preview'>('edit');
-  const [docSectionFilter, setDocSectionFilter] = useState<'all' | 'overview' | 'sheets' | 'ops' | 'security'>(
+  const [docSectionFilter, setDocSectionFilter] = useState<'all' | 'overview' | 'ops' | 'security'>(
     'overview'
   );
-  const [sheetSearch, setSheetSearch] = useState('');
-  const [sheetCategory, setSheetCategory] = useState<string>('all');
 
   const [name, setName] = useState(project.name);
   const [assetIdVal, setAssetIdVal] = useState(project.assetId);
@@ -186,6 +193,7 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   const [objective, setObjective] = useState(project.objective);
   const [initialDoc, setInitialDoc] = useState(project.initialDoc);
   const [techDoc, setTechDoc] = useState(project.technicalDoc);
+  const [links, setLinks] = useState(project.links);
   const [isSavedToast, setIsSavedToast] = useState(false);
   const [copiedDoc, setCopiedDoc] = useState(false);
 
@@ -193,21 +201,9 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
     setTechDoc((prev) => ({ ...prev, [field]: value }));
   };
 
-  const { sheetsCatalog } = project;
-
-  const filteredSheets = (sheetsCatalog || []).filter((sheet) => {
-    if (sheetCategory !== 'all' && sheet.category !== sheetCategory) return false;
-    if (
-      sheetSearch &&
-      !sheet.name.toLowerCase().includes(sheetSearch.toLowerCase()) &&
-      !sheet.purpose.toLowerCase().includes(sheetSearch.toLowerCase())
-    ) {
-      return false;
-    }
-    return true;
-  });
-
-  const categories = Array.from(new Set((sheetsCatalog || []).map((s) => s.category)));
+  const updateLink = (field: keyof SolutionProject['links'], value: string) => {
+    setLinks((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSave = () => {
     setIsSavedToast(true);
@@ -222,7 +218,8 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
         initialDoc,
         assetId: assetIdVal,
         glpiTicketId: glpiTicketIdVal,
-        technicalDoc: techDoc
+        technicalDoc: techDoc,
+        links
       });
     }
     setTimeout(() => setIsSavedToast(false), 3000);
@@ -275,15 +272,7 @@ ${initialDoc}
 - Logs: ${nf(techDoc.logsSummary)}
 - Controle de Acesso: ${nf(techDoc.accessControlSummary)}
 - Contas: ${nf(techDoc.accountsSummary)}
-- Credenciais: ${nf(techDoc.credentialsSummary)}
-${
-  showDataDictionary
-    ? `
-## 6. DICIONÁRIO DE DADOS & CATÁLOGO DE ABAS (${sheetsCatalog?.length || 0} ABAS)
-${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: ${s.sensitivity}): ${s.purpose}`).join('\n')}
-`
-    : ''
-}`;
+- Credenciais: ${nf(techDoc.credentialsSummary)}`;
     navigator.clipboard.writeText(text);
     setCopiedDoc(true);
     setTimeout(() => setCopiedDoc(false), 2500);
@@ -488,7 +477,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <FileSpreadsheet className="w-3.5 h-3.5 text-brand-main" />
-                        <span className="truncate">Planilha Base ({sheetsCatalog?.length || 0} abas)</span>
+                        <span className="truncate">Planilha Base</span>
                       </div>
                       <ExternalLink className="w-3 h-3 text-grey-400 group-hover:text-grey-700 shrink-0" />
                     </a>
@@ -549,6 +538,38 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Links da Solução (editável) — planilha, script, repositório e portais */}
+          <div className="border-t border-grey-200 p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-grey-900 flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-brand-dark" />
+                <span>Links da Solução</span>
+              </h3>
+              <p className="text-xs text-grey-500 mt-0.5">
+                URLs de planilha, script, repositório e portais — alimentam os atalhos ao lado e ficam
+                em branco até serem preenchidos.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {LINK_FIELDS.map(({ key, label, placeholder }) => (
+                <Field key={key} label={label}>
+                  {canEdit ? (
+                    <Input
+                      type="url"
+                      value={links[key] || ''}
+                      onChange={(e) => updateLink(key, e.target.value)}
+                      placeholder={placeholder}
+                      className="font-mono text-xs"
+                    />
+                  ) : (
+                    <ReadOnlyField value={links[key] || ''} className="font-mono text-xs" />
+                  )}
+                </Field>
+              ))}
             </div>
           </div>
 
@@ -640,7 +661,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                 </div>
                 <h3 className="text-lg font-bold text-white mt-0.5">Documentação Técnica e Funcional Viva</h3>
                 <p className="text-xs text-brand-light">
-                  Visão consolidada com arquitetura, dicionário de dados interativo ({sheetsCatalog?.length || 0} abas), sustentação e conformidade LGPD.
+                  Visão consolidada com arquitetura, sustentação e conformidade LGPD.
                 </p>
               </div>
             </div>
@@ -674,11 +695,8 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             {[
               { id: 'all', label: 'Visão Geral Completa' },
               { id: 'overview', label: '1. Resumo & Arquitetura' },
-              ...(showDataDictionary
-                ? [{ id: 'sheets', label: `2. Dicionário de Dados (${sheetsCatalog?.length || 0} Abas)` }]
-                : []),
-              { id: 'ops', label: '3. Sustentação & Operação' },
-              { id: 'security', label: '4. Segurança & LGPD' }
+              { id: 'ops', label: '2. Sustentação & Operação' },
+              { id: 'security', label: '3. Segurança & LGPD' }
             ].map((sec) => (
               <button
                 key={sec.id}
@@ -819,11 +837,6 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                       <span className="text-grey-600">Score Residual Atual:</span>
                       <strong className="text-brand-dark font-mono font-bold">{residualScore} pts</strong>
                     </div>
-
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-grey-600">Total de Abas Mapeadas:</span>
-                      <span className="font-bold text-grey-800">{sheetsCatalog?.length || 0} abas</span>
-                    </div>
                   </div>
 
                   <Button
@@ -839,101 +852,13 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             </div>
           )}
 
-          {/* SECTION 2: Dicionário de Dados Completo — atrás da feature flag (Configurações > Funcionalidades) */}
-          {showDataDictionary && (docSectionFilter === 'all' || docSectionFilter === 'sheets') && (
-            <Card className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-grey-200 pb-4">
-                <div>
-                  <h4 className="font-bold text-grey-900 text-base flex items-center gap-2">
-                    <FileSpreadsheet className="w-5 h-5 text-brand-dark" />
-                    <span>Dicionário de Dados & Estrutura de Abas ({sheetsCatalog?.length || 0} Abas Mapeadas)</span>
-                  </h4>
-                  <p className="text-xs text-grey-500 mt-0.5">
-                    Mapeamento detalhado de cada aba da planilha base com categoria operacional, objetivo funcional e nível
-                    de sensibilidade LGPD.
-                  </p>
-                </div>
-
-                <Badge className="bg-brand-lighter text-brand-dark border-brand-light shrink-0">
-                  {filteredSheets.length} de {sheetsCatalog?.length || 0} abas exibidas
-                </Badge>
-              </div>
-
-              {/* Filters & Search Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                <div className="sm:col-span-8">
-                  <SearchInput
-                    placeholder="Buscar por nome da aba ou finalidade..."
-                    value={sheetSearch}
-                    onChange={(e) => setSheetSearch(e.target.value)}
-                  />
-                </div>
-
-                <div className="sm:col-span-4">
-                  <Select value={sheetCategory} onChange={(e) => setSheetCategory(e.target.value)}>
-                    <option value="all">Todas as Categorias ({sheetsCatalog?.length || 0})</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              {/* Sheets List */}
-              <div className="border border-grey-200 rounded-lg overflow-hidden">
-                <div className="max-h-96 overflow-y-auto divide-y divide-grey-200">
-                  {filteredSheets.map((sheet) => (
-                    <div
-                      key={sheet.name}
-                      className="p-3.5 hover:bg-grey-50 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-bold text-grey-900 bg-grey-100 px-2 py-0.5 rounded border border-grey-200">
-                            {sheet.name}
-                          </span>
-                          <Badge className="bg-info-50 text-info-700 border-info-200 text-[10px]">
-                            {sheet.category}
-                          </Badge>
-                        </div>
-                        <p className="text-grey-600 text-xs leading-relaxed">{sheet.purpose}</p>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                        <Badge
-                          className={`text-[10px] ${
-                            sheet.sensitivity === 'Alta'
-                              ? 'bg-danger-50 text-danger-800 border-danger-300'
-                              : sheet.sensitivity === 'Média'
-                              ? 'bg-warning-50 text-warning-600 border-warning-200'
-                              : 'bg-grey-100 text-grey-700 border-grey-200'
-                          }`}
-                        >
-                          Sensibilidade: {sheet.sensitivity}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-
-                  {filteredSheets.length === 0 && (
-                    <div className="p-8 text-center text-grey-500 text-xs">
-                      Nenhuma aba encontrada com os filtros selecionados.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* SECTION 3: Sustentação, Continuidade e Operação */}
+          {/* SECTION 2: Sustentação, Continuidade e Operação */}
           {(docSectionFilter === 'all' || docSectionFilter === 'ops') && (
             <Card className="space-y-4">
               <div className="border-b border-grey-200 pb-3">
                 <h4 className="font-bold text-grey-900 text-base flex items-center gap-2">
                   <Workflow className="w-5 h-5 text-brand-dark" />
-                  <span>3. Sustentação, Continuidade de Negócio & Operação</span>
+                  <span>2. Sustentação, Continuidade de Negócio & Operação</span>
                 </h4>
               </div>
 
@@ -978,13 +903,13 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             </Card>
           )}
 
-          {/* SECTION 4: Segurança da Informação & LGPD */}
+          {/* SECTION 3: Segurança da Informação & LGPD */}
           {(docSectionFilter === 'all' || docSectionFilter === 'security') && (
             <Card className="space-y-4">
               <div className="flex items-center justify-between border-b border-grey-200 pb-3">
                 <h4 className="font-bold text-grey-900 text-base flex items-center gap-2">
                   <Lock className="w-5 h-5 text-brand-dark" />
-                  <span>4. Segurança da Informação, LGPD & Gestão de Acessos</span>
+                  <span>3. Segurança da Informação, LGPD & Gestão de Acessos</span>
                 </h4>
                 <Badge className="bg-brand-lighter text-brand-dark border-brand-light">Em Conformidade</Badge>
               </div>

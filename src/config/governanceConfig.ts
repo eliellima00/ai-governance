@@ -60,8 +60,6 @@ export interface GovernanceSettings {
   };
   /** Funcionalidades avançadas desligadas por padrão (visão sucinta); reativáveis aqui sem alterar código. */
   featureFlags: {
-    /** Aba "Dicionário de Dados" (catálogo de abas de planilha) dentro da Ficha GLPI. */
-    dataDictionary: boolean;
     /** Gráfico de burn-down e simulador "what-if" na aba Evolução (além do resumo sucinto padrão). */
     detailedEvolution: boolean;
   };
@@ -127,7 +125,6 @@ export function getDefaultGovernanceSettings(): GovernanceSettings {
       ]
     },
     featureFlags: {
-      dataDictionary: false,
       detailedEvolution: false
     }
   };

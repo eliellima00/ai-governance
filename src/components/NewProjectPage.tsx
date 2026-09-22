@@ -277,7 +277,6 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       dimensionsInitial: { seguranca, lgpd, operacional },
       criteria,
       actionPlan,
-      sheetsCatalog: [],
       // Eixo 2 & Governança
       projectType,
       generationTool,

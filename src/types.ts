@@ -118,14 +118,6 @@ export interface RiskCriterion {
   mitigatedByActionIds?: number[];
 }
 
-export interface SheetBaseInfo {
-  name: string;
-  category: 'Operacional' | 'Origem / Normalização' | 'Integrações / ERP' | 'Transferências' | 'Fórmula' | 'Histórico / Logs';
-  purpose: string;
-  sensitivity: 'Alta' | 'Média' | 'Baixa';
-  linesEstimated?: string;
-}
-
 export interface ProjectActivityLog {
   id: string;
   date: string;
@@ -235,7 +227,6 @@ export interface SolutionProject {
   };
   criteria: RiskCriterion[];
   actionPlan: ActionItem[];
-  sheetsCatalog: SheetBaseInfo[];
   technicalDoc: {
     version: string;
     classification: string;
