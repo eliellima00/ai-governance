@@ -1,6 +1,11 @@
 -- ==============================================================================
 -- SCHEMA RELACIONAL POSTGRESQL PARA O SUPABASE
 -- Sistema de Governança de Soluções e Ativos GLPI - ATTO Sementes
+--
+-- USO: referência para provisionar um projeto Supabase NOVO do zero (rode este
+-- arquivo uma única vez). Para alterações num banco que já existe, NÃO edite
+-- este arquivo — crie uma migration em prisma/migrations/ (veja README.md) e
+-- rode `npx prisma migrate dev` (dev) ou `npx prisma migrate deploy` (produção).
 -- ==============================================================================
 
 -- 1. Habilitar extensões úteis
@@ -37,6 +42,7 @@ CREATE TABLE IF NOT EXISTS projects (
     dimensions_initial JSONB DEFAULT '{}'::jsonb,
     links JSONB DEFAULT '{}'::jsonb,
     technical_doc JSONB DEFAULT '{}'::jsonb,
+    estimation JSONB DEFAULT '{}'::jsonb,
     sheets_catalog JSONB DEFAULT '[]'::jsonb,
     custom_hourly_rate NUMERIC,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

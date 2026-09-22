@@ -93,7 +93,7 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
     }
     return getDefaultEstimationInputs(
       project.projectType || 'A',
-      project.createdAt ? project.createdAt.split(' ')[0] : undefined
+      project.createdAt ? project.createdAt.split(/[ T]/)[0] : undefined
     );
   }, [project.estimation, project.projectType, project.createdAt]);
 

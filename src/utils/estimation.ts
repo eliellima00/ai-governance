@@ -8,11 +8,12 @@ import {
 import { getActiveConfig } from '../config/governanceConfig';
 
 /**
- * Faz o parse de uma data em YYYY-MM-DD ou DD/MM/YYYY (com ou sem horário anexado)
+ * Faz o parse de uma data em YYYY-MM-DD ou DD/MM/YYYY (com ou sem horário/timezone
+ * anexado, seja como "YYYY-MM-DD HH:mm" ou como timestamp ISO "YYYY-MM-DDTHH:mm:ss.sss+00:00")
  * para um objeto Date local.
  */
 export function parseFlexibleDate(dateStr: string): Date {
-  const datePart = (dateStr || new Date().toISOString().split('T')[0]).split(' ')[0];
+  const datePart = (dateStr || new Date().toISOString().split('T')[0]).split(' ')[0].split('T')[0];
   if (datePart.includes('/')) {
     const [day, month, year] = datePart.split('/').map(Number);
     return new Date(year, month - 1, day);
@@ -67,13 +68,14 @@ export function addWorkingDays(startDateStr: string, daysToAdd: number): string 
 }
 
 /**
- * Formata data ISO (YYYY-MM-DD) para padrão brasileiro DD/MM/YYYY
+ * Formata data ISO (YYYY-MM-DD, com ou sem horário/timezone anexado) para padrão brasileiro DD/MM/YYYY
  */
 export function formatPtBrDate(isoOrFormattedDate: string): string {
   if (!isoOrFormattedDate) return '-';
   if (isoOrFormattedDate.includes('/')) return isoOrFormattedDate;
-  const parts = isoOrFormattedDate.split('-');
-  if (parts.length === 3) {
+  const datePart = isoOrFormattedDate.split('T')[0].split(' ')[0];
+  const parts = datePart.split('-');
+  if (parts.length === 3 && parts.every((p) => /^\d+$/.test(p))) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
   return isoOrFormattedDate;

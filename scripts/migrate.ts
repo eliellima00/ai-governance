@@ -1,3 +1,8 @@
+// ATENÇÃO: este script roda supabase-schema.sql inteiro (CREATE TABLE / CREATE POLICY sem
+// IF NOT EXISTS). Use-o só para provisionar um projeto Supabase NOVO, do zero. Rodar de novo
+// contra um banco que já tem as tabelas/políticas falha nas linhas CREATE POLICY (Postgres não
+// suporta "CREATE POLICY IF NOT EXISTS"). Para alterar um banco que já existe, crie uma migration
+// em prisma/migrations/ e use `npm run migrate` (prisma migrate deploy).
 import { Client } from 'pg';
 import fs from 'fs';
 import path from 'path';

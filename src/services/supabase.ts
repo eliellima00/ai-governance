@@ -250,6 +250,7 @@ export async function fetchProjectsFromSupabase(): Promise<SolutionProject[] | n
     dimensionsInitial: p.dimensions_initial || { seguranca: 0, lgpd: 0, operacional: 0 },
     links: p.links || { spreadsheet: '', script: '', internalPanel: '', externalPortal: '' },
     technicalDoc: p.technical_doc,
+    estimation: p.estimation && Object.keys(p.estimation).length > 0 ? p.estimation : undefined,
     sheetsCatalog: p.sheets_catalog || [],
     createdAt: p.created_at,
     lastUpdated: p.last_updated || new Date().toLocaleDateString('pt-BR'),
@@ -303,6 +304,7 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
       dimensions_initial: project.dimensionsInitial || {},
       links: project.links || {},
       technical_doc: project.technicalDoc || {},
+      estimation: project.estimation || {},
       sheets_catalog: project.sheetsCatalog || [],
       last_updated: project.lastUpdated || new Date().toLocaleDateString('pt-BR')
     });
