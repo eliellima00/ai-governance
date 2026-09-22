@@ -54,6 +54,7 @@ interface GlpiAssetViewProps {
     initialDoc: string;
     assetId: string;
     glpiTicketId: string;
+    technicalDoc: SolutionProject['technicalDoc'];
   }) => void;
 }
 
@@ -70,6 +71,91 @@ const QrCodeBlock: React.FC<{ project: SolutionProject; caption: string }> = ({ 
     <div className="mt-2 text-[11px] text-grey-500 truncate font-mono">{caption}</div>
   </div>
 );
+
+/** Exibição estática de um campo, usada no lugar do input/select/textarea quando o perfil não pode editar. */
+const ReadOnlyField: React.FC<{ value: string; multiline?: boolean; className?: string }> = ({
+  value,
+  multiline,
+  className = ''
+}) => (
+  <div
+    className={`w-full px-3 py-2 border border-grey-200 rounded-md text-sm bg-grey-50 text-grey-700 ${
+      multiline ? 'whitespace-pre-line leading-relaxed' : 'truncate'
+    } ${className}`}
+  >
+    {value || '—'}
+  </div>
+);
+
+type TechDocKey = keyof SolutionProject['technicalDoc'];
+
+const TECH_DOC_LABELS: Record<TechDocKey, string> = {
+  version: 'Versão da Documentação',
+  classification: 'Classificação (ex.: Confidencial - Uso Interno)',
+  frontend: 'Apresentação (Frontend)',
+  backend: 'Motor de Negócio (Backend)',
+  database: 'Base de Dados',
+  integrations: 'Integrações',
+  pdfGeneration: 'Geração de Relatórios / PDF',
+  emailDispatch: 'Disparo de E-mails',
+  hosting: 'Hospedagem',
+  environments: 'Ambientes (dev / homolog / produção)',
+  domain: 'Domínio',
+  aiAssistance: 'Uso de IA / Assistência',
+  backupData: 'Backup de Dados',
+  backupCode: 'Backup de Código-Fonte',
+  incidentHandling: 'Tratamento de Incidentes',
+  featureRollout: 'Rollout de Funcionalidades',
+  versionControl: 'Controle de Versão',
+  contingency: 'Contingência Operacional',
+  maturity: 'Maturidade Técnica',
+  personalDataSummary: 'Dados Pessoais Tratados',
+  pdfStorageSummary: 'Armazenamento de PDFs',
+  legalBasis: 'Base Legal (LGPD)',
+  confidentialDataSummary: 'Dados Confidenciais',
+  retentionPolicy: 'Política de Retenção',
+  logsSummary: 'Logs',
+  accessControlSummary: 'Controle de Acesso',
+  accountsSummary: 'Contas',
+  credentialsSummary: 'Credenciais'
+};
+
+const TECH_DOC_GROUPS: { title: string; fields: TechDocKey[] }[] = [
+  { title: 'Identificação da Documentação', fields: ['version', 'classification'] },
+  {
+    title: 'Arquitetura de Software & Topologia',
+    fields: [
+      'frontend',
+      'backend',
+      'database',
+      'integrations',
+      'pdfGeneration',
+      'emailDispatch',
+      'hosting',
+      'environments',
+      'domain',
+      'aiAssistance'
+    ]
+  },
+  {
+    title: 'Sustentação, Continuidade & Operação',
+    fields: ['backupData', 'backupCode', 'versionControl', 'incidentHandling', 'featureRollout', 'contingency', 'maturity']
+  },
+  {
+    title: 'Segurança da Informação, LGPD & Acessos',
+    fields: [
+      'personalDataSummary',
+      'pdfStorageSummary',
+      'legalBasis',
+      'confidentialDataSummary',
+      'retentionPolicy',
+      'logsSummary',
+      'accessControlSummary',
+      'accountsSummary',
+      'credentialsSummary'
+    ]
+  }
+];
 
 export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   project,
@@ -99,10 +185,15 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
   const [userGroup, setUserGroup] = useState(project.userGroup);
   const [objective, setObjective] = useState(project.objective);
   const [initialDoc, setInitialDoc] = useState(project.initialDoc);
+  const [techDoc, setTechDoc] = useState(project.technicalDoc);
   const [isSavedToast, setIsSavedToast] = useState(false);
   const [copiedDoc, setCopiedDoc] = useState(false);
 
-  const { technicalDoc, sheetsCatalog } = project;
+  const updateTechDoc = (field: keyof SolutionProject['technicalDoc'], value: string) => {
+    setTechDoc((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const { sheetsCatalog } = project;
 
   const filteredSheets = (sheetsCatalog || []).filter((sheet) => {
     if (sheetCategory !== 'all' && sheet.category !== sheetCategory) return false;
@@ -130,19 +221,22 @@ export const GlpiAssetView: React.FC<GlpiAssetViewProps> = ({
         objective,
         initialDoc,
         assetId: assetIdVal,
-        glpiTicketId: glpiTicketIdVal
+        glpiTicketId: glpiTicketIdVal,
+        technicalDoc: techDoc
       });
     }
     setTimeout(() => setIsSavedToast(false), 3000);
   };
 
   const handleCopyLivingDoc = () => {
+    const nf = (v?: string) => v || 'Não preenchido';
     const text = `# DOCUMENTAÇÃO TÉCNICA E FUNCIONAL VIVA - ${name} (GLPI ID: ${project.assetId})
 Status: ${status} | Chamado GLPI: ${project.glpiTicketId}
 Área: ${project.department} (${userGroup})
 Responsável Técnico: ${techResponsible} | Grupo: ${groupEncargado}
 Responsável Negócio: ${userResponsible}
 Classificação de Risco: ${residualScore} pts (${residualScore <= 5 ? 'Baixo' : residualScore <= 12 ? 'Médio' : residualScore <= 20 ? 'Alto' : 'Crítico'})
+Versão da Doc: ${nf(techDoc.version)} | Classificação: ${nf(techDoc.classification)}
 
 ## 1. OBJETIVO & ESCOPO OPERACIONAL
 ${objective}
@@ -151,30 +245,41 @@ ${objective}
 ${initialDoc}
 
 ## 3. ARQUITETURA DE SOFTWARE & TOPOLOGIA
-- Camada Apresentação (Frontend): ${technicalDoc?.frontend || 'Google Workspace WebApp'}
-- Motor de Negócio (Backend): ${technicalDoc?.backend || 'Google Apps Script (~30k linhas)'}
-- Base de Dados: ${technicalDoc?.database || 'Google Sheets (31 abas relacionais)'}
-- Integrações ERP: ${technicalDoc?.integrations || 'API REST Senior Sapiens'}
-- Repositório Git: ${project.links.githubRepo || 'grupoatto/portal-logistica'}
-- Geração de Relatórios/PDF: ${technicalDoc?.pdfGeneration || 'Apps Script + Drive'}
-- Disparo de E-mails: ${technicalDoc?.emailDispatch || 'Gmail API Corporativa'}
+- Camada Apresentação (Frontend): ${nf(techDoc.frontend)}
+- Motor de Negócio (Backend): ${nf(techDoc.backend)}
+- Base de Dados: ${nf(techDoc.database)}
+- Integrações: ${nf(techDoc.integrations)}
+- Repositório Git: ${project.links.githubRepo || 'Não informado'}
+- Geração de Relatórios/PDF: ${nf(techDoc.pdfGeneration)}
+- Disparo de E-mails: ${nf(techDoc.emailDispatch)}
+- Hospedagem: ${nf(techDoc.hosting)}
+- Ambientes: ${nf(techDoc.environments)}
+- Domínio: ${nf(techDoc.domain)}
+- Uso de IA / Assistência: ${nf(techDoc.aiAssistance)}
 
 ## 4. SUSTENTAÇÃO, CONTINUIDADE & BACKUP
-- Backup de Dados: ${technicalDoc?.backupData || 'Snapshot diário automatizado'}
-- Backup de Código: ${technicalDoc?.backupCode || 'GitHub Repositório'}
-- Tratamento de Incidentes: ${technicalDoc?.incidentHandling || 'Chamados via GLPI'}
-- Contingência Operacional: ${technicalDoc?.contingency || 'Planilha Base'}
+- Backup de Dados: ${nf(techDoc.backupData)}
+- Backup de Código: ${nf(techDoc.backupCode)}
+- Controle de Versão: ${nf(techDoc.versionControl)}
+- Tratamento de Incidentes: ${nf(techDoc.incidentHandling)}
+- Rollout de Funcionalidades: ${nf(techDoc.featureRollout)}
+- Contingência Operacional: ${nf(techDoc.contingency)}
+- Maturidade Técnica: ${nf(techDoc.maturity)}
 
 ## 5. SEGURANÇA, LGPD & GESTÃO DE ACESSOS
-- Dados Pessoais: ${technicalDoc?.personalDataSummary || 'Motoristas, CPF, Placas de Veículos'}
-- Base Legal: ${technicalDoc?.legalBasis || 'Execução de Contrato de Frete (Art. 7º, V, LGPD)'}
-- Dados Confidenciais: ${technicalDoc?.confidentialDataSummary || 'Valores de fretes e contratos comerciais'}
-- Política de Retenção: ${technicalDoc?.retentionPolicy || '5 anos para auditoria fiscal'}
-- Controle de Acesso: ${technicalDoc?.accessControlSummary || 'Autenticação Google Workspace'}
+- Dados Pessoais: ${nf(techDoc.personalDataSummary)}
+- Armazenamento de PDFs: ${nf(techDoc.pdfStorageSummary)}
+- Base Legal: ${nf(techDoc.legalBasis)}
+- Dados Confidenciais: ${nf(techDoc.confidentialDataSummary)}
+- Política de Retenção: ${nf(techDoc.retentionPolicy)}
+- Logs: ${nf(techDoc.logsSummary)}
+- Controle de Acesso: ${nf(techDoc.accessControlSummary)}
+- Contas: ${nf(techDoc.accountsSummary)}
+- Credenciais: ${nf(techDoc.credentialsSummary)}
 ${
   showDataDictionary
     ? `
-## 6. DICIONÁRIO DE DADOS & CATÁLOGO DE ABAS (${sheetsCatalog?.length || 31} ABAS)
+## 6. DICIONÁRIO DE DADOS & CATÁLOGO DE ABAS (${sheetsCatalog?.length || 0} ABAS)
 ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: ${s.sensitivity}): ${s.purpose}`).join('\n')}
 `
     : ''
@@ -231,57 +336,83 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
               <div className="lg:col-span-9 space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Nome">
-                    <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit} />
+                    {canEdit ? (
+                      <Input value={name} onChange={(e) => setName(e.target.value)} />
+                    ) : (
+                      <ReadOnlyField value={name} />
+                    )}
                   </Field>
 
                   <Field label="Status">
-                    <Select value={status} onChange={(e) => setStatus(e.target.value as any)} disabled={!canEdit}>
-                      {auxiliaryLists.statuses.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </Select>
+                    {canEdit ? (
+                      <Select value={status} onChange={(e) => setStatus(e.target.value as any)}>
+                        {auxiliaryLists.statuses.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      <ReadOnlyField value={status} />
+                    )}
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Identificador do Ativo (GLPI)">
-                    <Input
-                      value={assetIdVal}
-                      onChange={(e) => setAssetIdVal(e.target.value)}
-                      className="font-mono"
-                      disabled={!canEdit}
-                    />
+                    {canEdit ? (
+                      <Input
+                        value={assetIdVal}
+                        onChange={(e) => setAssetIdVal(e.target.value)}
+                        className="font-mono"
+                      />
+                    ) : (
+                      <ReadOnlyField value={assetIdVal} className="font-mono" />
+                    )}
                   </Field>
 
                   <Field label="Nº do Chamado GLPI de Origem">
-                    <Input
-                      value={glpiTicketIdVal}
-                      onChange={(e) => setGlpiTicketIdVal(e.target.value)}
-                      className="font-mono"
-                      disabled={!canEdit}
-                    />
+                    {canEdit ? (
+                      <Input
+                        value={glpiTicketIdVal}
+                        onChange={(e) => setGlpiTicketIdVal(e.target.value)}
+                        className="font-mono"
+                      />
+                    ) : (
+                      <ReadOnlyField value={glpiTicketIdVal} className="font-mono" />
+                    )}
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Técnico encarregado">
-                    <Input value={techResponsible} onChange={(e) => setTechResponsible(e.target.value)} disabled={!canEdit} />
+                    {canEdit ? (
+                      <Input value={techResponsible} onChange={(e) => setTechResponsible(e.target.value)} />
+                    ) : (
+                      <ReadOnlyField value={techResponsible} />
+                    )}
                   </Field>
 
                   <Field label="Grupo encarregado">
-                    <Input value={groupEncargado} onChange={(e) => setGroupEncargado(e.target.value)} disabled={!canEdit} />
+                    {canEdit ? (
+                      <Input value={groupEncargado} onChange={(e) => setGroupEncargado(e.target.value)} />
+                    ) : (
+                      <ReadOnlyField value={groupEncargado} />
+                    )}
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Usuário (Resp. Negócio)">
-                    <Input value={userResponsible} onChange={(e) => setUserResponsible(e.target.value)} disabled={!canEdit} />
+                    {canEdit ? (
+                      <Input value={userResponsible} onChange={(e) => setUserResponsible(e.target.value)} />
+                    ) : (
+                      <ReadOnlyField value={userResponsible} />
+                    )}
                   </Field>
 
                   <Field label="Grupo">
-                    <Input value={userGroup} disabled readOnly />
+                    <ReadOnlyField value={userGroup} />
                   </Field>
                 </div>
 
@@ -295,22 +426,28 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                       Visualizar na Documentação Viva
                     </button>
                   </div>
-                  <Textarea
-                    rows={6}
-                    value={objective}
-                    onChange={(e) => setObjective(e.target.value)}
-                    className="leading-relaxed"
-                    disabled={!canEdit}
-                  />
+                  {canEdit ? (
+                    <Textarea
+                      rows={6}
+                      value={objective}
+                      onChange={(e) => setObjective(e.target.value)}
+                      className="leading-relaxed"
+                    />
+                  ) : (
+                    <ReadOnlyField value={objective} multiline />
+                  )}
                 </Field>
 
                 <Field label="Documentação inicial">
-                  <Textarea
-                    rows={3}
-                    value={initialDoc}
-                    onChange={(e) => setInitialDoc(e.target.value)}
-                    disabled={!canEdit}
-                  />
+                  {canEdit ? (
+                    <Textarea
+                      rows={3}
+                      value={initialDoc}
+                      onChange={(e) => setInitialDoc(e.target.value)}
+                    />
+                  ) : (
+                    <ReadOnlyField value={initialDoc} multiline />
+                  )}
                 </Field>
               </div>
 
@@ -336,7 +473,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <GitBranch className="w-3.5 h-3.5 text-grey-600" />
-                        <span className="font-mono text-[11px] truncate">grupoatto/portal-logistica</span>
+                        <span className="font-mono text-[11px] truncate">{project.links.githubRepo}</span>
                       </div>
                       <ExternalLink className="w-3 h-3 text-grey-400 group-hover:text-grey-700 shrink-0" />
                     </a>
@@ -351,7 +488,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <FileSpreadsheet className="w-3.5 h-3.5 text-brand-main" />
-                        <span className="truncate">Planilha Base (31 abas)</span>
+                        <span className="truncate">Planilha Base ({sheetsCatalog?.length || 0} abas)</span>
                       </div>
                       <ExternalLink className="w-3 h-3 text-grey-400 group-hover:text-grey-700 shrink-0" />
                     </a>
@@ -366,7 +503,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <Code2 className="w-3.5 h-3.5 text-info-600" />
-                        <span className="truncate">Apps Script (~30k linhas)</span>
+                        <span className="truncate">Script / Automação</span>
                       </div>
                       <ExternalLink className="w-3 h-3 text-grey-400 group-hover:text-grey-700 shrink-0" />
                     </a>
@@ -415,6 +552,48 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
             </div>
           </div>
 
+          {/* Documentação Técnica Viva (editável) — mesmos campos exibidos na aba "Documentação Viva & Técnica" */}
+          <div className="border-t border-grey-200 p-6 space-y-6">
+            <div>
+              <h3 className="text-sm font-bold text-grey-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-brand-dark" />
+                <span>Documentação Técnica Viva</span>
+              </h3>
+              <p className="text-xs text-grey-500 mt-0.5">
+                Preencha aqui os campos que alimentam a aba "Documentação Viva & Técnica" desta solução. Fica em branco
+                até ser preenchido — nada aqui é herdado de outro projeto.
+              </p>
+            </div>
+
+            {TECH_DOC_GROUPS.map((group) => (
+              <div key={group.title} className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-grey-500">{group.title}</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {group.fields.map((key) => {
+                    const isShort = key === 'version' || key === 'classification' || key === 'hosting' || key === 'environments' || key === 'domain';
+                    return (
+                      <Field key={key} label={TECH_DOC_LABELS[key]}>
+                        {canEdit ? (
+                          isShort ? (
+                            <Input value={techDoc[key] || ''} onChange={(e) => updateTechDoc(key, e.target.value)} />
+                          ) : (
+                            <Textarea
+                              rows={2}
+                              value={techDoc[key] || ''}
+                              onChange={(e) => updateTechDoc(key, e.target.value)}
+                            />
+                          )
+                        ) : (
+                          <ReadOnlyField value={techDoc[key] || ''} multiline={!isShort} />
+                        )}
+                      </Field>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* GLPI Footer Bar with Save Button */}
           <div className="bg-grey-50 border-t border-grey-200 px-6 py-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs text-grey-500">
@@ -461,7 +640,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                 </div>
                 <h3 className="text-lg font-bold text-white mt-0.5">Documentação Técnica e Funcional Viva</h3>
                 <p className="text-xs text-brand-light">
-                  Visão consolidada com arquitetura, dicionário de dados interativo (31 abas), sustentação e conformidade LGPD.
+                  Visão consolidada com arquitetura, dicionário de dados interativo ({sheetsCatalog?.length || 0} abas), sustentação e conformidade LGPD.
                 </p>
               </div>
             </div>
@@ -496,7 +675,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
               { id: 'all', label: 'Visão Geral Completa' },
               { id: 'overview', label: '1. Resumo & Arquitetura' },
               ...(showDataDictionary
-                ? [{ id: 'sheets', label: `2. Dicionário de Dados (${sheetsCatalog?.length || 31} Abas)` }]
+                ? [{ id: 'sheets', label: `2. Dicionário de Dados (${sheetsCatalog?.length || 0} Abas)` }]
                 : []),
               { id: 'ops', label: '3. Sustentação & Operação' },
               { id: 'security', label: '4. Segurança & LGPD' }
@@ -559,12 +738,17 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                       <span>2. Topologia da Arquitetura de Software</span>
                     </h4>
                     <div className="flex items-center gap-2 shrink-0">
-                      {technicalDoc?.classification && (
+                      {techDoc.classification && (
                         <Badge className="bg-grey-100 text-grey-700 border-grey-200 text-[10px]">
-                          {technicalDoc.classification}
+                          {techDoc.classification}
                         </Badge>
                       )}
-                      <span className="text-[11px] text-grey-500 font-mono">GitHub: grupoatto/portal-logistica</span>
+                      {techDoc.version && (
+                        <span className="text-[10px] text-grey-400 font-mono">v{techDoc.version}</span>
+                      )}
+                      <span className="text-[11px] text-grey-500 font-mono">
+                        GitHub: {project.links.githubRepo || 'Não informado'}
+                      </span>
                     </div>
                   </div>
 
@@ -575,8 +759,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                         <span>Apresentação (Frontend)</span>
                       </div>
                       <p className="text-grey-600 text-[11px] leading-relaxed">
-                        {technicalDoc?.frontend ||
-                          'Web Apps em Google Workspace com interface HTML/CSS responsiva para usuários internos e externos.'}
+                        {techDoc.frontend || 'Não preenchido'}
                       </p>
                     </div>
 
@@ -586,21 +769,38 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                         <span>Motor de Negócio (Backend)</span>
                       </div>
                       <p className="text-grey-600 text-[11px] leading-relaxed">
-                        {technicalDoc?.backend ||
-                          'Google Apps Script (~30.000 linhas de código), versionado em repositório GitHub com CI/CD.'}
+                        {techDoc.backend || 'Não preenchido'}
                       </p>
                     </div>
 
                     <div className="p-3.5 bg-grey-50 rounded-lg border border-grey-200 space-y-1.5">
                       <div className="flex items-center gap-1.5 font-bold text-grey-900">
                         <Database className="w-4 h-4 text-brand-main" />
-                        <span>Base de Dados & ERP</span>
+                        <span>Base de Dados & Integrações</span>
                       </div>
                       <p className="text-grey-600 text-[11px] leading-relaxed">
-                        {technicalDoc?.database ||
-                          'Google Sheets estruturado em 31 abas relacionais com integração via API REST ao ERP Senior Sapiens.'}
+                        {techDoc.database || 'Não preenchido'}
                       </p>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-[11px]">
+                    {[
+                      { label: 'Integrações', value: techDoc.integrations },
+                      { label: 'Geração de PDF/Relatórios', value: techDoc.pdfGeneration },
+                      { label: 'Disparo de E-mails', value: techDoc.emailDispatch },
+                      { label: 'Hospedagem', value: techDoc.hosting },
+                      { label: 'Ambientes', value: techDoc.environments },
+                      { label: 'Domínio', value: techDoc.domain },
+                      { label: 'Uso de IA / Assistência', value: techDoc.aiAssistance }
+                    ].map((item) => (
+                      <div key={item.label} className="p-2.5 bg-grey-50 rounded-lg border border-grey-200">
+                        <span className="text-grey-500 font-semibold block text-[10px] uppercase tracking-wider">
+                          {item.label}
+                        </span>
+                        <span className="text-grey-700">{item.value || 'Não preenchido'}</span>
+                      </div>
+                    ))}
                   </div>
                 </Card>
               </div>
@@ -622,7 +822,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
 
                     <div className="flex items-center justify-between py-2">
                       <span className="text-grey-600">Total de Abas Mapeadas:</span>
-                      <span className="font-bold text-grey-800">{sheetsCatalog?.length || 31} abas</span>
+                      <span className="font-bold text-grey-800">{sheetsCatalog?.length || 0} abas</span>
                     </div>
                   </div>
 
@@ -646,7 +846,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                 <div>
                   <h4 className="font-bold text-grey-900 text-base flex items-center gap-2">
                     <FileSpreadsheet className="w-5 h-5 text-brand-dark" />
-                    <span>Dicionário de Dados & Estrutura de Abas ({sheetsCatalog?.length || 31} Abas Mapeadas)</span>
+                    <span>Dicionário de Dados & Estrutura de Abas ({sheetsCatalog?.length || 0} Abas Mapeadas)</span>
                   </h4>
                   <p className="text-xs text-grey-500 mt-0.5">
                     Mapeamento detalhado de cada aba da planilha base com categoria operacional, objetivo funcional e nível
@@ -655,7 +855,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                 </div>
 
                 <Badge className="bg-brand-lighter text-brand-dark border-brand-light shrink-0">
-                  {filteredSheets.length} de {sheetsCatalog?.length || 31} abas exibidas
+                  {filteredSheets.length} de {sheetsCatalog?.length || 0} abas exibidas
                 </Badge>
               </div>
 
@@ -671,7 +871,7 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
 
                 <div className="sm:col-span-4">
                   <Select value={sheetCategory} onChange={(e) => setSheetCategory(e.target.value)}>
-                    <option value="all">Todas as Categorias ({sheetsCatalog?.length || 31})</option>
+                    <option value="all">Todas as Categorias ({sheetsCatalog?.length || 0})</option>
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
@@ -744,13 +944,16 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   </span>
                   <div className="space-y-1.5 text-grey-600">
                     <p>
-                      <strong>Dados:</strong> {technicalDoc?.backupData}
+                      <strong>Dados:</strong> {techDoc.backupData || 'Não preenchido'}
                     </p>
                     <p>
-                      <strong>Código-Fonte:</strong> {technicalDoc?.backupCode}
+                      <strong>Código-Fonte:</strong> {techDoc.backupCode || 'Não preenchido'}
                     </p>
                     <p>
-                      <strong>Versionamento:</strong> {technicalDoc?.versionControl}
+                      <strong>Versionamento:</strong> {techDoc.versionControl || 'Não preenchido'}
+                    </p>
+                    <p>
+                      <strong>Rollout de Funcionalidades:</strong> {techDoc.featureRollout || 'Não preenchido'}
                     </p>
                   </div>
                 </div>
@@ -761,13 +964,13 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   </span>
                   <div className="space-y-1.5 text-grey-600">
                     <p>
-                      <strong>Incidentes:</strong> {technicalDoc?.incidentHandling}
+                      <strong>Incidentes:</strong> {techDoc.incidentHandling || 'Não preenchido'}
                     </p>
                     <p>
-                      <strong>Contingência:</strong> {technicalDoc?.contingency}
+                      <strong>Contingência:</strong> {techDoc.contingency || 'Não preenchido'}
                     </p>
                     <p>
-                      <strong>Maturidade Técnica:</strong> {technicalDoc?.maturity}
+                      <strong>Maturidade Técnica:</strong> {techDoc.maturity || 'Não preenchido'}
                     </p>
                   </div>
                 </div>
@@ -786,14 +989,15 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                 <Badge className="bg-brand-lighter text-brand-dark border-brand-light">Em Conformidade</Badge>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div className="p-4 bg-grey-50 rounded-lg border border-grey-200 space-y-2">
                   <span className="font-bold text-grey-900 text-xs uppercase tracking-wider block">
                     Tratamento de Dados Pessoais
                   </span>
-                  <p className="text-grey-600 leading-relaxed">{technicalDoc?.personalDataSummary}</p>
-                  <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200">
-                    <strong>Base Legal:</strong> {technicalDoc?.legalBasis}
+                  <p className="text-grey-600 leading-relaxed">{techDoc.personalDataSummary || 'Não preenchido'}</p>
+                  <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200 space-y-1">
+                    <p><strong>Base Legal:</strong> {techDoc.legalBasis || 'Não preenchido'}</p>
+                    <p><strong>Armazenamento de PDFs:</strong> {techDoc.pdfStorageSummary || 'Não preenchido'}</p>
                   </div>
                 </div>
 
@@ -801,9 +1005,9 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   <span className="font-bold text-grey-900 text-xs uppercase tracking-wider block">
                     Dados Confidenciais & Retenção
                   </span>
-                  <p className="text-grey-600 leading-relaxed">{technicalDoc?.confidentialDataSummary}</p>
+                  <p className="text-grey-600 leading-relaxed">{techDoc.confidentialDataSummary || 'Não preenchido'}</p>
                   <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200">
-                    <strong>Política de Retenção:</strong> {technicalDoc?.retentionPolicy}
+                    <strong>Política de Retenção:</strong> {techDoc.retentionPolicy || 'Não preenchido'}
                   </div>
                 </div>
 
@@ -811,9 +1015,19 @@ ${(sheetsCatalog || []).map((s) => `- ${s.name} [${s.category}] (Sensibilidade: 
                   <span className="font-bold text-grey-900 text-xs uppercase tracking-wider block">
                     Gestão de Acessos & Logs
                   </span>
-                  <p className="text-grey-600 leading-relaxed">{technicalDoc?.accessControlSummary}</p>
+                  <p className="text-grey-600 leading-relaxed">{techDoc.accessControlSummary || 'Não preenchido'}</p>
                   <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200">
-                    <strong>Logs:</strong> {technicalDoc?.logsSummary}
+                    <strong>Logs:</strong> {techDoc.logsSummary || 'Não preenchido'}
+                  </div>
+                </div>
+
+                <div className="p-4 bg-grey-50 rounded-lg border border-grey-200 space-y-2">
+                  <span className="font-bold text-grey-900 text-xs uppercase tracking-wider block">
+                    Contas & Credenciais
+                  </span>
+                  <p className="text-grey-600 leading-relaxed">{techDoc.accountsSummary || 'Não preenchido'}</p>
+                  <div className="pt-2 text-[11px] text-grey-500 border-t border-grey-200">
+                    <strong>Credenciais:</strong> {techDoc.credentialsSummary || 'Não preenchido'}
                   </div>
                 </div>
               </div>

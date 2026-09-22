@@ -32,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userRole
 }) => {
   const canCreate = can('create_project', userRole);
+  const canConfigure = can('edit_settings', userRole);
 
   const handleGoPortfolio = () => {
     onNavigateToPortfolio();
@@ -110,42 +111,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span className="truncate">Gestão de Demandas</span>}
           </button>
 
-          <button
-            onClick={handleCreateNew}
-            disabled={!canCreate}
-            data-tour="sidebar-new-solution-btn"
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
-              !canCreate
-                ? 'text-grey-300 cursor-not-allowed'
-                : route.name === 'new-project'
-                ? 'bg-brand-dark text-white shadow-xs font-bold'
-                : 'text-grey-600 hover:bg-grey-100 hover:text-grey-900'
-            } ${isCollapsed ? 'justify-center px-0' : ''}`}
-            title={canCreate ? 'Cadastrar Nova Solução / Demanda' : 'Cadastro restrito ao perfil Admin'}
-          >
-            <PlusCircle
-              className={`w-4 h-4 shrink-0 ${
-                !canCreate ? 'text-grey-300' : route.name === 'new-project' ? 'text-white' : 'text-brand-main'
-              }`}
-            />
-            {!isCollapsed && <span className="truncate">Nova Solução</span>}
-          </button>
+          {canCreate && (
+            <button
+              onClick={handleCreateNew}
+              data-tour="sidebar-new-solution-btn"
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
+                route.name === 'new-project'
+                  ? 'bg-brand-dark text-white shadow-xs font-bold'
+                  : 'text-grey-600 hover:bg-grey-100 hover:text-grey-900'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              title="Cadastrar Nova Solução / Demanda"
+            >
+              <PlusCircle
+                className={`w-4 h-4 shrink-0 ${route.name === 'new-project' ? 'text-white' : 'text-brand-main'}`}
+              />
+              {!isCollapsed && <span className="truncate">Nova Solução</span>}
+            </button>
+          )}
 
-          <button
-            onClick={handleGoSettings}
-            data-tour="sidebar-settings-btn"
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
-              route.name === 'settings'
-                ? 'bg-brand-dark text-white shadow-xs font-bold'
-                : 'text-grey-600 hover:bg-grey-100 hover:text-grey-900'
-            } ${isCollapsed ? 'justify-center px-0' : ''}`}
-            title="Parametrização & Regras de Governança T.I"
-          >
-            <SlidersHorizontal
-              className={`w-4 h-4 shrink-0 ${route.name === 'settings' ? 'text-white' : 'text-grey-500'}`}
-            />
-            {!isCollapsed && <span className="truncate">Parametrização</span>}
-          </button>
+          {canConfigure && (
+            <button
+              onClick={handleGoSettings}
+              data-tour="sidebar-settings-btn"
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
+                route.name === 'settings'
+                  ? 'bg-brand-dark text-white shadow-xs font-bold'
+                  : 'text-grey-600 hover:bg-grey-100 hover:text-grey-900'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              title="Parametrização & Regras de Governança T.I"
+            >
+              <SlidersHorizontal
+                className={`w-4 h-4 shrink-0 ${route.name === 'settings' ? 'text-white' : 'text-grey-500'}`}
+              />
+              {!isCollapsed && <span className="truncate">Parametrização</span>}
+            </button>
+          )}
         </div>
 
         <div className="flex-1" />

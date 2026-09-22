@@ -60,6 +60,13 @@ interface EstimationScheduleViewProps {
   onNavigateToGlpi?: () => void;
 }
 
+/** Exibição estática de um campo, usada no lugar do input/select quando o perfil não pode editar a estimativa. */
+const ReadOnlyField: React.FC<{ value: string; className?: string }> = ({ value, className = '' }) => (
+  <div className={`w-full px-3 py-2 border border-grey-200 rounded-md text-sm bg-grey-50 text-grey-700 truncate ${className}`}>
+    {value || '—'}
+  </div>
+);
+
 export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   project,
   userRole,
@@ -472,90 +479,109 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
           </p>
         </div>
 
-        {/* Cards de Seleção de Tipo Técnico (A / B / C) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(['A', 'B', 'C'] as ProjectType[]).map((typeKey) => {
-            const isSelected = currentProjectType === typeKey;
-            const info = PROJECT_TYPE_INFO[typeKey];
+        {/* Cards de Seleção de Tipo Técnico (A / B / C) — só editável para quem pode alterar a estimativa */}
+        {canEditEstimation ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(['A', 'B', 'C'] as ProjectType[]).map((typeKey) => {
+              const isSelected = currentProjectType === typeKey;
+              const info = PROJECT_TYPE_INFO[typeKey];
 
-            return (
-              <SelectableCard
-                key={typeKey}
-                selected={isSelected}
-                onClick={() => handleTypeChange(typeKey)}
-                disabled={!canEditEstimation}
-                className="flex flex-col justify-between h-full"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge
-                      className={`uppercase ${
-                        isSelected
-                          ? 'bg-brand-main text-white border-brand-main'
-                          : 'bg-grey-100 text-grey-700 border-grey-200'
-                      }`}
-                    >
-                      {typeKey === 'A' ? 'Workspace' : typeKey === 'B' ? 'Container / VPS' : 'No-Code'}
-                    </Badge>
-                    {isSelected && (
-                      <span className="text-brand-dark flex items-center gap-1 text-xs font-bold">
-                        <CheckCircle2 className="w-4 h-4" /> Selecionado
-                      </span>
+              return (
+                <SelectableCard
+                  key={typeKey}
+                  selected={isSelected}
+                  onClick={() => handleTypeChange(typeKey)}
+                  className="flex flex-col justify-between h-full"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge
+                        className={`uppercase ${
+                          isSelected
+                            ? 'bg-brand-main text-white border-brand-main'
+                            : 'bg-grey-100 text-grey-700 border-grey-200'
+                        }`}
+                      >
+                        {typeKey === 'A' ? 'Workspace' : typeKey === 'B' ? 'Container / VPS' : 'No-Code'}
+                      </Badge>
+                      {isSelected && (
+                        <span className="text-brand-dark flex items-center gap-1 text-xs font-bold">
+                          <CheckCircle2 className="w-4 h-4" /> Selecionado
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="text-sm font-extrabold text-grey-900 leading-tight">
+                      {info.label}
+                    </h3>
+                    <p className="text-[11px] text-grey-500 mt-1 leading-relaxed">
+                      {info.shortDesc}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-grey-200/80 text-[11px] space-y-1 font-mono">
+                    <div className="flex justify-between text-grey-700">
+                      <span>Stack Sugerida:</span>
+                      <strong className="text-brand-dark text-[10px] truncate max-w-[170px]" title={info.technologyHint}>
+                        {info.technologyHint}
+                      </strong>
+                    </div>
+                    {info.statusBadge && (
+                      <div className="flex justify-between text-grey-700">
+                        <span>Calibração:</span>
+                        <strong className="text-warning-600 text-[10px]">{info.statusBadge}</strong>
+                      </div>
                     )}
                   </div>
-
-                  <h3 className="text-sm font-extrabold text-grey-900 leading-tight">
-                    {info.label}
-                  </h3>
-                  <p className="text-[11px] text-grey-500 mt-1 leading-relaxed">
-                    {info.shortDesc}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-grey-200/80 text-[11px] space-y-1 font-mono">
-                  <div className="flex justify-between text-grey-700">
-                    <span>Stack Sugerida:</span>
-                    <strong className="text-brand-dark text-[10px] truncate max-w-[170px]" title={info.technologyHint}>
-                      {info.technologyHint}
-                    </strong>
-                  </div>
-                  {info.statusBadge && (
-                    <div className="flex justify-between text-grey-700">
-                      <span>Calibração:</span>
-                      <strong className="text-warning-600 text-[10px]">{info.statusBadge}</strong>
-                    </div>
-                  )}
-                </div>
-              </SelectableCard>
-            );
-          })}
-        </div>
+                </SelectableCard>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-3 rounded-lg border border-grey-200 bg-grey-50">
+            <Badge className="uppercase bg-brand-main text-white border-brand-main">
+              {currentProjectType === 'A' ? 'Workspace' : currentProjectType === 'B' ? 'Container / VPS' : 'No-Code'}
+            </Badge>
+            <h3 className="text-sm font-extrabold text-grey-900 leading-tight mt-2">
+              {PROJECT_TYPE_INFO[currentProjectType].label}
+            </h3>
+            <p className="text-[11px] text-grey-500 mt-1 leading-relaxed">
+              {PROJECT_TYPE_INFO[currentProjectType].shortDesc}
+            </p>
+          </div>
+        )}
 
         {/* Inputs de Data de Início e Ferramenta de Geração */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
           <Field label="Data de Início da Contagem:">
-            <Input
-              type="date"
-              value={currentInputs.startDate}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              className="text-xs font-mono font-bold text-grey-800"
-              disabled={!canEditEstimation}
-            />
+            {canEditEstimation ? (
+              <Input
+                type="date"
+                value={currentInputs.startDate}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="text-xs font-mono font-bold text-grey-800"
+              />
+            ) : (
+              <ReadOnlyField value={formatPtBrDate(currentInputs.startDate)} className="font-mono font-bold" />
+            )}
           </Field>
 
           <Field label="Ferramenta de Vibe Coding / Geração:">
-            <Select
-              value={currentGenerationTool}
-              onChange={(e) => handleToolChange(e.target.value as GenerationTool)}
-              className="text-xs font-bold text-grey-800"
-              disabled={!canEditEstimation}
-            >
-              {generationToolOptions.map((tool) => (
-                <option key={tool} value={tool}>
-                  {tool}
-                </option>
-              ))}
-            </Select>
+            {canEditEstimation ? (
+              <Select
+                value={currentGenerationTool}
+                onChange={(e) => handleToolChange(e.target.value as GenerationTool)}
+                className="text-xs font-bold text-grey-800"
+              >
+                {generationToolOptions.map((tool) => (
+                  <option key={tool} value={tool}>
+                    {tool}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <ReadOnlyField value={currentGenerationTool} className="font-bold" />
+            )}
           </Field>
 
           <Field label="Responsável Técnico da T.I:">
@@ -593,22 +619,17 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
             const currentIndex = GOV_STAGES_CATALOG.indexOf(currentGovStage);
             const isPassed = idx < currentIndex;
 
-            return (
-              <button
-                key={stageKey}
-                type="button"
-                onClick={() => handleRequestStageChange(stageKey)}
-                disabled={!canAdvanceStage}
-                className={`text-left p-3 rounded-xl border transition-all relative flex flex-col justify-between min-h-[72px] ${
-                  !canAdvanceStage ? 'cursor-default opacity-90' : ''
-                } ${
-                  isCurrent
-                    ? 'border-brand-main bg-brand-main text-white shadow-md ring-2 ring-brand-main/30'
-                    : isPassed
-                    ? 'border-brand-light bg-brand-lighter/70 text-brand-dark hover:bg-brand-lighter'
-                    : 'border-grey-200 bg-white text-grey-700 hover:bg-grey-50'
-                }`}
-              >
+            const stageClasses = `text-left p-3 rounded-xl border relative flex flex-col justify-between min-h-[72px] ${
+              canAdvanceStage ? 'transition-all' : ''
+            } ${
+              isCurrent
+                ? 'border-brand-main bg-brand-main text-white shadow-md ring-2 ring-brand-main/30'
+                : isPassed
+                ? `border-brand-light bg-brand-lighter/70 text-brand-dark ${canAdvanceStage ? 'hover:bg-brand-lighter' : ''}`
+                : `border-grey-200 bg-white text-grey-700 ${canAdvanceStage ? 'hover:bg-grey-50' : ''}`
+            }`;
+            const stageContent = (
+              <>
                 <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
                   <span className={isCurrent ? 'text-brand-light' : isPassed ? 'text-brand-main' : 'text-grey-400'}>
                     Etapa {idx + 1}
@@ -622,7 +643,22 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                 <div className={`text-xs font-bold leading-tight ${isCurrent ? 'text-white' : 'text-grey-900'}`}>
                   {STAGE_NAMES[stageKey]}
                 </div>
+              </>
+            );
+
+            return canAdvanceStage ? (
+              <button
+                key={stageKey}
+                type="button"
+                onClick={() => handleRequestStageChange(stageKey)}
+                className={stageClasses}
+              >
+                {stageContent}
               </button>
+            ) : (
+              <div key={stageKey} className={stageClasses}>
+                {stageContent}
+              </div>
             );
           })}
         </div>

@@ -407,35 +407,33 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
                     </Badge>
                   </Td>
                   <Td className="text-center">
-                    <button
-                      onClick={() => handleStatusChange(item.id, item.status)}
-                      disabled={!canEditActions}
-                      title={
-                        canEditActions
-                          ? 'Clique para alternar: Aguardando -> Em andamento -> Concluído'
-                          : 'Somente leitura para o seu perfil'
-                      }
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 border transition-transform shadow-2xs ${STATUS_BUTTON_CLASSES[item.status]} ${
-                        canEditActions ? 'active:scale-95 cursor-pointer' : 'opacity-70 cursor-default'
-                      }`}
-                    >
-                      {item.status === 'Concluído' ? (
-                        <>
-                          <Check className="w-3 h-3" />
-                          <span>Concluído</span>
-                        </>
-                      ) : item.status === 'Em andamento' ? (
-                        <>
-                          <Clock className="w-3 h-3" />
-                          <span>Em andamento</span>
-                        </>
+                    {(() => {
+                      const statusContent =
+                        item.status === 'Concluído' ? (
+                          <>
+                            <Check className="w-3 h-3" />
+                            <span>Concluído</span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3 h-3" />
+                            <span>{item.status}</span>
+                          </>
+                        );
+                      const pillClasses = `px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 border shadow-2xs ${STATUS_BUTTON_CLASSES[item.status]}`;
+
+                      return canEditActions ? (
+                        <button
+                          onClick={() => handleStatusChange(item.id, item.status)}
+                          title="Clique para alternar: Aguardando -> Em andamento -> Concluído"
+                          className={`${pillClasses} transition-transform active:scale-95 cursor-pointer`}
+                        >
+                          {statusContent}
+                        </button>
                       ) : (
-                        <>
-                          <Clock className="w-3 h-3" />
-                          <span>{item.status}</span>
-                        </>
-                      )}
-                    </button>
+                        <span className={pillClasses}>{statusContent}</span>
+                      );
+                    })()}
                   </Td>
                   <Td
                     sticky="right"

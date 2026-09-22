@@ -337,6 +337,7 @@ export default function App() {
     initialDoc: string;
     assetId: string;
     glpiTicketId: string;
+    technicalDoc: SolutionProject['technicalDoc'];
   }) => {
     setProjects((prevProjects) =>
       prevProjects.map((proj) => {

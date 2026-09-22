@@ -228,6 +228,21 @@ export function getPriorityStyle(priority?: string | null) {
   return DEFAULT_PRIORITY_STYLE;
 }
 
+/** Exibição estática de um campo, usada no lugar do input/textarea/checkbox quando o perfil não pode editar. */
+const ReadOnlyField: React.FC<{ value: string; multiline?: boolean; className?: string }> = ({
+  value,
+  multiline,
+  className = ''
+}) => (
+  <div
+    className={`w-full px-3 py-2 border border-grey-200 rounded-md text-sm bg-grey-50 text-grey-700 ${
+      multiline ? 'whitespace-pre-line leading-relaxed' : 'truncate'
+    } ${className}`}
+  >
+    {value || '—'}
+  </div>
+);
+
 export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps> = ({
   projects,
   userRole = 'admin',
@@ -747,28 +762,33 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         proj.isPriorityForManagement ? 'bg-warning-50' : 'bg-white group-hover:bg-grey-50'
                       }`}
                     >
-                      <button
-                        onClick={() => handleTogglePrioritizeForManagement(proj)}
-                        disabled={!canTogglePriority}
-                        className={`p-1 rounded-full transition-transform ${
-                          canTogglePriority ? 'hover:bg-grey-200/60 active:scale-95' : 'cursor-default'
-                        }`}
-                        title={
-                          !canTogglePriority
-                            ? 'Somente leitura para o seu perfil'
-                            : proj.isPriorityForManagement
-                            ? 'Priorizado para apresentar à Gestão (Clique para desmarcar)'
-                            : 'Clique para marcar e priorizar na pauta da Gestão'
-                        }
-                      >
-                        <Star
-                          className={`w-4 h-4 ${
+                      {canTogglePriority ? (
+                        <button
+                          onClick={() => handleTogglePrioritizeForManagement(proj)}
+                          className="p-1 rounded-full hover:bg-grey-200/60 transition-transform active:scale-95"
+                          title={
                             proj.isPriorityForManagement
-                              ? 'fill-warning-500 text-warning-500'
-                              : 'text-grey-300 hover:text-grey-400'
-                          }`}
-                        />
-                      </button>
+                              ? 'Priorizado para apresentar à Gestão (Clique para desmarcar)'
+                              : 'Clique para marcar e priorizar na pauta da Gestão'
+                          }
+                        >
+                          <Star
+                            className={`w-4 h-4 ${
+                              proj.isPriorityForManagement
+                                ? 'fill-warning-500 text-warning-500'
+                                : 'text-grey-300 hover:text-grey-400'
+                            }`}
+                          />
+                        </button>
+                      ) : (
+                        <span className="p-1 inline-flex" title={proj.isPriorityForManagement ? 'Priorizado para a Gestão' : undefined}>
+                          <Star
+                            className={`w-4 h-4 ${
+                              proj.isPriorityForManagement ? 'fill-warning-500 text-warning-500' : 'text-grey-300'
+                            }`}
+                          />
+                        </span>
+                      )}
                     </Td>
 
                     {/* 2. Solution Name & Identifiers */}
@@ -818,24 +838,28 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
 
                     {/* 5. Stage Select (Interactive) */}
                     <Td>
-                      <select
-                        value={proj.stage && ALL_STAGES.includes(proj.stage) ? proj.stage : 'Levantamento & Ficha'}
-                        onChange={(e) => handleStageChange(proj, e.target.value as ProjectStage)}
-                        disabled={!canAdvanceStage}
-                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors w-full ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main ${
-                          canAdvanceStage ? 'cursor-pointer' : 'cursor-default opacity-80'
-                        }`}
-                      >
-                        {ALL_STAGES.map((stg) => (
-                          <option key={stg} value={stg} className="bg-white text-grey-900">
-                            {stg}
-                          </option>
-                        ))}
-                      </select>
+                      {canAdvanceStage ? (
+                        <select
+                          value={proj.stage && ALL_STAGES.includes(proj.stage) ? proj.stage : 'Levantamento & Ficha'}
+                          onChange={(e) => handleStageChange(proj, e.target.value as ProjectStage)}
+                          className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors w-full cursor-pointer ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
+                        >
+                          {ALL_STAGES.map((stg) => (
+                            <option key={stg} value={stg} className="bg-white text-grey-900">
+                              {stg}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className={`block text-xs font-bold rounded-lg px-2 py-1 border w-full truncate ${stageStyle.bg} ${stageStyle.text} ${stageStyle.border}`}>
+                          {proj.stage && ALL_STAGES.includes(proj.stage) ? proj.stage : 'Levantamento & Ficha'}
+                        </span>
+                      )}
                     </Td>
 
                     {/* 6. Priority Select */}
                     <Td>
+                      {canTogglePriority ? (
                       <select
                         value={
                           proj.executivePriority && PRIORITY_CONFIG[proj.executivePriority]
@@ -843,10 +867,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                             : 'P2 - Média'
                         }
                         onChange={(e) => handlePriorityChange(proj, e.target.value as ExecutivePriority)}
-                        disabled={!canTogglePriority}
-                        className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors w-full ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main ${
-                          canTogglePriority ? 'cursor-pointer' : 'cursor-default opacity-80'
-                        }`}
+                        className={`text-xs font-semibold rounded-lg px-2 py-1 border transition-colors w-full cursor-pointer ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} focus:outline-hidden focus:ring-1 focus:ring-brand-main`}
                       >
                         {priorityOptions.map((p) => (
                           <option key={p} value={p}>
@@ -854,6 +875,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                           </option>
                         ))}
                       </select>
+                      ) : (
+                        <span className={`block text-xs font-semibold rounded-lg px-2 py-1 border w-full truncate ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border}`}>
+                          {proj.executivePriority && PRIORITY_CONFIG[proj.executivePriority] ? proj.executivePriority : 'P2 - Média'}
+                        </span>
+                      )}
                     </Td>
 
                     {/* 7. Impediment Button & Status */}
@@ -1185,13 +1211,16 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           onClose={() => setActiveNotesModalProject(null)}
           title={`Anotações da Solução: ${activeNotesModalProject.name}`}
         >
-          <Textarea
-            rows={5}
-            defaultValue={activeNotesModalProject.notes || ''}
-            id="modal-notes-textarea"
-            placeholder="Digite anotações ou observações internas sobre o andamento desta demanda..."
-            disabled={!canAnnotate}
-          />
+          {canAnnotate ? (
+            <Textarea
+              rows={5}
+              defaultValue={activeNotesModalProject.notes || ''}
+              id="modal-notes-textarea"
+              placeholder="Digite anotações ou observações internas sobre o andamento desta demanda..."
+            />
+          ) : (
+            <ReadOnlyField value={activeNotesModalProject.notes || ''} multiline />
+          )}
           <ModalFooter>
             <Button color="secondary" onClick={() => setActiveNotesModalProject(null)}>
               {canAnnotate ? 'Cancelar' : 'Fechar'}
@@ -1219,35 +1248,49 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           title={`Registro de Bloqueio: ${activeImpedimentModalProject.name}`}
           subtitle="Informe o bloqueio e qual ação é requerida da gestão para destravar."
         >
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-grey-800">
-            <input
-              type="checkbox"
-              id="modal-has-impediment"
-              defaultChecked={activeImpedimentModalProject.hasImpediment}
-              disabled={!canManageImpediment}
-              className="w-4 h-4 rounded text-danger-500 focus:ring-danger-500 border-grey-300"
-            />
-            <span>Projeto atualmente com impedimento / bloqueio</span>
-          </label>
+          {canManageImpediment ? (
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-grey-800">
+              <input
+                type="checkbox"
+                id="modal-has-impediment"
+                defaultChecked={activeImpedimentModalProject.hasImpediment}
+                className="w-4 h-4 rounded text-danger-500 focus:ring-danger-500 border-grey-300"
+              />
+              <span>Projeto atualmente com impedimento / bloqueio</span>
+            </label>
+          ) : (
+            <div className="text-xs font-bold text-grey-800">
+              Projeto atualmente com impedimento / bloqueio:{' '}
+              <span className={activeImpedimentModalProject.hasImpediment ? 'text-danger-600' : 'text-grey-500'}>
+                {activeImpedimentModalProject.hasImpediment ? 'Sim' : 'Não'}
+              </span>
+            </div>
+          )}
 
           <Field label="Detalhes do Bloqueio:">
-            <Textarea
-              rows={3}
-              id="modal-impediment-details"
-              defaultValue={activeImpedimentModalProject.impedimentDetails || ''}
-              placeholder="Ex: Aguardando liberação de porta de banco no firewall ou aprovação da área jurídica..."
-              disabled={!canManageImpediment}
-            />
+            {canManageImpediment ? (
+              <Textarea
+                rows={3}
+                id="modal-impediment-details"
+                defaultValue={activeImpedimentModalProject.impedimentDetails || ''}
+                placeholder="Ex: Aguardando liberação de porta de banco no firewall ou aprovação da área jurídica..."
+              />
+            ) : (
+              <ReadOnlyField value={activeImpedimentModalProject.impedimentDetails || ''} multiline />
+            )}
           </Field>
 
           <Field label="Ação Requerida da Gestão para Destravar:">
-            <Textarea
-              rows={2}
-              id="modal-action-management"
-              defaultValue={activeImpedimentModalProject.actionRequiredFromManagement || ''}
-              placeholder="Ex: Cobrar área de Infraestrutura para priorizar ticket de rede..."
-              disabled={!canManageImpediment}
-            />
+            {canManageImpediment ? (
+              <Textarea
+                rows={2}
+                id="modal-action-management"
+                defaultValue={activeImpedimentModalProject.actionRequiredFromManagement || ''}
+                placeholder="Ex: Cobrar área de Infraestrutura para priorizar ticket de rede..."
+              />
+            ) : (
+              <ReadOnlyField value={activeImpedimentModalProject.actionRequiredFromManagement || ''} multiline />
+            )}
           </Field>
 
           <ModalFooter>
@@ -1280,23 +1323,29 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           size="sm"
         >
           <Field label="Data:">
-            <Input
-              type="date"
-              id="modal-schedule-date"
-              defaultValue={activeScheduleModalProject.scheduledDate || ''}
-              className="font-mono font-bold"
-              disabled={!canAnnotate}
-            />
+            {canAnnotate ? (
+              <Input
+                type="date"
+                id="modal-schedule-date"
+                defaultValue={activeScheduleModalProject.scheduledDate || ''}
+                className="font-mono font-bold"
+              />
+            ) : (
+              <ReadOnlyField value={activeScheduleModalProject.scheduledDate || ''} className="font-mono font-bold" />
+            )}
           </Field>
 
           <Field label="Pauta / Assunto:">
-            <Input
-              type="text"
-              id="modal-schedule-subject"
-              defaultValue={activeScheduleModalProject.scheduledSubject || ''}
-              placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
-              disabled={!canAnnotate}
-            />
+            {canAnnotate ? (
+              <Input
+                type="text"
+                id="modal-schedule-subject"
+                defaultValue={activeScheduleModalProject.scheduledSubject || ''}
+                placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
+              />
+            ) : (
+              <ReadOnlyField value={activeScheduleModalProject.scheduledSubject || ''} />
+            )}
           </Field>
 
           <ModalFooter>
