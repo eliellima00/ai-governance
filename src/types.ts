@@ -191,6 +191,7 @@ export interface SolutionProject {
   // (GovernanceSettings.auxiliaryLists.statuses); mantido como string livre.
   status: string;
   stage?: ProjectStage;
+  stageEnteredAt?: string;
   // Novo Eixo 2 e Governança
   projectType?: ProjectType;
   generationTool?: GenerationTool;
