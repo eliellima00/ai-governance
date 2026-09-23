@@ -415,7 +415,6 @@ export default function App() {
             project={currentProject}
             activeTab={route.tab}
             onSelectTab={selectProjectTab}
-            onNavigateToPortfolio={navigateToPortfolio}
             residualScore={residualStats.currentResidualScore}
             completedActions={currentProject.actionPlan.filter((a) => a.status === 'Concluído').length}
             totalActions={currentProject.actionPlan.length}
@@ -475,7 +474,6 @@ export default function App() {
           {route.name === 'project' && route.tab === 'diagnostic' && currentProject && (
             <AiDiagnosticView
               project={currentProject}
-              onNavigateHome={() => selectProjectTab('glpi')}
               onNavigateToActionPlan={() => selectProjectTab('action_plan')}
             />
           )}
@@ -485,7 +483,6 @@ export default function App() {
               project={currentProject}
               actionList={currentProject.actionPlan}
               userRole={userRole}
-              onNavigateHome={() => selectProjectTab('glpi')}
               onToggleActionStatus={handleToggleActionStatus}
               onAddActionItem={handleAddActionItem}
               onEditActionItem={handleEditActionItem}
@@ -499,9 +496,6 @@ export default function App() {
               project={currentProject}
               actionList={currentProject.actionPlan}
               residualScore={residualStats.currentResidualScore}
-              onNavigateHome={() => selectProjectTab('glpi')}
-              onToggleAction={handleToggleActionStatus}
-              onNavigateToActionPlan={() => selectProjectTab('action_plan')}
             />
           )}
 
@@ -510,7 +504,6 @@ export default function App() {
               project={currentProject}
               userRole={userRole}
               onUpdateProject={handleUpdateProject}
-              onNavigateToGlpi={() => selectProjectTab('glpi')}
             />
           )}
         </main>

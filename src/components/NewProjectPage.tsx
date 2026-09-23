@@ -287,7 +287,10 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       estimation: defaultEstimation,
       technicalDoc: {
         version: '1.0.0',
-        classification: score > 20 ? 'Solução Corporativa Crítica' : 'Solução Departamental',
+        classification:
+          score > getActiveConfig().riskThresholds.altoMax
+            ? 'Solução Corporativa Crítica'
+            : 'Solução Departamental',
         frontend: 'Interface Setorial',
         backend: 'Script / Automação',
         database: isSheetsDrive ? 'Google Sheets / Drive' : 'Banco Relacional',

@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Dumps de chamados GLPI / material bruto de levantamento (docx, html exportado, anexos)
+docs/*/

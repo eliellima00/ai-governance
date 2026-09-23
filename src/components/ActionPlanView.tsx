@@ -36,7 +36,6 @@ interface ActionPlanViewProps {
   project: SolutionProject;
   actionList: ActionItem[];
   userRole: UserRole;
-  onNavigateHome?: () => void;
   onToggleActionStatus: (id: number, newStatus: ActionStatus) => void;
   onAddActionItem: (item: Omit<ActionItem, 'id'>) => void;
   onEditActionItem: (item: ActionItem) => void;
@@ -62,7 +61,6 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
   project,
   actionList,
   userRole,
-  onNavigateHome,
   onToggleActionStatus,
   onAddActionItem,
   onEditActionItem,
@@ -500,7 +498,7 @@ export const ActionPlanView: React.FC<ActionPlanViewProps> = ({
                 <Input
                   type="text"
                   required
-                  placeholder="Ex: Roger (Dev Logística) / TI Segurança"
+                  placeholder="Ex: Nome do responsável / Área ou Time"
                   value={formResponsible}
                   onChange={(e) => setFormResponsible(e.target.value)}
                 />

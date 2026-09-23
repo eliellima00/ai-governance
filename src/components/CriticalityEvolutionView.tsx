@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   TrendingDown,
   AlertTriangle,
   ShieldCheck,
   ArrowRight,
-  BarChart2,
-  Zap
+  BarChart2
 } from 'lucide-react';
 import {
   AreaChart,
@@ -23,7 +22,7 @@ import {
 import { ActionItem, RiskLevel, SolutionProject } from '../types';
 import { calculateRiskLevel, getRiskColorClass } from '../utils/riskCalculations';
 import { getActiveConfig } from '../config/governanceConfig';
-import { Card, Badge, StatTile, ChecklistItem, PageHeader } from './ui';
+import { Card, Badge, StatTile, PageHeader } from './ui';
 
 const RISK_LABELS: Record<RiskLevel, string> = {
   BAIXO: 'Baixo',
@@ -53,36 +52,16 @@ interface CriticalityEvolutionViewProps {
   project: SolutionProject;
   actionList: ActionItem[];
   residualScore: number;
-  onNavigateHome?: () => void;
-  onToggleAction: (id: number, status: any) => void;
-  onNavigateToActionPlan: () => void;
 }
 
 export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> = ({
   project,
   actionList,
-  residualScore,
-  onNavigateHome,
-  onToggleAction,
-  onNavigateToActionPlan
+  residualScore
 }) => {
   const detailedEvolution = !!getActiveConfig().featureFlags?.detailedEvolution;
 
-  // What-if simulation overrides
-  const [simulatedCompletedIds, setSimulatedCompletedIds] = useState<number[]>([]);
-
   const completedActions = actionList.filter((a) => a.status === 'Concluído');
-  const pendingActions = actionList.filter((a) => a.status !== 'Concluído');
-
-  // Calculate points with simulation
-  const extraSimPoints = simulatedCompletedIds.reduce((sum, id) => {
-    const act = actionList.find((a) => a.id === id);
-    return sum + (act ? act.riskPointsImpact : 0);
-  }, 0);
-
-  const effectiveSimScore = Math.max(0, residualScore - extraSimPoints);
-  const effectiveRiskLevel = calculateRiskLevel(effectiveSimScore);
-  const riskColor = getRiskColorClass(effectiveRiskLevel);
 
   // Score/risco inicial real do projeto (não mais fixo em "Crítico").
   const initialRiskColor = getRiskColorClass(project.initialRisk);
@@ -191,14 +170,6 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
       Meta: 1
     }
   ];
-
-  const toggleSimulated = (id: number) => {
-    if (simulatedCompletedIds.includes(id)) {
-      setSimulatedCompletedIds(simulatedCompletedIds.filter((i) => i !== id));
-    } else {
-      setSimulatedCompletedIds([...simulatedCompletedIds, id]);
-    }
-  };
 
   const percentReduction = Math.round(
     ((project.initialScore - residualScore) / project.initialScore) * 100
@@ -332,119 +303,28 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
       </Card>
       )}
 
-      {/* Dimensões (sempre visível) + Simulador "What-If" (atrás da feature flag) */}
-      <div className={detailedEvolution ? 'grid grid-cols-1 lg:grid-cols-12 gap-6' : ''}>
-        {/* Dimensions Bar Chart Comparison */}
-        <Card className={detailedEvolution ? 'lg:col-span-6 space-y-3' : 'space-y-3'}>
-          <h3 className="text-sm font-bold text-grey-900 flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-grey-600" />
-            <span>Evolução por Dimensão de Risco (Antes x Agora x Meta)</span>
-          </h3>
+      {/* Dimensões (sempre visível) */}
+      <Card className="space-y-3">
+        <h3 className="text-sm font-bold text-grey-900 flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-grey-600" />
+          <span>Evolução por Dimensão de Risco (Antes x Agora x Meta)</span>
+        </h3>
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dimensionsComparison} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="Inicial" fill="#9CA3AF" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Atual" fill="#5C8834" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Meta" fill="#15803D" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        {/* "What-If" Interactive Simulator for Coordinator */}
-        {detailedEvolution && (
-        <Card className="lg:col-span-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-grey-200 pb-2">
-            <div>
-              <h3 className="text-sm font-bold text-grey-900 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-warning-600" />
-                <span>Simulador de Impacto para Apresentação ao Coordenador</span>
-              </h3>
-              <p className="text-xs text-grey-500">
-                Selecione ações pendentes para ver a pontuação caindo ao vivo:
-              </p>
-            </div>
-            {simulatedCompletedIds.length > 0 && (
-              <button
-                onClick={() => setSimulatedCompletedIds([])}
-                className="text-[11px] text-grey-500 hover:text-grey-800 underline shrink-0"
-              >
-                Limpar Simulação
-              </button>
-            )}
-          </div>
-
-          {/* Simulation Gauge */}
-          <div className="flex items-center gap-3">
-            <StatTile
-              label="Score Simulado"
-              value={`${effectiveSimScore} pts`}
-              subtext={
-                extraSimPoints > 0
-                  ? `-${extraSimPoints} pts extras simulados`
-                  : 'Nenhuma ação extra simulada'
-              }
-              className="flex-1"
-            />
-            <Badge className={`${riskColor.badge} shrink-0`}>Classificação: {effectiveRiskLevel}</Badge>
-          </div>
-
-          {/* Pending Action Checkboxes */}
-          <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-            {pendingActions.map((action) => {
-              const isSimulated = simulatedCompletedIds.includes(action.id);
-              return (
-                <div
-                  key={action.id}
-                  onClick={() => toggleSimulated(action.id)}
-                  className={`p-2 rounded-lg border cursor-pointer transition-colors ${
-                    isSimulated
-                      ? 'bg-brand-lighter border-brand-light text-brand-dark font-medium'
-                      : 'bg-grey-50 border-grey-200 text-grey-700 hover:bg-grey-100'
-                  }`}
-                >
-                  <ChecklistItem
-                    checked={isSimulated}
-                    trailing={
-                      <span className="font-bold text-indigo-700 text-xs shrink-0">
-                        -{action.riskPointsImpact} pts
-                      </span>
-                    }
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-semibold text-inherit">
-                        #{action.id} {action.title}
-                      </span>
-                      <span className="text-[11px] text-grey-500">
-                        Resp: {action.responsible} | Prioridade: {action.priority}
-                      </span>
-                    </div>
-                  </ChecklistItem>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center justify-between pt-2 border-t border-grey-200">
-            <span className="text-[11px] text-grey-500">
-              * Marque as ações para testar cenários de homologação com a coordenação.
-            </span>
-            <button
-              onClick={onNavigateToActionPlan}
-              className="text-xs font-bold text-indigo-700 hover:text-indigo-900"
-            >
-              Ir para Plano Oficial →
-            </button>
-          </div>
-        </Card>
-        )}
-      </div>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={dimensionsComparison} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} />
+              <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="Inicial" fill="#9CA3AF" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Atual" fill="#5C8834" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Meta" fill="#15803D" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import {
   ShieldAlert,
   AlertOctagon,
@@ -6,23 +6,14 @@ import {
   Lock,
   Database,
   Users,
-  Server,
-  FileCheck,
-  HelpCircle,
-  Sparkles,
-  Sliders,
-  AlertTriangle
+  FileCheck
 } from 'lucide-react';
-import { SolutionProject, RiskCriterion } from '../types';
+import { SolutionProject } from '../types';
 import { getRiskColorClass } from '../utils/riskCalculations';
 import {
-  Button,
   Badge,
   Card,
-  Label,
-  Textarea,
   PageHeader,
-  Tabs,
   Table,
   Thead,
   Tbody,
@@ -36,77 +27,18 @@ import {
 
 interface AiDiagnosticViewProps {
   project: SolutionProject;
-  onNavigateHome?: () => void;
   onNavigateToActionPlan: () => void;
 }
 
 export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
   project,
-  onNavigateHome,
   onNavigateToActionPlan
 }) => {
-  const [activeTab, setActiveTab] = useState<'official' | 'simulator'>('official');
-
-  // Deterministic Rules Simulator (Without LLM)
-  const [simText, setSimText] = useState(
-    `Nome: Portal Logística\nObjetivo: Cotação de fretes com transportadores externos, integrado ao ERP Senior Sapiens.\nDados: Planilhas Google Sheets com 31 abas, PDFs de CNH e placas (LGPD), dados confidenciais de fretes.`
-  );
-  const [simResult, setSimResult] = useState<any>(null);
-
-  const runDeterministicTriage = () => {
-    const text = simText.toLowerCase();
-    let score = 0;
-    let seguranca = 0;
-    let lgpd = 0;
-    let operacional = 0;
-    const detectedRules: string[] = [];
-
-    if (text.includes('lgpd') || text.includes('cpf') || text.includes('dados pessoais') || text.includes('cnh') || text.includes('motorista')) {
-      score += 5;
-      lgpd += 5;
-      detectedRules.push('Tratamento de dados pessoais ou documentos sensíveis (LGPD: +5 pts)');
-    }
-    if (text.includes('confidencial') || text.includes('frete') || text.includes('fatura') || text.includes('banco') || text.includes('financeiro')) {
-      score += 5;
-      seguranca += 5;
-      detectedRules.push('Tratamento de dados de negócio confidenciais / financeiros (+5 pts)');
-    }
-    if (text.includes('senior') || text.includes('erp') || text.includes('sapiens') || text.includes('api externa')) {
-      score += 5;
-      seguranca += 5;
-      detectedRules.push('Integração com ERP corporativo Senior Sapiens (+5 pts)');
-    }
-    if (text.includes('sheets') || text.includes('planilha') || text.includes('drive') || text.includes('excel')) {
-      score += 4;
-      operacional += 4;
-      detectedRules.push('Uso de planilhas como banco de dados ou backend operacional (+4 pts)');
-    }
-    if (text.includes('externo') || text.includes('terceiro') || text.includes('transportador') || text.includes('cliente')) {
-      score += 4;
-      operacional += 4;
-      detectedRules.push('Acesso simultâneo por usuários ou terceiros externos (+4 pts)');
-    }
-    if (text.includes('crítico') || text.includes('embarque') || text.includes('faturamento') || text.includes('parada')) {
-      score += 5;
-      operacional += 5;
-      detectedRules.push('Impacto severo na operação em caso de indisponibilidade (+5 pts)');
-    }
-
-    const level = score <= 5 ? 'BAIXO' : score <= 12 ? 'MEDIO' : score <= 20 ? 'ALTO' : 'CRITICO';
-
-    setSimResult({
-      score,
-      level,
-      dimensions: { seguranca, lgpd, operacional },
-      rules: detectedRules
-    });
-  };
-
   const riskColor = getRiskColorClass(project.initialRisk);
 
   return (
     <div className="space-y-6">
-      {/* Sub-Header & Switcher */}
+      {/* Sub-Header */}
       <div className="bg-white border border-grey-200 rounded-lg p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-brand-lighter text-brand-dark rounded-lg border border-brand-light shrink-0">
@@ -125,19 +57,9 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
             />
           </div>
         </div>
-
-        <Tabs<'official' | 'simulator'>
-          items={[
-            { id: 'official', label: 'Parecer Oficial do Chamado' },
-            { id: 'simulator', label: 'Simulador de Regras', badge: <Sliders className="w-3.5 h-3.5" /> }
-          ]}
-          value={activeTab}
-          onChange={setActiveTab}
-        />
       </div>
 
-      {activeTab === 'official' ? (
-        <div className="space-y-6">
+      <div className="space-y-6">
           {/* Executive Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Overall Score — custom block: StatTile has no decorative-icon slot */}
@@ -160,8 +82,8 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
             {/* Category Card */}
             <StatTile
               label="Categoria da Solução"
-              value="Solução Corporativa"
-              subtext="Mais de 20 usuários, acesso por terceiros e impacto na operação de embarque."
+              value={project.technicalDoc?.classification || 'Classificação a definir'}
+              subtext={`Área responsável: ${project.department}`}
             />
 
             {/* TI Mandate */}
@@ -207,12 +129,17 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                   colorClassName="bg-red-500"
                 />
                 <div className="space-y-1.5 mt-2">
-                  <ChecklistItem checked>
-                    Credenciais de bancos de dados gravadas em scripts abertos.
-                  </ChecklistItem>
-                  <ChecklistItem checked>
-                    Tokens de API de ERP sem expiração nem segregação de perfil.
-                  </ChecklistItem>
+                  {project.criteria.filter((c) => c.dimension === 'Segurança').length > 0 ? (
+                    project.criteria
+                      .filter((c) => c.dimension === 'Segurança')
+                      .map((c) => (
+                        <ChecklistItem key={c.id} checked>
+                          {c.criterion}
+                        </ChecklistItem>
+                      ))
+                  ) : (
+                    <span className="text-xs text-grey-400">Nenhum critério de Segurança registrado.</span>
+                  )}
                 </div>
               </div>
 
@@ -232,12 +159,17 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                   colorClassName="bg-warning-500"
                 />
                 <div className="space-y-1.5 mt-2">
-                  <ChecklistItem checked>
-                    Dados de motoristas (CPF, CNH, telefone) compartilhados via Google Sheets.
-                  </ChecklistItem>
-                  <ChecklistItem checked>
-                    Ausência de política de expiração automática de documentos.
-                  </ChecklistItem>
+                  {project.criteria.filter((c) => c.dimension === 'LGPD').length > 0 ? (
+                    project.criteria
+                      .filter((c) => c.dimension === 'LGPD')
+                      .map((c) => (
+                        <ChecklistItem key={c.id} checked>
+                          {c.criterion}
+                        </ChecklistItem>
+                      ))
+                  ) : (
+                    <span className="text-xs text-grey-400">Nenhum critério de LGPD registrado.</span>
+                  )}
                 </div>
               </div>
 
@@ -257,12 +189,17 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                   colorClassName="bg-info-500"
                 />
                 <div className="space-y-1.5 mt-2">
-                  <ChecklistItem checked>
-                    Dependência de pessoa única para suporte e manutenção da planilha.
-                  </ChecklistItem>
-                  <ChecklistItem checked>
-                    Risco de bloqueio operacional em época de safra de sementes.
-                  </ChecklistItem>
+                  {project.criteria.filter((c) => c.dimension === 'Operacional').length > 0 ? (
+                    project.criteria
+                      .filter((c) => c.dimension === 'Operacional')
+                      .map((c) => (
+                        <ChecklistItem key={c.id} checked>
+                          {c.criterion}
+                        </ChecklistItem>
+                      ))
+                  ) : (
+                    <span className="text-xs text-grey-400">Nenhum critério Operacional registrado.</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -315,54 +252,7 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
             </Table>
           </div>
         </div>
-      ) : (
-        /* Deterministic Rules Simulator View */
-        <Card className="space-y-5">
-          <div>
-            <h3 className="text-sm font-bold text-grey-900">
-              Simulador de Regras de Triagem (Determinístico)
-            </h3>
-            <p className="text-xs text-grey-500 mt-1">
-              Avalie previamente uma descrição de chamado para simular o score de risco e as regras disparadas.
-            </p>
-          </div>
-
-          <div>
-            <Label>Texto de Descrição do Chamado / Solução:</Label>
-            <Textarea
-              rows={5}
-              value={simText}
-              onChange={(e) => setSimText(e.target.value)}
-              className="font-mono"
-            />
-          </div>
-
-          <Button size="sm" onClick={runDeterministicTriage} leftIcon={<Sliders className="w-4 h-4" />}>
-            Avaliar por Regras
-          </Button>
-
-          {simResult && (
-            <div className="p-4 rounded-lg border border-grey-200 bg-grey-50 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-grey-900">Resultado da Simulação:</span>
-                <span className="text-sm font-black text-grey-900 font-mono">
-                  {simResult.score} pontos ({simResult.level})
-                </span>
-              </div>
-              <div className="text-xs text-grey-700">
-                <div className="font-semibold mb-1">Regras Acionadas ({simResult.rules.length}):</div>
-                <div className="space-y-1.5">
-                  {simResult.rules.map((r: string, idx: number) => (
-                    <ChecklistItem key={idx} checked>
-                      {r}
-                    </ChecklistItem>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
-      )}
-    </div>
+      </div>
   );
 };
+

@@ -1189,7 +1189,7 @@ export const ProjectFollowUpView: React.FC<ProjectFollowUpViewProps> = ({
               type="text"
               value={diaryForm.participants}
               onChange={(e) => setDiaryForm({ ...diaryForm, participants: e.target.value })}
-              placeholder="Ex.: Diego Cavalcante (Logística), Roger (Dev), Eliel Lima (TI Governança)"
+              placeholder="Ex.: Nome (Área de Negócio), Nome (Dev), Nome (TI Governança)"
               className="w-full text-xs border border-grey-300 rounded-lg px-3 py-2 text-grey-900 focus:outline-hidden"
             />
           </FormField>

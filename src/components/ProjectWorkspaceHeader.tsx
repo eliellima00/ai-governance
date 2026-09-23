@@ -9,7 +9,6 @@ export interface ProjectWorkspaceHeaderProps {
   project: SolutionProject;
   activeTab: ProjectTab;
   onSelectTab: (tab: ProjectTab) => void;
-  onNavigateToPortfolio: () => void;
   residualScore: number;
   completedActions: number;
   totalActions: number;
@@ -24,7 +23,6 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
   project,
   activeTab,
   onSelectTab,
-  onNavigateToPortfolio,
   residualScore,
   completedActions,
   totalActions,

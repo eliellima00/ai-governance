@@ -283,10 +283,10 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
 
   const handleResetAllData = () => {
     if (!isAdmin) return;
-    if (window.confirm('ATENÇÃO: Deseja redefinir todas as soluções para a base padrão original? Quaisquer alterações locais em projetos serão substituídas pelos 5 projetos de exemplo.')) {
+    if (window.confirm('ATENÇÃO: Isso apaga todos os projetos e configurações salvos localmente neste navegador (o portfólio local ficará vazio) e não pode ser desfeito. Os dados no Supabase não são afetados. Deseja continuar?')) {
       resetToDefaultState();
       onReloadAllState();
-      setBackupMessage({ type: 'success', text: 'Base de dados resetada com sucesso para as soluções de exemplo originais.' });
+      setBackupMessage({ type: 'success', text: 'Dados locais apagados. O portfólio local está vazio.' });
     }
   };
 
@@ -891,12 +891,11 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
               />
               <span>
                 <span className="text-xs font-bold text-grey-900 block">
-                  Evolução detalhada (burn-down + simulador "what-if")
+                  Evolução detalhada (gráfico de burn-down)
                 </span>
                 <span className="text-[11px] text-grey-500">
-                  Mostra, na aba Evolução, o gráfico cronológico de queda de risco e o simulador
-                  interativo para apresentações. Por padrão a aba mostra só o resumo (score inicial,
-                  residual e evolução por dimensão).
+                  Mostra, na aba Evolução, o gráfico cronológico de queda de risco. Por padrão a aba
+                  mostra só o resumo (score inicial, residual e evolução por dimensão).
                 </span>
               </span>
             </label>
@@ -1165,10 +1164,10 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
               <div>
                 <span className="text-xs font-bold text-grey-900 flex items-center gap-1.5">
                   <RotateCcw className="w-4 h-4 text-danger-800" />
-                  <span>Resetar para Exemplos Originais</span>
+                  <span>Limpar Dados Locais</span>
                 </span>
                 <p className="text-[11px] text-grey-500 mt-1">
-                  Limpa o localStorage e recarrega os 5 projetos padrão da ATTO (Portal Logística, CTe OCR, etc).
+                  Apaga o localStorage deste navegador (portfólio e configurações ficam vazios). Os dados no Supabase não são afetados.
                 </p>
               </div>
 
@@ -1179,7 +1178,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                 leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
                 className="w-full bg-danger-50 text-danger-800 border border-danger-300 hover:bg-danger-50"
               >
-                Restaurar Base de Exemplo
+                Limpar Dados Locais
               </Button>
             </div>
           </div>

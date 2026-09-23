@@ -57,7 +57,6 @@ interface EstimationScheduleViewProps {
   project: SolutionProject;
   userRole: UserRole;
   onUpdateProject: (updated: SolutionProject) => void;
-  onNavigateToGlpi?: () => void;
 }
 
 /** Exibição estática de um campo, usada no lugar do input/select quando o perfil não pode editar a estimativa. */
@@ -70,8 +69,7 @@ const ReadOnlyField: React.FC<{ value: string; className?: string }> = ({ value,
 export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   project,
   userRole,
-  onUpdateProject,
-  onNavigateToGlpi
+  onUpdateProject
 }) => {
   const { generationTools: generationToolOptions } = getActiveConfig().auxiliaryLists;
   const canEditEstimation = can(userRole, 'edit_estimation');

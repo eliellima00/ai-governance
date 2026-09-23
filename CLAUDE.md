@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-"ATTO Sementes — Governança de Soluções & Ativos (Industriatto)" is a single-page React app that manages IT solution/asset governance: intake, risk diagnostics, action plans, criticality evolution tracking, and effort/schedule estimation for internal low-code/vibe-coding projects. It was scaffolded by Google AI Studio (see `metadata.json`, the AI Studio comments in `vite.config.ts`, and the `@google/genai` dependency), but no code currently calls the Gemini API — `GEMINI_API_KEY` in `.env.example` is unused by `src/`.
+"ATTO Sementes — Governança de Soluções & Ativos (Industriatto)" is a single-page React app that manages IT solution/asset governance: intake, risk diagnostics, action plans, criticality evolution tracking, and effort/schedule estimation for internal low-code/vibe-coding projects. It was originally scaffolded by Google AI Studio (see `metadata.json` and the AI Studio comments in `vite.config.ts`); the `@google/genai` dependency and the unused `GEMINI_API_KEY`/`APP_URL` env vars from that scaffold have since been removed, as no code ever called the Gemini API.
 
 There is no backend. All application data is seeded from `src/data/` and persisted client-side in `localStorage` (see `src/utils/storage.ts`).
 
@@ -16,7 +16,7 @@ npm run dev         # start Vite dev server on http://localhost:3000
 npm run build        # production build
 npm run preview       # preview the production build
 npm run lint         # type-check only (tsc --noEmit); there is no separate test suite or linter config
-npm run clean        # remove dist/ and server.js
+npm run clean        # remove dist/
 ```
 
 There are no automated tests in this repo. `npm run lint` (a `tsc --noEmit` pass) is the only verification step available.
@@ -27,7 +27,7 @@ A `bun.lock` file is present, but this environment installs and runs fine with p
 
 **Single-file routing and state, no router/state library.** `src/App.tsx` owns all top-level state (`projects`, `userRole`, `governanceConfig`, `route`) and is the only place that talks to `localStorage` via `loadState`/`saveState`. Routing is a hand-rolled `Route` union (`{name: 'portfolio'} | {name: 'project', projectId, tab} | {name: 'settings'}`) synced to `window.location.hash` (`parseHashToRoute`/`syncRouteToHash` in `App.tsx`), not `react-router`. All views are rendered conditionally from `App.tsx` based on `route`; there's no nested component routing.
 
-**Data model** (`src/types.ts`): a `SolutionProject` is the central entity — it carries GLPI asset metadata, a risk diagnostic (`criteria`, `dimensionsInitial`, `initialScore`), an `actionPlan` (mitigation items with `riskPointsImpact`), an `estimation` (effort/schedule inputs), and a `technicalDoc` block (LGPD/security/infra "doc viva"). Project workspace tabs (`glpi | diagnostic | action_plan | evolution | estimation`) each map to one component in `src/components/` and one `ProjectTab` value.
+**Data model** (`src/types.ts`): a `SolutionProject` is the central entity — it carries GLPI asset metadata, a risk diagnostic (`criteria`, `dimensionsInitial`, `initialScore`), an `actionPlan` (mitigation items with `riskPointsImpact`), an `estimation` (effort/schedule inputs), and a `technicalDoc` block (LGPD/security/infra "doc viva"). Project workspace tabs (`glpi | artifacts | diagnostic | action_plan | evolution | estimation`) each map to one component in `src/components/` and one `ProjectTab` value.
 
 **Risk scoring** (`src/utils/riskCalculations.ts`): risk level thresholds and per-level colors are derived from the *active* `GovernanceConfig`/`GovernanceSettings` (`src/config/governanceConfig.ts`), not hardcoded — `computeResidualScore` subtracts completed/in-progress `actionPlan` items' `riskPointsImpact` from a project's `initialScore` to get the current/projected residual score and risk level (`BAIXO/MEDIO/ALTO/CRITICO`). `computeDimensionEvolution` splits mitigation across `Segurança`/`LGPD`/`Operacional` dimensions (with `Governança` actions split 50/50 across Segurança/Operacional).
 

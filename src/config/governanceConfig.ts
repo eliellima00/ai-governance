@@ -60,7 +60,7 @@ export interface GovernanceSettings {
   };
   /** Funcionalidades avançadas desligadas por padrão (visão sucinta); reativáveis aqui sem alterar código. */
   featureFlags: {
-    /** Gráfico de burn-down e simulador "what-if" na aba Evolução (além do resumo sucinto padrão). */
+    /** Gráfico de burn-down na aba Evolução (além do resumo sucinto padrão). */
     detailedEvolution: boolean;
   };
 }
