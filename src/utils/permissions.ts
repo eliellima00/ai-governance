@@ -11,6 +11,7 @@ export type PermissionAction =
   | 'edit_project_glpi'
   | 'advance_stage'
   | 'edit_estimation'
+  | 'edit_criteria'
   | 'toggle_action_item'
   | 'add_activity_log'
   | 'add_notes'
@@ -50,6 +51,7 @@ export function can(arg1?: string, arg2?: string): boolean {
     case 'edit_project_glpi':
     case 'advance_stage':
     case 'edit_estimation':
+    case 'edit_criteria':
     case 'toggle_action_item':
     case 'add_activity_log':
     case 'add_notes':

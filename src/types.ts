@@ -27,7 +27,8 @@ export type Route =
   | { name: 'portfolio' }
   | { name: 'project'; projectId: string; tab: ProjectTab }
   | { name: 'settings' }
-  | { name: 'new-project' };
+  | { name: 'new-project' }
+  | { name: 'my-week' };
 
 // --- Eixo 2 & Governança Low-Code / Vibe Coding ATTO ---
 export type ProjectType = 'A' | 'B' | 'C'; // A=Google Workspace/App Script · B=Container/VPS · C=No-code/externo

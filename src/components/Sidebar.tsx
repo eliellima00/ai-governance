@@ -1,5 +1,12 @@
 import React from 'react';
-import { FolderKanban, PlusCircle, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  FolderKanban,
+  PlusCircle,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays
+} from 'lucide-react';
 import { Route, UserRole } from '../types';
 import { can } from '../utils/permissions';
 import { AttoLogo } from './AttoLogo';
@@ -9,6 +16,7 @@ export interface SidebarProps {
   onNavigateToPortfolio: () => void;
   onNavigateToSettings: () => void;
   onOpenNewProject: () => void;
+  onNavigateToMyWeek: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   isMobileOpen: boolean;
@@ -25,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNavigateToPortfolio,
   onNavigateToSettings,
   onOpenNewProject,
+  onNavigateToMyWeek,
   isCollapsed,
   onToggleCollapse,
   isMobileOpen,
@@ -46,6 +55,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleGoSettings = () => {
     onNavigateToSettings();
+    onCloseMobile();
+  };
+
+  const handleGoMyWeek = () => {
+    onNavigateToMyWeek();
     onCloseMobile();
   };
 
@@ -109,6 +123,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <FolderKanban className={`w-4 h-4 shrink-0 ${isPortfolioActive ? 'text-white' : 'text-brand-main'}`} />
             {!isCollapsed && <span className="truncate">Gestão de Demandas</span>}
+          </button>
+
+          <button
+            onClick={handleGoMyWeek}
+            data-tour="sidebar-my-week-btn"
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
+              route.name === 'my-week'
+                ? 'bg-brand-dark text-white shadow-xs font-bold'
+                : 'text-grey-600 hover:bg-grey-100 hover:text-grey-900'
+            } ${isCollapsed ? 'justify-center px-0' : ''}`}
+            title="Minha Semana (planner semanal)"
+          >
+            <CalendarDays
+              className={`w-4 h-4 shrink-0 ${route.name === 'my-week' ? 'text-white' : 'text-brand-main'}`}
+            />
+            {!isCollapsed && <span className="truncate">Minha Semana</span>}
           </button>
 
           {canCreate && (

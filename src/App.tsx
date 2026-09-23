@@ -4,11 +4,12 @@ import {
   ActionStatus,
   GovernanceConfig,
   ProjectTab,
+  RiskCriterion,
   Route,
   SolutionProject,
   UserRole
 } from './types';
-import { computeResidualScore } from './utils/riskCalculations';
+import { computeResidualScore, recomputeInitialFromCriteria } from './utils/riskCalculations';
 import { can } from './utils/permissions';
 import { loadState, saveState, resetToDefaultState } from './utils/storage';
 import { getActiveConfig } from './config/governanceConfig';
@@ -32,6 +33,7 @@ import { ProjectPortfolioDashboard } from './components/ProjectPortfolioDashboar
 import { EstimationScheduleView } from './components/EstimationScheduleView';
 import { SettingsView } from './components/SettingsView';
 import { NewProjectPage } from './components/NewProjectPage';
+import { MyWeekView } from './components/MyWeekView';
 import { ProjectFollowUpView } from './components/ProjectFollowUpView';
 import { AppTour } from './components/tour/AppTour';
 
@@ -46,6 +48,9 @@ function parseHashToRoute(): Route | null {
   }
   if (hash === 'new-project') {
     return { name: 'new-project' };
+  }
+  if (hash === 'my-week') {
+    return { name: 'my-week' };
   }
   const parts = hash.split('/');
   if (parts[0] === 'project' && parts[1]) {
@@ -80,6 +85,10 @@ function syncRouteToHash(route: Route) {
   } else if (route.name === 'new-project') {
     if (window.location.hash !== '#new-project') {
       window.location.hash = '#new-project';
+    }
+  } else if (route.name === 'my-week') {
+    if (window.location.hash !== '#my-week') {
+      window.location.hash = '#my-week';
     }
   } else if (route.name === 'project') {
     const targetHash = `#project/${route.projectId}/${route.tab}`;
@@ -218,6 +227,10 @@ export default function App() {
     setRoute({ name: 'new-project' });
   }, []);
 
+  const navigateToMyWeek = useCallback(() => {
+    setRoute({ name: 'my-week' });
+  }, []);
+
   const navigateToProject = useCallback(
     (projectId: string, tab: ProjectTab = 'glpi') => {
       setRoute({
@@ -327,6 +340,42 @@ export default function App() {
     );
   };
 
+  // Critérios de risco: toda mutação recalcula initialScore/initialRisk/dimensionsInitial
+  // a partir da soma dos critérios, pra nunca ficarem fora de sincronia com a tabela.
+  const applyCriteriaChange = (newCriteria: RiskCriterion[]) => {
+    setProjects((prevProjects) =>
+      prevProjects.map((proj) => {
+        if (proj.id !== currentProject.id) return proj;
+        const recomputed = recomputeInitialFromCriteria(newCriteria);
+        const updated: SolutionProject = {
+          ...proj,
+          criteria: newCriteria,
+          ...recomputed
+        };
+        persistProject(updated).catch(console.error);
+        return updated;
+      })
+    );
+  };
+
+  const handleAddCriterion = (newItemData: Omit<RiskCriterion, 'id'>) => {
+    const newItem: RiskCriterion = {
+      ...newItemData,
+      id: `${currentProject.id}-c-${Date.now()}`
+    };
+    applyCriteriaChange([...currentProject.criteria, newItem]);
+  };
+
+  const handleEditCriterion = (updatedItem: RiskCriterion) => {
+    applyCriteriaChange(
+      currentProject.criteria.map((c) => (c.id === updatedItem.id ? updatedItem : c))
+    );
+  };
+
+  const handleDeleteCriterion = (id: string) => {
+    applyCriteriaChange(currentProject.criteria.filter((c) => c.id !== id));
+  };
+
   const handleSaveGlpiAsset = (updatedFields: {
     name: string;
     status: any;
@@ -384,6 +433,7 @@ export default function App() {
         onNavigateToPortfolio={navigateToPortfolio}
         onNavigateToSettings={navigateToSettings}
         onOpenNewProject={navigateToNewProject}
+        onNavigateToMyWeek={navigateToMyWeek}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         isMobileOpen={isMobileSidebarOpen}
@@ -453,6 +503,14 @@ export default function App() {
             />
           )}
 
+          {route.name === 'my-week' && (
+            <MyWeekView
+              projects={projects}
+              onUpdateProject={handleUpdateProject}
+              onNavigateToProject={navigateToProject}
+            />
+          )}
+
           {route.name === 'project' && route.tab === 'glpi' && currentProject && (
             <GlpiAssetView
               project={currentProject}
@@ -474,7 +532,11 @@ export default function App() {
           {route.name === 'project' && route.tab === 'diagnostic' && currentProject && (
             <AiDiagnosticView
               project={currentProject}
+              userRole={userRole}
               onNavigateToActionPlan={() => selectProjectTab('action_plan')}
+              onAddCriterion={handleAddCriterion}
+              onEditCriterion={handleEditCriterion}
+              onDeleteCriterion={handleDeleteCriterion}
             />
           )}
 

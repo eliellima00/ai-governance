@@ -10,6 +10,30 @@ export function calculateRiskLevel(score: number): RiskLevel {
   return 'CRITICO';
 }
 
+/**
+ * Deriva pontuação, risco e distribuição por dimensão a partir da lista de critérios —
+ * garante que `initialScore`/`initialRisk`/`dimensionsInitial` nunca fiquem fora de sincronia
+ * com a tabela de critérios depois de uma edição manual (adicionar/editar/excluir).
+ */
+export function recomputeInitialFromCriteria(criteria: RiskCriterion[]): {
+  initialScore: number;
+  initialRisk: RiskLevel;
+  dimensionsInitial: { lgpd: number; seguranca: number; operacional: number };
+} {
+  const dimensionsInitial = { lgpd: 0, seguranca: 0, operacional: 0 };
+  criteria.forEach((c) => {
+    if (c.dimension === 'LGPD') dimensionsInitial.lgpd += c.points;
+    else if (c.dimension === 'Segurança') dimensionsInitial.seguranca += c.points;
+    else if (c.dimension === 'Operacional') dimensionsInitial.operacional += c.points;
+  });
+  const initialScore = dimensionsInitial.lgpd + dimensionsInitial.seguranca + dimensionsInitial.operacional;
+  return {
+    initialScore,
+    initialRisk: calculateRiskLevel(initialScore),
+    dimensionsInitial
+  };
+}
+
 export function getRiskColorClass(level: RiskLevel): {
   bg: string;
   text: string;
