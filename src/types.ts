@@ -50,12 +50,20 @@ export interface DiscountToggle {
   confirmed: boolean;
 }
 
+// Datas escolhidas manualmente para uma etapa (YYYY-MM-DD). Campo ausente = usa a data sugerida pelo motor.
+export interface StageDateOverride {
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface EstimationInputs {
   projectType: ProjectType;
   generationTool?: GenerationTool;
   startDate: string;
   modules: ModuleToggle[];
   discounts: DiscountToggle[];
+  // O início da E0 é sempre `startDate`; aqui ficam só os ajustes das demais datas.
+  stageDateOverrides?: Partial<Record<GovStage, StageDateOverride>>;
 }
 
 export interface StageSchedule {
@@ -69,8 +77,14 @@ export interface StageSchedule {
   externalDepsCount: number;
   workDays: number;
   waitDays: number;
+  // Datas planejadas (manuais quando houver ajuste, senão as sugeridas)
   startDate: string;
   endDate: string;
+  // Datas que o motor sugere, encadeando a partir do fim planejado da etapa anterior
+  suggestedStartDate: string;
+  suggestedEndDate: string;
+  isStartManual: boolean;
+  isEndManual: boolean;
 }
 
 export interface EstimationResult {
@@ -94,6 +108,9 @@ export interface EstimationResult {
     deliveryDate: string;
   };
   stages: StageSchedule[];
+  // Entrega que o motor calcularia sem nenhum ajuste manual de datas (para comparação)
+  suggestedDeliveryDate: string;
+  hasManualDates: boolean;
 }
 
 export interface ActionItem {

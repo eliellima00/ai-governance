@@ -12,7 +12,9 @@ import {
   Check,
   FileText,
   History,
-  AlertOctagon
+  AlertOctagon,
+  RotateCcw,
+  CalendarClock
 } from 'lucide-react';
 import {
   DiscountToggle,
@@ -39,7 +41,9 @@ import {
 import {
   computeEstimation,
   formatPtBrDate,
-  getDefaultEstimationInputs
+  getDefaultEstimationInputs,
+  replanFromStage,
+  setStageDate
 } from '../utils/estimation';
 import { getActiveConfig } from '../config/governanceConfig';
 import { Card } from './ui/Card';
@@ -65,6 +69,56 @@ const ReadOnlyField: React.FC<{ value: string; className?: string }> = ({ value,
     {value || '—'}
   </div>
 );
+
+/** Célula de data de uma etapa: input editável (admin) com destaque quando a data foi ajustada manualmente. */
+const StageDateCell: React.FC<{
+  value: string;
+  suggested: string;
+  isManual: boolean;
+  editable: boolean;
+  min?: string;
+  onChange: (date: string) => void;
+  onReset?: () => void;
+}> = ({ value, suggested, isManual, editable, min, onChange, onReset }) => {
+  const showSuggestion = isManual && suggested !== value;
+  if (!editable) {
+    return (
+      <div className="flex flex-col items-center">
+        <span>{formatPtBrDate(value)}</span>
+        {isManual && <span className="text-[9px] font-semibold text-warning-600 uppercase">manual</span>}
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-1">
+        <input
+          type="date"
+          value={value}
+          min={min}
+          onChange={(e) => e.target.value && onChange(e.target.value)}
+          className={`px-1.5 py-0.5 rounded border text-xs font-mono ${
+            isManual ? 'border-warning-400 bg-warning-50 text-warning-800' : 'border-grey-200 bg-white text-inherit'
+          }`}
+          title={isManual ? `Data manual · sugerida: ${formatPtBrDate(suggested)}` : 'Data sugerida pelo motor — altere se quiser'}
+        />
+        {isManual && onReset && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-grey-400 hover:text-brand-dark"
+            title={`Voltar à data sugerida (${formatPtBrDate(suggested)})`}
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+      {showSuggestion && (
+        <span className="text-[9px] font-normal text-grey-400">sug. {formatPtBrDate(suggested)}</span>
+      )}
+    </div>
+  );
+};
 
 export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   project,
@@ -233,6 +287,23 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
     });
   };
 
+  // Datas manuais por etapa: a sugestão do motor continua visível, mas a data escolhida prevalece
+  const [replanDate, setReplanDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const canReplan = canEditEstimation && currentGovStage !== 'Concluído';
+
+  const handleStageDateChange = (stageId: GovStage, field: 'startDate' | 'endDate', date: string) => {
+    handleUpdateInputs(setStageDate(currentInputs, stageId, field, date || undefined));
+  };
+
+  const handleReplanFromCurrentStage = () => {
+    if (!canReplan || !replanDate) return;
+    handleUpdateInputs(replanFromStage(currentInputs, currentGovStage, replanDate));
+  };
+
+  const handleResetAllStageDates = () => {
+    handleUpdateInputs({ ...currentInputs, stageDateOverrides: {} });
+  };
+
   // Gerar texto formatado do apontamento da esteira para colar no chamado GLPI
   const generateGlpiNoteText = () => {
     const optDate = formatPtBrDate(estimationResult.optimistic.deliveryDate);
@@ -370,20 +441,36 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
           icon={<Calendar className="w-4 h-4" />}
           iconClassName="bg-white/10 text-brand-light"
           value={
-            <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">
-                {formatPtBrDate(estimationResult.optimistic.deliveryDate)}
+            estimationResult.hasManualDates ? (
+              <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                <span className="text-brand-light font-bold text-sm">Planejado:</span>
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-warning-200 font-mono">
+                  {formatPtBrDate(estimationResult.realistic.deliveryDate)}
+                </span>
               </span>
-              <span className="text-brand-light font-bold text-sm">à</span>
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-warning-200 font-mono">
-                {formatPtBrDate(estimationResult.realistic.deliveryDate)}
+            ) : (
+              <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">
+                  {formatPtBrDate(estimationResult.optimistic.deliveryDate)}
+                </span>
+                <span className="text-brand-light font-bold text-sm">à</span>
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-warning-200 font-mono">
+                  {formatPtBrDate(estimationResult.realistic.deliveryDate)}
+                </span>
               </span>
-            </span>
+            )
           }
           subtext={
             <div className="space-y-2">
               <div className="text-[10px] text-grey-400 font-mono">
                 Início: {formatPtBrDate(currentInputs.startDate)}
+                {estimationResult.hasManualDates && (
+                  <>
+                    {' '}· Datas ajustadas manualmente · sugestão do motor:{' '}
+                    {formatPtBrDate(estimationResult.optimistic.deliveryDate)} à{' '}
+                    {formatPtBrDate(estimationResult.suggestedDeliveryDate)}
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-grey-700/80 text-[11px]">
                 <div>
@@ -874,8 +961,46 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
             </h2>
             <p className="text-xs text-grey-500 mt-0.5">
               Detalhamento de dias úteis ativos (código e testes) e dias de espera de agenda e terceiros.
+              {canEditEstimation &&
+                ' As datas são sugeridas pelo motor, mas podem ser alteradas livremente — as etapas seguintes sem ajuste se reencadeiam.'}
             </p>
           </div>
+          {canEditEstimation && (
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              {canReplan && (
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="date"
+                    value={replanDate}
+                    onChange={(e) => setReplanDate(e.target.value)}
+                    className="text-xs font-mono w-36"
+                    aria-label="Nova data de início da etapa atual"
+                  />
+                  <Button
+                    size="sm"
+                    color="secondary"
+                    leftIcon={<CalendarClock className="w-3.5 h-3.5" />}
+                    onClick={handleReplanFromCurrentStage}
+                    disabled={!replanDate}
+                    title="A etapa atual passa a começar na data escolhida e as seguintes voltam para as durações sugeridas. Etapas anteriores não mudam."
+                  >
+                    Replanejar a partir de {currentGovStage} - {STAGE_NAMES[currentGovStage]}
+                  </Button>
+                </div>
+              )}
+              {estimationResult.hasManualDates && (
+                <Button
+                  size="sm"
+                  color="secondary"
+                  leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+                  onClick={handleResetAllStageDates}
+                  title="Remove todos os ajustes manuais de datas e volta ao cronograma sugerido"
+                >
+                  Restaurar datas sugeridas
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <Table>
@@ -925,10 +1050,26 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
                     +{stg.waitDays}d
                   </Td>
                   <Td className="text-center font-mono text-grey-600">
-                    {formatPtBrDate(stg.startDate)}
+                    <StageDateCell
+                      value={stg.startDate}
+                      suggested={stg.suggestedStartDate}
+                      isManual={stg.isStartManual}
+                      editable={canEditEstimation}
+                      // O início da E0 é a própria data de início da contagem — não há "sugestão" a restaurar
+                      onChange={(date) => handleStageDateChange(stg.stageId, 'startDate', date)}
+                      onReset={stg.stageId === 'E0' ? undefined : () => handleStageDateChange(stg.stageId, 'startDate', '')}
+                    />
                   </Td>
                   <Td className="text-center font-mono font-bold text-brand-dark">
-                    {formatPtBrDate(stg.endDate)}
+                    <StageDateCell
+                      value={stg.endDate}
+                      suggested={stg.suggestedEndDate}
+                      isManual={stg.isEndManual}
+                      editable={canEditEstimation}
+                      min={stg.startDate}
+                      onChange={(date) => handleStageDateChange(stg.stageId, 'endDate', date)}
+                      onReset={() => handleStageDateChange(stg.stageId, 'endDate', '')}
+                    />
                   </Td>
                 </Tr>
               );

@@ -1,23 +1,33 @@
-import React, { useMemo } from 'react';
-import { AlertTriangle } from 'lucide-react';
-import { GovStage, SolutionProject } from '../types';
+import React, { useMemo, useState } from 'react';
+import { AlertTriangle, CalendarClock, RotateCcw, Star } from 'lucide-react';
+import { EstimationInputs, GovStage, SolutionProject, UserRole } from '../types';
 import {
   computeEstimation,
   diffDays,
   formatPtBrDate,
   getDefaultEstimationInputs,
-  parseFlexibleDate
+  parseFlexibleDate,
+  replanFromStage,
+  setStageDate
 } from '../utils/estimation';
 import { STAGE_NAMES } from '../data/estimationCatalog';
+import { getActiveConfig } from '../config/governanceConfig';
+import { can } from '../utils/permissions';
 import { Card } from './ui/Card';
+import { Button } from './ui/Button';
 
 interface PortfolioGanttViewProps {
   projects: SolutionProject[];
+  userRole: UserRole;
+  onUpdateProject: (updated: SolutionProject) => void;
   onSelectProjectAndNavigate: (
     project: SolutionProject,
     targetTab: 'glpi' | 'diagnostic' | 'action_plan' | 'evolution' | 'estimation'
   ) => void;
 }
+
+const DATE_INPUT_CLASS =
+  'px-1.5 py-0.5 rounded border border-grey-200 bg-white text-[11px] font-mono text-grey-800 disabled:bg-grey-50';
 
 const GOV_STAGE_ORDER: GovStage[] = ['E0', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
 const END_PADDING_DAYS = 20;
@@ -47,18 +57,41 @@ function shortDate(iso: string): string {
 
 export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
   projects,
+  userRole,
+  onUpdateProject,
   onSelectProjectAndNavigate
 }) => {
   const todayIso = new Date().toISOString().split('T')[0];
+  const { priorities: priorityOptions } = getActiveConfig().auxiliaryLists;
+  const canEditDates = can(userRole, 'edit_estimation');
+  const canTogglePriority = can(userRole, 'toggle_priority');
+  const [planningMode, setPlanningMode] = useState(false);
 
-  const rows = useMemo(
-    () =>
-      projects.map((project) => {
-        const inputs = project.estimation || getDefaultEstimationInputs(project.projectType || 'A');
-        return { project, est: computeEstimation(inputs) };
-      }),
-    [projects]
-  );
+  // Ordem de prioridade: pauta da gestão primeiro, depois a ordem da lista de prioridades
+  // (Configurações), depois a entrega planejada mais próxima.
+  const rows = useMemo(() => {
+    const priorityRank = (p: SolutionProject) => {
+      const idx = priorityOptions.indexOf(p.executivePriority || '');
+      return idx < 0 ? priorityOptions.length : idx;
+    };
+    return projects
+      .map((project) => {
+        const inputs: EstimationInputs =
+          project.estimation || getDefaultEstimationInputs(project.projectType || 'A');
+        return { project, inputs, est: computeEstimation(inputs) };
+      })
+      .sort(
+        (a, b) =>
+          Number(!!b.project.isPriorityForManagement) - Number(!!a.project.isPriorityForManagement) ||
+          priorityRank(a.project) - priorityRank(b.project) ||
+          diffDays(b.est.realistic.deliveryDate, a.est.realistic.deliveryDate)
+      );
+  }, [projects, priorityOptions]);
+
+  const updateInputs = (project: SolutionProject, inputs: EstimationInputs) => {
+    if (!canEditDates) return;
+    onUpdateProject({ ...project, estimation: inputs, lastUpdated: new Date().toLocaleDateString('pt-BR') });
+  };
 
   const { rangeStart, rangeEnd, totalSpanDays } = useMemo(() => {
     let minDate = todayIso;
@@ -105,13 +138,32 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
   return (
     <Card className="p-4 space-y-4">
       {/* Cabeçalho */}
-      <div>
-        <h3 className="text-sm font-bold text-grey-900">Planejamento visual</h3>
-        <p className="text-[11px] text-grey-500">
-          Período efetivo: {formatPtBrDate(rangeStart)} a {formatPtBrDate(rangeEnd)} · final automático: maior prazo
-          visível + {END_PADDING_DAYS} dias.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-grey-900">Planejamento visual</h3>
+          <p className="text-[11px] text-grey-500">
+            Período efetivo: {formatPtBrDate(rangeStart)} a {formatPtBrDate(rangeEnd)} · final automático: maior prazo
+            visível + {END_PADDING_DAYS} dias · ordenado por prioridade.
+          </p>
+        </div>
+        {(canEditDates || canTogglePriority) && (
+          <Button
+            size="sm"
+            color={planningMode ? 'primary' : 'secondary'}
+            leftIcon={<CalendarClock className="w-3.5 h-3.5" />}
+            onClick={() => setPlanningMode((v) => !v)}
+          >
+            {planningMode ? 'Concluir planejamento' : 'Modo planejamento'}
+          </Button>
+        )}
       </div>
+      {planningMode && (
+        <p className="text-[11px] text-info-700 bg-info-50 border border-info-200 rounded px-3 py-2">
+          Altere a prioridade e as datas direto nas linhas. <strong>Retomar em</strong> replaneja a partir da etapa
+          atual (as seguintes se reencadeiam pelas durações sugeridas); <strong>Entrega</strong> fixa o fim da última
+          etapa. Para ajustar etapa por etapa, abra a aba Estimativa do projeto.
+        </p>
+      )}
 
       {/* Legenda */}
       <div className="flex flex-wrap items-center gap-4 text-[11px] text-grey-600 pb-3 border-b border-grey-100">
@@ -148,7 +200,7 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
 
       {/* Linhas por projeto */}
       <div className="space-y-2 max-h-150 overflow-y-auto pr-1">
-        {rows.map(({ project, est }) => {
+        {rows.map(({ project, inputs, est }) => {
           const currentIndex =
             project.govStage === 'Concluído'
               ? GOV_STAGE_ORDER.length
@@ -198,12 +250,23 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
           const showFullLabel = width >= 16;
           const showShortLabel = !showFullLabel && width >= 6;
 
+          const suggestedEnd = est.suggestedDeliveryDate;
+          const showSuggestedMarker = est.hasManualDates && suggestedEnd !== barEnd;
+
           const tooltip = `${project.name}\n${style.label}${
             project.hasImpediment ? ' (impedimento sinalizado)' : ''
-          }\n${formatPtBrDate(barStart)} → ${formatPtBrDate(barEnd)}\n${progressPct}% concluído · ${doneActions}/${totalActions} ações do plano`;
+          }\n${formatPtBrDate(barStart)} → ${formatPtBrDate(barEnd)}${
+            showSuggestedMarker ? ` (sugerido pelo motor: ${formatPtBrDate(suggestedEnd)})` : ''
+          }\n${progressPct}% concluído · ${doneActions}/${totalActions} ações do plano`;
+
+          const isCompleted = project.govStage === 'Concluído';
+          const currentGovStage: GovStage = isCompleted ? 'E6' : project.govStage || 'E0';
+          const currentStagePlan = est.stages[currentIndex];
+          const lastStage = est.stages[est.stages.length - 1];
 
           return (
-            <div key={project.id} className="flex items-center gap-3 group pt-4 first:pt-0">
+            <div key={project.id} className="pt-4 first:pt-0">
+            <div className="flex items-center gap-3 group">
               <button
                 onClick={() => onSelectProjectAndNavigate(project, 'estimation')}
                 className="w-64 shrink-0 text-left"
@@ -242,6 +305,15 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
                   />
                 )}
 
+                {/* Entrega que o motor sugeriria sem ajustes manuais */}
+                {showSuggestedMarker && (
+                  <div
+                    className="absolute top-0 bottom-0 border-l-2 border-dashed border-grey-400 z-10"
+                    style={{ left: `${pct(suggestedEnd)}%` }}
+                    title={`Entrega sugerida pelo motor: ${formatPtBrDate(suggestedEnd)}`}
+                  />
+                )}
+
                 {/* Badge de previsão, acima do fim da barra */}
                 <span
                   className="absolute -top-4 text-[9px] font-semibold text-grey-600 bg-white border border-grey-200 rounded px-1 -translate-x-1/2 whitespace-nowrap z-10"
@@ -271,6 +343,93 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+
+            {planningMode && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 ml-1 pl-3 border-l-2 border-grey-200 text-[11px] text-grey-600">
+                <label className="flex items-center gap-1.5">
+                  <span>Prioridade</span>
+                  <select
+                    value={project.executivePriority || ''}
+                    disabled={!canTogglePriority}
+                    onChange={(e) => onUpdateProject({ ...project, executivePriority: e.target.value })}
+                    className={DATE_INPUT_CLASS}
+                  >
+                    {!priorityOptions.includes(project.executivePriority || '') && (
+                      <option value={project.executivePriority || ''}>{project.executivePriority || '—'}</option>
+                    )}
+                    {priorityOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  disabled={!canTogglePriority}
+                  onClick={() =>
+                    onUpdateProject({ ...project, isPriorityForManagement: !project.isPriorityForManagement })
+                  }
+                  className={`flex items-center gap-1 disabled:cursor-not-allowed ${
+                    project.isPriorityForManagement ? 'text-warning-600 font-semibold' : 'text-grey-500'
+                  }`}
+                  title="Marcar/desmarcar como prioridade para a gestão"
+                >
+                  <Star className={`w-3.5 h-3.5 ${project.isPriorityForManagement ? 'fill-current' : ''}`} />
+                  Pauta da gestão
+                </button>
+
+                {!isCompleted && currentStagePlan && (
+                  <label className="flex items-center gap-1.5">
+                    <span>
+                      Retomar {currentGovStage} - {STAGE_NAMES[currentGovStage]} em
+                    </span>
+                    <input
+                      type="date"
+                      value={currentStagePlan.startDate}
+                      disabled={!canEditDates}
+                      onChange={(e) =>
+                        e.target.value && updateInputs(project, replanFromStage(inputs, currentGovStage, e.target.value))
+                      }
+                      className={DATE_INPUT_CLASS}
+                    />
+                  </label>
+                )}
+
+                {!isCompleted && lastStage && (
+                  <label className="flex items-center gap-1.5">
+                    <span>Entrega</span>
+                    <input
+                      type="date"
+                      value={lastStage.endDate}
+                      min={lastStage.startDate}
+                      disabled={!canEditDates}
+                      onChange={(e) =>
+                        e.target.value && updateInputs(project, setStageDate(inputs, 'E6', 'endDate', e.target.value))
+                      }
+                      className={`${DATE_INPUT_CLASS} ${lastStage.isEndManual ? 'border-warning-400! bg-warning-50!' : ''}`}
+                      title={`Mínimo: início planejado da última etapa (${formatPtBrDate(
+                        lastStage.startDate
+                      )}). Para antecipar mais, ajuste as etapas na aba Estimativa.`}
+                    />
+                  </label>
+                )}
+
+                {est.hasManualDates && canEditDates && (
+                  <button
+                    type="button"
+                    onClick={() => updateInputs(project, { ...inputs, stageDateOverrides: {} })}
+                    className="flex items-center gap-1 text-grey-500 hover:text-brand-dark"
+                    title={`Remove os ajustes manuais e volta à entrega sugerida (${formatPtBrDate(suggestedEnd)})`}
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Restaurar sugestão ({formatPtBrDate(suggestedEnd)})
+                  </button>
+                )}
+              </div>
+            )}
             </div>
           );
         })}

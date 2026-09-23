@@ -3,6 +3,7 @@ import {
   EstimationResult,
   GovStage,
   ProjectType,
+  StageDateOverride,
   StageSchedule
 } from '../types';
 import { getActiveConfig } from '../config/governanceConfig';
@@ -150,7 +151,12 @@ export function computeEstimation(inputs: EstimationInputs): EstimationResult {
   });
 
   const stages: StageSchedule[] = [];
+  const overrides = inputs.stageDateOverrides || {};
+  // Cursor planejado (respeita datas manuais) e cursor puro (ignora ajustes, só para comparação)
   let currentStageStartDate = addWorkingDays(validStartDate, 0);
+  let pureStageStartDate = currentStageStartDate;
+  let pureDeliveryDate = validStartDate;
+  let hasManualDates = false;
 
   for (const stageId of stagesToCompute) {
     const baseConfig = config.stagesBaseConfig[projectType]?.[stageId] || {
@@ -193,10 +199,26 @@ export function computeEstimation(inputs: EstimationInputs): EstimationResult {
       externalDepsCount * config.estimationConfig.bufferDepRealista;
 
     const totalDaysSpan = workDays + waitDays;
-    const stageEndDate = addWorkingDays(
-      currentStageStartDate,
-      Math.max(totalDaysSpan - 1, 0)
-    );
+    const spanOffset = Math.max(totalDaysSpan - 1, 0);
+
+    pureDeliveryDate = addWorkingDays(pureStageStartDate, spanOffset);
+    pureStageStartDate = addWorkingDays(pureDeliveryDate, 1);
+
+    // Datas manuais prevalecem; sem elas, a etapa encadeia no fim planejado da anterior
+    // mantendo a duração calculada. O início da E0 é sempre o `startDate` dos inputs.
+    const override: StageDateOverride =
+      stageId === 'E0' ? { endDate: overrides.E0?.endDate } : overrides[stageId] || {};
+    const suggestedStartDate = currentStageStartDate;
+    const stageStartDate = override.startDate || suggestedStartDate;
+    const suggestedEndDate = addWorkingDays(stageStartDate, spanOffset);
+    let stageEndDate = suggestedEndDate;
+    if (override.endDate) {
+      // Fim manual anterior ao início não faz sentido — trata como etapa de um dia
+      stageEndDate = diffDays(stageStartDate, override.endDate) >= 0 ? override.endDate : stageStartDate;
+    }
+    const isStartManual = Boolean(override.startDate);
+    const isEndManual = Boolean(override.endDate);
+    if (isStartManual || isEndManual) hasManualDates = true;
 
     stages.push({
       stageId,
@@ -209,11 +231,15 @@ export function computeEstimation(inputs: EstimationInputs): EstimationResult {
       externalDepsCount,
       workDays,
       waitDays,
-      startDate: currentStageStartDate,
-      endDate: stageEndDate
+      startDate: stageStartDate,
+      endDate: stageEndDate,
+      suggestedStartDate,
+      suggestedEndDate,
+      isStartManual,
+      isEndManual
     });
 
-    // Próxima etapa inicia no próximo dia útil
+    // Próxima etapa inicia no próximo dia útil após o fim planejado desta
     currentStageStartDate = addWorkingDays(stageEndDate, 1);
   }
 
@@ -266,6 +292,47 @@ export function computeEstimation(inputs: EstimationInputs): EstimationResult {
       totalDays: realisticTotalDays,
       deliveryDate: realisticDeliveryDate
     },
-    stages
+    stages,
+    suggestedDeliveryDate: pureDeliveryDate,
+    hasManualDates
   };
+}
+
+/**
+ * Grava (ou limpa, com `date` vazio) a data manual de início/fim de uma etapa.
+ * O início da E0 é o próprio `startDate` da contagem, então é gravado lá.
+ */
+export function setStageDate(
+  inputs: EstimationInputs,
+  stageId: GovStage,
+  field: 'startDate' | 'endDate',
+  date: string | undefined
+): EstimationInputs {
+  if (stageId === 'E0' && field === 'startDate') {
+    return date ? { ...inputs, startDate: date } : inputs;
+  }
+  const overrides = { ...(inputs.stageDateOverrides || {}) };
+  const current = { ...(overrides[stageId] || {}) };
+  if (date) current[field] = date;
+  else delete current[field];
+  if (current.startDate || current.endDate) overrides[stageId] = current;
+  else delete overrides[stageId];
+  return { ...inputs, stageDateOverrides: overrides };
+}
+
+/**
+ * Replaneja a partir de uma etapa: ela passa a começar em `date` e todas as etapas
+ * seguintes perdem os ajustes manuais, voltando a encadear pelas durações sugeridas.
+ * As etapas anteriores ficam intactas (histórico do que já aconteceu).
+ */
+export function replanFromStage(inputs: EstimationInputs, stageId: GovStage, date: string): EstimationInputs {
+  const order: GovStage[] = ['E0', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
+  const fromIndex = Math.max(order.indexOf(stageId), 0);
+  const overrides = { ...(inputs.stageDateOverrides || {}) };
+  order.slice(fromIndex).forEach((s) => delete overrides[s]);
+  if (fromIndex === 0) {
+    return { ...inputs, startDate: date, stageDateOverrides: overrides };
+  }
+  overrides[stageId] = { startDate: date };
+  return { ...inputs, stageDateOverrides: overrides };
 }

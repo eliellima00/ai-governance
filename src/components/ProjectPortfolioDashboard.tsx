@@ -1243,6 +1243,8 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       {projects.length > 0 && viewMode === 'gantt' && (
         <PortfolioGanttView
           projects={filteredProjects}
+          userRole={userRole}
+          onUpdateProject={onUpdateProject}
           onSelectProjectAndNavigate={onSelectProjectAndNavigate}
         />
       )}
