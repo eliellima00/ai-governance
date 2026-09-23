@@ -27,7 +27,7 @@ export function parseKnownDate(value?: string | null): Date | null {
   return null;
 }
 
-/** Formata para `YYYY-MM-DD` (usado para gravar em `scheduledDate`/`deadline`). */
+/** Formata para `YYYY-MM-DD` (usado para gravar em `ScheduledMeeting.date`/`deadline`). */
 export function toIsoDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');

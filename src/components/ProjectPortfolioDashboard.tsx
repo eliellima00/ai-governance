@@ -12,7 +12,9 @@ import {
   ArrowRight,
   Workflow,
   Inbox,
-  Clock
+  Clock,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 import {
   SolutionProject,
@@ -20,7 +22,8 @@ import {
   ExecutivePriority,
   ProjectType,
   GovStage,
-  UserRole
+  UserRole,
+  ScheduledMeeting
 } from '../types';
 import {
   computeEstimation,
@@ -228,6 +231,14 @@ export function getPriorityStyle(priority?: string | null) {
   return DEFAULT_PRIORITY_STYLE;
 }
 
+/** Próxima reunião futura mais próxima (ou a mais próxima no geral, se todas já passaram). */
+function getNextMeeting(meetings?: ScheduledMeeting[]): ScheduledMeeting | null {
+  if (!meetings || meetings.length === 0) return null;
+  const sorted = [...meetings].sort((a, b) => a.date.localeCompare(b.date));
+  const todayIso = new Date().toISOString().split('T')[0];
+  return sorted.find((m) => m.date >= todayIso) || sorted[sorted.length - 1];
+}
+
 /** Exibição estática de um campo, usada no lugar do input/textarea/checkbox quando o perfil não pode editar. */
 const ReadOnlyField: React.FC<{ value: string; multiline?: boolean; className?: string }> = ({
   value,
@@ -272,6 +283,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   const [activeNotesModalProject, setActiveNotesModalProject] = useState<SolutionProject | null>(null);
   const [activeImpedimentModalProject, setActiveImpedimentModalProject] = useState<SolutionProject | null>(null);
   const [activeScheduleModalProject, setActiveScheduleModalProject] = useState<SolutionProject | null>(null);
+  const [newMeetingDate, setNewMeetingDate] = useState('');
+  const [newMeetingSubject, setNewMeetingSubject] = useState('');
+  const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
+  const [editMeetingDate, setEditMeetingDate] = useState('');
+  const [editMeetingSubject, setEditMeetingSubject] = useState('');
 
   // Unique departments for filter
   const departments = useMemo(() => {
@@ -342,7 +358,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     const total = projects.length;
     const prioritizedForManagement = projects.filter((p) => p.isPriorityForManagement).length;
     const withImpediment = projects.filter((p) => p.hasImpediment).length;
-    const withScheduledDate = projects.filter((p) => !!p.scheduledDate).length;
+    const withScheduledDate = projects.filter((p) => (p.scheduledMeetings?.length || 0) > 0).length;
     const inProduction = projects.filter((p) => p.stage === 'Em Produção / Operação').length;
 
     return {
@@ -423,25 +439,39 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     setActiveImpedimentModalProject(null);
   };
 
-  const handleSaveSchedule = (
-    project: SolutionProject,
-    date: string,
-    subject: string
-  ) => {
+  const handleAddMeeting = (project: SolutionProject, date: string, subject: string) => {
+    if (!canAnnotate || !date) return;
+    const newMeeting: ScheduledMeeting = { id: `m-${Date.now()}`, date, subject };
+    onUpdateProject({
+      ...project,
+      scheduledMeetings: [...(project.scheduledMeetings || []), newMeeting]
+    });
+  };
+
+  const handleEditMeeting = (project: SolutionProject, updated: ScheduledMeeting) => {
     if (!canAnnotate) return;
     onUpdateProject({
       ...project,
-      scheduledDate: date,
-      scheduledSubject: subject
+      scheduledMeetings: (project.scheduledMeetings || []).map((m) =>
+        m.id === updated.id ? updated : m
+      )
     });
-    setActiveScheduleModalProject(null);
+  };
+
+  const handleDeleteMeeting = (project: SolutionProject, meetingId: string) => {
+    if (!canAnnotate) return;
+    if (!window.confirm('Remover esta reunião agendada?')) return;
+    onUpdateProject({
+      ...project,
+      scheduledMeetings: (project.scheduledMeetings || []).filter((m) => m.id !== meetingId)
+    });
   };
 
   // Copy Executive Pauta to clipboard for WhatsApp / Email
   const handleCopyManagementPauta = () => {
     const managementProjects = projects.filter((p) => p.isPriorityForManagement);
     const impedimentProjects = projects.filter((p) => p.hasImpediment);
-    const scheduledProjects = projects.filter((p) => p.scheduledDate);
+    const scheduledProjects = projects.filter((p) => (p.scheduledMeetings?.length || 0) > 0);
 
     let text = `📋 *PAUTA EXECUTIVA DE DEMANDAS & PROJETOS - ATTO T.I*\n`;
     text += `_Data: ${new Date().toLocaleDateString('pt-BR')}_\n\n`;
@@ -481,10 +511,14 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     }
 
     if (scheduledProjects.length > 0) {
-      text += `📅 *AGENDAMENTOS & PRÓXIMAS REUNIÕES (${scheduledProjects.length}):*\n`;
-      scheduledProjects.forEach((p, idx) => {
-        text += `${idx + 1}. *${p.scheduledDate}* - ${p.name}\n`;
-        text += `   • Pauta: ${p.scheduledSubject || 'Alinhamento geral'}\n`;
+      const totalMeetings = scheduledProjects.reduce((sum, p) => sum + (p.scheduledMeetings?.length || 0), 0);
+      text += `📅 *AGENDAMENTOS & PRÓXIMAS REUNIÕES (${totalMeetings}):*\n`;
+      scheduledProjects.forEach((p) => {
+        const meetings = [...(p.scheduledMeetings || [])].sort((a, b) => a.date.localeCompare(b.date));
+        text += `*${p.name}*\n`;
+        meetings.forEach((m) => {
+          text += `   • ${m.date} — ${m.subject || 'Alinhamento geral'}\n`;
+        });
       });
       text += `\n`;
     }
@@ -905,28 +939,37 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                       </Button>
                     </Td>
 
-                    {/* 8. Scheduled Date */}
+                    {/* 8. Scheduled Meetings */}
                     <Td>
                       <button
                         onClick={() => setActiveScheduleModalProject(proj)}
                         className="text-left w-full hover:bg-grey-100 p-1 rounded-full transition-colors"
-                        title="Clique para agendar data de reunião ou entrega"
+                        title="Clique para ver/agendar reuniões deste projeto"
                       >
-                        {proj.scheduledDate ? (
-                          <div>
-                            <div className="font-bold text-grey-800 flex items-center gap-1">
-                              <Calendar className="w-3 h-3 text-info-600" />
-                              <span>{proj.scheduledDate}</span>
+                        {(() => {
+                          const next = getNextMeeting(proj.scheduledMeetings);
+                          const extra = (proj.scheduledMeetings?.length || 0) - 1;
+                          return next ? (
+                            <div>
+                              <div className="font-bold text-grey-800 flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-info-600" />
+                                <span>{next.date}</span>
+                                {extra > 0 && (
+                                  <Badge className="bg-info-50 text-info-700 border-info-200 text-[9px] px-1.5 py-0">
+                                    +{extra}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-grey-500 truncate max-w-[120px]">
+                                {next.subject || 'Reunião marcada'}
+                              </div>
                             </div>
-                            <div className="text-[10px] text-grey-500 truncate max-w-[120px]">
-                              {proj.scheduledSubject || 'Reunião marcada'}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-grey-400 italic flex items-center gap-1">
-                            <Calendar className="w-3 h-3" /> Agendar
-                          </span>
-                        )}
+                          ) : (
+                            <span className="text-[11px] text-grey-400 italic flex items-center gap-1">
+                              <Calendar className="w-3 h-3" /> Agendar
+                            </span>
+                          );
+                        })()}
                       </button>
                     </Td>
 
@@ -1314,59 +1357,155 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
         </Modal>
       )}
 
-      {/* MODAL 3: AGENDAR DATA / REUNIÃO */}
-      {activeScheduleModalProject && (
-        <Modal
-          isOpen
-          onClose={() => setActiveScheduleModalProject(null)}
-          title={`Agendar Reunião ou Entrega: ${activeScheduleModalProject.name}`}
-          size="sm"
-        >
-          <Field label="Data:">
-            {canAnnotate ? (
-              <Input
-                type="date"
-                id="modal-schedule-date"
-                defaultValue={activeScheduleModalProject.scheduledDate || ''}
-                className="font-mono font-bold"
-              />
-            ) : (
-              <ReadOnlyField value={activeScheduleModalProject.scheduledDate || ''} className="font-mono font-bold" />
-            )}
-          </Field>
+      {/* MODAL 3: REUNIÕES AGENDADAS (lista, permite marcar várias de uma vez) */}
+      {activeScheduleModalProject && (() => {
+        const liveProject =
+          projects.find((p) => p.id === activeScheduleModalProject.id) || activeScheduleModalProject;
+        const meetings = [...(liveProject.scheduledMeetings || [])].sort((a, b) =>
+          a.date.localeCompare(b.date)
+        );
 
-          <Field label="Pauta / Assunto:">
-            {canAnnotate ? (
-              <Input
-                type="text"
-                id="modal-schedule-subject"
-                defaultValue={activeScheduleModalProject.scheduledSubject || ''}
-                placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
-              />
-            ) : (
-              <ReadOnlyField value={activeScheduleModalProject.scheduledSubject || ''} />
-            )}
-          </Field>
+        return (
+          <Modal
+            isOpen
+            onClose={() => {
+              setActiveScheduleModalProject(null);
+              setEditingMeetingId(null);
+              setNewMeetingDate('');
+              setNewMeetingSubject('');
+            }}
+            title={`Reuniões Agendadas: ${liveProject.name}`}
+            subtitle="Marque de uma vez todas as reuniões que a esteira vai exigir — cada uma pode ser editada ou removida depois."
+            size="sm"
+          >
+            <div className="space-y-2">
+              {meetings.length === 0 && (
+                <p className="text-xs text-grey-400 italic">Nenhuma reunião agendada ainda.</p>
+              )}
+              {meetings.map((m) =>
+                editingMeetingId === m.id ? (
+                  <div key={m.id} className="p-2.5 rounded-lg border border-brand-light bg-brand-lighter/40 space-y-2">
+                    <Input
+                      type="date"
+                      value={editMeetingDate}
+                      onChange={(e) => setEditMeetingDate(e.target.value)}
+                      className="font-mono font-bold text-xs"
+                    />
+                    <Input
+                      type="text"
+                      value={editMeetingSubject}
+                      onChange={(e) => setEditMeetingSubject(e.target.value)}
+                      placeholder="Pauta / Assunto"
+                      className="text-xs"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" color="secondary" onClick={() => setEditingMeetingId(null)}>
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        color="primary"
+                        onClick={() => {
+                          if (!editMeetingDate) return;
+                          handleEditMeeting(liveProject, {
+                            id: m.id,
+                            date: editMeetingDate,
+                            subject: editMeetingSubject
+                          });
+                          setEditingMeetingId(null);
+                        }}
+                      >
+                        Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    key={m.id}
+                    className="p-2.5 rounded-lg border border-grey-200 bg-grey-50/60 flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-mono font-bold text-xs text-grey-800">{m.date}</div>
+                      <div className="text-[11px] text-grey-500 truncate">{m.subject || 'Reunião marcada'}</div>
+                    </div>
+                    {canAnnotate && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => {
+                            setEditingMeetingId(m.id);
+                            setEditMeetingDate(m.date);
+                            setEditMeetingSubject(m.subject);
+                          }}
+                          className="text-grey-400 hover:text-brand-dark"
+                          title="Editar"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMeeting(liveProject, m.id)}
+                          className="text-grey-400 hover:text-danger-800"
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
 
-          <ModalFooter>
-            <Button color="secondary" onClick={() => setActiveScheduleModalProject(null)}>
-              {canAnnotate ? 'Cancelar' : 'Fechar'}
-            </Button>
             {canAnnotate && (
+              <div className="pt-3 mt-1 border-t border-grey-200 space-y-2">
+                <Field label="Adicionar Reunião — Data:">
+                  <Input
+                    type="date"
+                    value={newMeetingDate}
+                    onChange={(e) => setNewMeetingDate(e.target.value)}
+                    className="font-mono font-bold"
+                  />
+                </Field>
+                <Field label="Pauta / Assunto:">
+                  <Input
+                    type="text"
+                    value={newMeetingSubject}
+                    onChange={(e) => setNewMeetingSubject(e.target.value)}
+                    placeholder="Ex: Reunião de Entendimento (E1) ou Homologação T.I"
+                  />
+                </Field>
+                <Button
+                  size="sm"
+                  color="secondary"
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                  onClick={() => {
+                    if (!newMeetingDate) return;
+                    handleAddMeeting(liveProject, newMeetingDate, newMeetingSubject);
+                    setNewMeetingDate('');
+                    setNewMeetingSubject('');
+                  }}
+                  disabled={!newMeetingDate}
+                >
+                  Adicionar Reunião
+                </Button>
+              </div>
+            )}
+
+            <ModalFooter>
               <Button
-                color="primary"
+                color="secondary"
                 onClick={() => {
-                  const date = (document.getElementById('modal-schedule-date') as HTMLInputElement)?.value || '';
-                  const sub = (document.getElementById('modal-schedule-subject') as HTMLInputElement)?.value || '';
-                  handleSaveSchedule(activeScheduleModalProject, date, sub);
+                  setActiveScheduleModalProject(null);
+                  setEditingMeetingId(null);
+                  setNewMeetingDate('');
+                  setNewMeetingSubject('');
                 }}
               >
-                Salvar Agendamento
+                Fechar
               </Button>
-            )}
-          </ModalFooter>
-        </Modal>
-      )}
+            </ModalFooter>
+          </Modal>
+        );
+      })()}
     </div>
   );
 };

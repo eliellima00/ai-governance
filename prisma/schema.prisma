@@ -23,8 +23,7 @@ model Project {
   executivePriority       String?  @default("P2 - Média Prioridade") @map("executive_priority") @db.VarChar(50)
   isPriorityForManagement Boolean? @default(false) @map("is_priority_for_management")
   hasImpediment           Boolean? @default(false) @map("has_impediment")
-  scheduledDate           String?  @map("scheduled_date") @db.VarChar(50)
-  scheduledSubject        String?  @map("scheduled_subject") @db.Text
+  scheduledMeetings       Json?    @default("[]") @map("scheduled_meetings")
   registeredBy            String?  @map("registered_by") @db.VarChar(150)
   groupEncargado          String?  @map("group_encargado") @db.VarChar(150)
   userGroup               String?  @map("user_group") @db.VarChar(150)

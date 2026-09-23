@@ -110,6 +110,12 @@ export interface ActionItem {
   evidence?: string;
 }
 
+export interface ScheduledMeeting {
+  id: string;
+  date: string; // YYYY-MM-DD
+  subject: string;
+}
+
 export interface RiskCriterion {
   id: string;
   criterion: string;
@@ -197,8 +203,7 @@ export interface SolutionProject {
   hasImpediment?: boolean;
   impedimentDetails?: string;
   actionRequiredFromManagement?: string;
-  scheduledDate?: string;
-  scheduledSubject?: string;
+  scheduledMeetings?: ScheduledMeeting[];
   createdAt: string;
   lastUpdated: string;
   registeredBy: string;

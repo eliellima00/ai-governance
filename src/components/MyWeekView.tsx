@@ -35,7 +35,7 @@ const NO_DATE_COL = 'sem-data';
 
 /**
  * Board semanal (Seg-Sex + "Sem data") com arrastar-e-soltar, reunindo reuniões agendadas
- * (SolutionProject.scheduledDate) e ações pendentes do plano de ação de todos os projetos
+ * (SolutionProject.scheduledMeetings) e ações pendentes do plano de ação de todos os projetos
  * (ActionItem.deadline). Arrastar um card pra um dia sobrescreve a data dele; arrastar pra
  * "Sem data" limpa. Só cobre os projetos cadastrados na governança — chamados de suporte GLPI
  * e trabalho em outros projetos não entram aqui, pois o modelo de dados atual não tem esse conceito.
@@ -49,17 +49,17 @@ export const MyWeekView: React.FC<MyWeekViewProps> = ({ projects, onUpdateProjec
   const items: PlanItem[] = useMemo(() => {
     const list: PlanItem[] = [];
     projects.forEach((project) => {
-      if (project.scheduledDate) {
+      (project.scheduledMeetings || []).forEach((meeting) => {
         list.push({
-          id: `meeting:${project.id}`,
+          id: `meeting:${project.id}:${meeting.id}`,
           kind: 'meeting',
           projectId: project.id,
           projectName: project.name,
-          title: project.scheduledSubject || 'Reunião / Alinhamento',
-          date: parseKnownDate(project.scheduledDate),
+          title: meeting.subject || 'Reunião / Alinhamento',
+          date: parseKnownDate(meeting.date),
           riskLevel: project.initialRisk
         });
-      }
+      });
       project.actionPlan
         .filter((a) => a.status === 'Aguardando' || a.status === 'Em andamento')
         .forEach((action) => {
@@ -102,16 +102,17 @@ export const MyWeekView: React.FC<MyWeekViewProps> = ({ projects, onUpdateProjec
     if (!over) return;
 
     const targetKey = String(over.id);
-    const [kind, projectId, actionIdRaw] = String(active.id).split(':');
+    const [kind, projectId, itemIdRaw] = String(active.id).split(':');
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
 
     if (kind === 'meeting') {
-      onUpdateProject({
-        ...project,
-        scheduledDate: targetKey === NO_DATE_COL ? undefined : targetKey
-      });
+      const updatedMeetings = (project.scheduledMeetings || []).map((m) =>
+        m.id === itemIdRaw ? { ...m, date: targetKey === NO_DATE_COL ? '' : targetKey } : m
+      );
+      onUpdateProject({ ...project, scheduledMeetings: updatedMeetings });
     } else if (kind === 'action') {
+      const actionIdRaw = itemIdRaw;
       const actionId = Number(actionIdRaw);
       const updatedPlan = project.actionPlan.map((a) =>
         a.id === actionId ? { ...a, deadline: targetKey === NO_DATE_COL ? 'A definir' : targetKey } : a

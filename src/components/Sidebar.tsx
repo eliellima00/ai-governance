@@ -17,6 +17,7 @@ export interface SidebarProps {
   onNavigateToSettings: () => void;
   onOpenNewProject: () => void;
   onNavigateToMyWeek: () => void;
+  myWeekEnabled: boolean;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   isMobileOpen: boolean;
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNavigateToSettings,
   onOpenNewProject,
   onNavigateToMyWeek,
+  myWeekEnabled,
   isCollapsed,
   onToggleCollapse,
   isMobileOpen,
@@ -125,21 +127,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span className="truncate">Gestão de Demandas</span>}
           </button>
 
-          <button
-            onClick={handleGoMyWeek}
-            data-tour="sidebar-my-week-btn"
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
-              route.name === 'my-week'
-                ? 'bg-brand-dark text-white shadow-xs font-bold'
-                : 'text-grey-600 hover:bg-grey-100 hover:text-grey-900'
-            } ${isCollapsed ? 'justify-center px-0' : ''}`}
-            title="Minha Semana (planner semanal)"
-          >
-            <CalendarDays
-              className={`w-4 h-4 shrink-0 ${route.name === 'my-week' ? 'text-white' : 'text-brand-main'}`}
-            />
-            {!isCollapsed && <span className="truncate">Minha Semana</span>}
-          </button>
+          {myWeekEnabled && (
+            <button
+              onClick={handleGoMyWeek}
+              data-tour="sidebar-my-week-btn"
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-full text-xs font-semibold transition-all ${
+                route.name === 'my-week'
+                  ? 'bg-brand-dark text-white shadow-xs font-bold'
+                  : 'text-grey-600 hover:bg-grey-100 hover:text-grey-900'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              title="Minha Semana (planner semanal) — beta"
+            >
+              <CalendarDays
+                className={`w-4 h-4 shrink-0 ${route.name === 'my-week' ? 'text-white' : 'text-brand-main'}`}
+              />
+              {!isCollapsed && <span className="truncate">Minha Semana</span>}
+            </button>
+          )}
 
           {canCreate && (
             <button

@@ -203,7 +203,10 @@ export default function App() {
     if (route.name === 'new-project' && !can(userRole, 'create_project')) {
       setRoute({ name: 'portfolio' });
     }
-  }, [route, userRole]);
+    if (route.name === 'my-week' && !governanceConfig.featureFlags?.myWeekEnabled) {
+      setRoute({ name: 'portfolio' });
+    }
+  }, [route, userRole, governanceConfig]);
 
   // Determine current project when in 'project' route
   const currentProjectId = route.name === 'project' ? route.projectId : projects[0]?.id;
@@ -434,6 +437,7 @@ export default function App() {
         onNavigateToSettings={navigateToSettings}
         onOpenNewProject={navigateToNewProject}
         onNavigateToMyWeek={navigateToMyWeek}
+        myWeekEnabled={!!governanceConfig.featureFlags?.myWeekEnabled}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         isMobileOpen={isMobileSidebarOpen}

@@ -270,10 +270,13 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
       text += `[${isChecked ? 'X' : ' '}] ${c.id}: ${c.title} (${isChecked ? 'ATENDIDO' : 'PENDENTE'})\n`;
     });
 
-    if (project.scheduledDate) {
-      text += `\nPRÓXIMO AGENDAMENTO:\n`;
-      text += `• Data: ${project.scheduledDate}\n`;
-      text += `• Pauta: ${project.scheduledSubject || 'Alinhamento de esteira'}\n`;
+    if (project.scheduledMeetings && project.scheduledMeetings.length > 0) {
+      text += `\nAGENDAMENTOS:\n`;
+      [...project.scheduledMeetings]
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .forEach((m) => {
+          text += `• ${m.date} — ${m.subject || 'Alinhamento de esteira'}\n`;
+        });
     }
 
     if (project.hasImpediment) {

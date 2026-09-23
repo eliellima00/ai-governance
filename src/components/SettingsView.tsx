@@ -119,8 +119,7 @@ CREATE TABLE IF NOT EXISTS projects (
     executive_priority VARCHAR(50) DEFAULT 'P2 - Média Prioridade',
     is_priority_for_management BOOLEAN DEFAULT FALSE,
     has_impediment BOOLEAN DEFAULT FALSE,
-    scheduled_date VARCHAR(50),
-    scheduled_subject TEXT,
+    scheduled_meetings JSONB DEFAULT '[]',
     registered_by VARCHAR(150),
     group_encargado VARCHAR(150),
     user_group VARCHAR(150),
@@ -896,6 +895,34 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                 <span className="text-[11px] text-grey-500">
                   Mostra, na aba Evolução, o gráfico cronológico de queda de risco. Por padrão a aba
                   mostra só o resumo (score inicial, residual e evolução por dimensão).
+                </span>
+              </span>
+            </label>
+
+            <label
+              className={`flex items-start gap-3 p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 ${
+                isAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'
+              }`}
+            >
+              <input
+                type="checkbox"
+                disabled={!isAdmin}
+                checked={!!formData.featureFlags.myWeekEnabled}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    featureFlags: { ...prev.featureFlags, myWeekEnabled: e.target.checked }
+                  }))
+                }
+                className="mt-0.5 rounded text-brand-main"
+              />
+              <span>
+                <span className="text-xs font-bold text-grey-900 block">
+                  Minha Semana (planner semanal)
+                </span>
+                <span className="text-[11px] text-grey-500">
+                  Ainda em beta. Ativa o item "Minha Semana" no menu lateral — um board semanal com
+                  arrastar-e-soltar reunindo reuniões agendadas e ações pendentes de todos os projetos.
                 </span>
               </span>
             </label>

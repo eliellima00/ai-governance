@@ -62,6 +62,8 @@ export interface GovernanceSettings {
   featureFlags: {
     /** Gráfico de burn-down na aba Evolução (além do resumo sucinto padrão). */
     detailedEvolution: boolean;
+    /** Item "Minha Semana" no Sidebar (planner semanal com arrastar-e-soltar) — ainda em beta. */
+    myWeekEnabled: boolean;
   };
 }
 
@@ -125,7 +127,8 @@ export function getDefaultGovernanceSettings(): GovernanceSettings {
       ]
     },
     featureFlags: {
-      detailedEvolution: false
+      detailedEvolution: false,
+      myWeekEnabled: false
     }
   };
 }
