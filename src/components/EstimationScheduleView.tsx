@@ -141,24 +141,21 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   const handleRequestStageChange = (newStage: GovStage) => {
     if (!canAdvanceStage || newStage === currentGovStage) return;
 
-    // Se estiver avançando para E6 ou Concluído, validar os 4 critérios de saída
+    // Toda mudança de etapa pede confirmação — evita que um clique acidental no stepper
+    // já mude o status oficial do projeto sem querer. Se estiver avançando para E6/Concluído
+    // com critérios de saída pendentes, o modal também exige justificativa.
     const isAdvancingToCompletion = newStage === 'E6' || newStage === 'Concluído';
-    if (isAdvancingToCompletion) {
-      const missing = EXIT_CRITERIA_CHECKLIST.filter((c) => !exitCriteriaChecked[c.id]).map(
-        (c) => `${c.id}: ${c.title}`
-      );
+    const missing = isAdvancingToCompletion
+      ? EXIT_CRITERIA_CHECKLIST.filter((c) => !exitCriteriaChecked[c.id]).map(
+          (c) => `${c.id}: ${c.title}`
+        )
+      : [];
 
-      if (missing.length > 0) {
-        setPendingStageModal({
-          targetStage: newStage,
-          missingCriteria: missing
-        });
-        setStageJustification('');
-        return;
-      }
-    }
-
-    applyStageTransition(newStage);
+    setPendingStageModal({
+      targetStage: newStage,
+      missingCriteria: missing
+    });
+    setStageJustification('');
   };
 
   const applyStageTransition = (newStage: GovStage, justification?: string) => {
@@ -1015,57 +1012,85 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
         </ModalFooter>
       </Modal>
 
-      {/* MODAL 2: Justificativa de Avanço de Etapa com Critérios Faltantes */}
-      {pendingStageModal && (
-        <Modal
-          isOpen
-          onClose={() => setPendingStageModal(null)}
-          title="Atenção: Critérios de Saída Incompletos"
-          size="md"
-        >
-          <div className="flex items-center gap-2 text-warning-600 -mt-1">
-            <AlertOctagon className="w-5 h-5" />
-            <span className="text-xs font-semibold">
-              Avançando para a etapa {STAGE_NAMES[pendingStageModal.targetStage]}
-            </span>
-          </div>
+      {/* MODAL 2: Confirmação de Mudança de Etapa (toda transição passa por aqui) */}
+      {pendingStageModal && (() => {
+        const hasMissingCriteria = pendingStageModal.missingCriteria.length > 0;
+        const targetIdx = GOV_STAGES_CATALOG.indexOf(pendingStageModal.targetStage);
+        const currentIdx = GOV_STAGES_CATALOG.indexOf(currentGovStage);
+        const isBackward = targetIdx < currentIdx;
 
-          <p className="text-xs text-grey-600">
-            Você está avançando para a etapa <strong>{STAGE_NAMES[pendingStageModal.targetStage]}</strong>, mas os seguintes critérios de saída da governança ainda não foram validados:
-          </p>
+        return (
+          <Modal
+            isOpen
+            onClose={() => setPendingStageModal(null)}
+            title={hasMissingCriteria ? 'Atenção: Critérios de Saída Incompletos' : 'Confirmar Mudança de Etapa'}
+            size="md"
+          >
+            <div className="flex items-center gap-2 text-warning-600 -mt-1">
+              <AlertOctagon className="w-5 h-5" />
+              <span className="text-xs font-semibold">
+                {STAGE_NAMES[currentGovStage]} → {STAGE_NAMES[pendingStageModal.targetStage]}
+              </span>
+            </div>
 
-          <div className="p-3 bg-warning-50 rounded-lg border border-warning-200 space-y-1.5 text-xs text-warning-600 font-medium">
-            {pendingStageModal.missingCriteria.map((item, i) => (
-              <div key={i} className="flex items-start gap-1.5">
-                <span className="text-warning-600 font-bold">•</span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
+            {isBackward && !hasMissingCriteria && (
+              <p className="text-xs text-warning-600 bg-warning-50 border border-warning-200 rounded-lg p-2.5 font-medium">
+                ⚠️ Isso volta a esteira para uma etapa anterior.
+              </p>
+            )}
 
-          <Field label="Justificativa para avanço extraordinário:">
-            <Textarea
-              rows={3}
-              placeholder="Informe o motivo ou aprovação formal para avançar mesmo com critérios em aberto..."
-              value={stageJustification}
-              onChange={(e) => setStageJustification(e.target.value)}
-              className="bg-grey-50 focus:bg-white"
-            />
-          </Field>
+            {hasMissingCriteria ? (
+              <>
+                <p className="text-xs text-grey-600">
+                  Você está avançando para a etapa <strong>{STAGE_NAMES[pendingStageModal.targetStage]}</strong>, mas os seguintes critérios de saída da governança ainda não foram validados:
+                </p>
 
-          <ModalFooter>
-            <Button color="secondary" onClick={() => setPendingStageModal(null)}>
-              Cancelar
-            </Button>
-            <Button
-              color="danger"
-              onClick={() => applyStageTransition(pendingStageModal.targetStage, stageJustification || 'Avanço autorizado com critérios parciais')}
-            >
-              Confirmar Avanço de Etapa
-            </Button>
-          </ModalFooter>
-        </Modal>
-      )}
+                <div className="p-3 bg-warning-50 rounded-lg border border-warning-200 space-y-1.5 text-xs text-warning-600 font-medium">
+                  {pendingStageModal.missingCriteria.map((item, i) => (
+                    <div key={i} className="flex items-start gap-1.5">
+                      <span className="text-warning-600 font-bold">•</span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Field label="Justificativa para avanço extraordinário:">
+                  <Textarea
+                    rows={3}
+                    placeholder="Informe o motivo ou aprovação formal para avançar mesmo com critérios em aberto..."
+                    value={stageJustification}
+                    onChange={(e) => setStageJustification(e.target.value)}
+                    className="bg-grey-50 focus:bg-white"
+                  />
+                </Field>
+              </>
+            ) : (
+              <p className="text-xs text-grey-600">
+                Confirma a mudança da etapa da esteira de <strong>{STAGE_NAMES[currentGovStage]}</strong> para{' '}
+                <strong>{STAGE_NAMES[pendingStageModal.targetStage]}</strong>? Essa mudança fica registrada no
+                histórico de auditoria da solução.
+              </p>
+            )}
+
+            <ModalFooter>
+              <Button color="secondary" onClick={() => setPendingStageModal(null)}>
+                Cancelar
+              </Button>
+              <Button
+                color={hasMissingCriteria ? 'danger' : 'primary'}
+                onClick={() =>
+                  applyStageTransition(
+                    pendingStageModal.targetStage,
+                    hasMissingCriteria ? stageJustification || 'Avanço autorizado com critérios parciais' : undefined
+                  )
+                }
+              >
+                {hasMissingCriteria ? 'Confirmar Avanço de Etapa' : 'Confirmar Mudança'}
+              </Button>
+            </ModalFooter>
+          </Modal>
+        );
+      })()}
     </div>
   );
 };

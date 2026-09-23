@@ -459,7 +459,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                                     disabled={!isAdmin}
                                     value={stagesForType[stage].hours}
                                     onChange={(e) => updateStageField(stage, 'hours', e.target.value)}
-                                    className="w-14 px-1.5 py-1 text-right text-[11px] font-mono font-bold text-grey-900"
+                                    className="w-16 px-1.5 py-1 text-right text-[11px] font-mono font-bold text-grey-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   />
                                 </Td>
                                 <Td className="py-1 px-1">
@@ -468,7 +468,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                                     disabled={!isAdmin}
                                     value={stagesForType[stage].meetings}
                                     onChange={(e) => updateStageField(stage, 'meetings', e.target.value)}
-                                    className="w-10 px-1.5 py-1 text-right text-[11px] font-mono"
+                                    className="w-12 px-1.5 py-1 text-right text-[11px] font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   />
                                 </Td>
                                 <Td className="py-1 pl-1 px-0">
@@ -477,7 +477,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                                     disabled={!isAdmin}
                                     value={stagesForType[stage].externalDeps}
                                     onChange={(e) => updateStageField(stage, 'externalDeps', e.target.value)}
-                                    className="w-10 px-1.5 py-1 text-right text-[11px] font-mono"
+                                    className="w-12 px-1.5 py-1 text-right text-[11px] font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   />
                                 </Td>
                               </Tr>
@@ -534,7 +534,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                           updated[idx] = { ...updated[idx], hours: val };
                           setFormData((prev) => ({ ...prev, modulesCatalog: updated }));
                         }}
-                        className="w-16 px-2 py-1 text-xs font-mono font-bold"
+                        className="w-20 px-2 py-1 text-xs font-mono font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
 
@@ -550,7 +550,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                           updated[idx] = { ...updated[idx], meetings: val };
                           setFormData((prev) => ({ ...prev, modulesCatalog: updated }));
                         }}
-                        className="w-14 px-2 py-1 text-xs font-mono"
+                        className="w-16 px-2 py-1 text-xs font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
@@ -600,7 +600,7 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                         updated[idx] = { ...updated[idx], hours: val };
                         setFormData((prev) => ({ ...prev, discountsCatalog: updated }));
                       }}
-                      className="w-16 px-2 py-1 text-xs font-mono font-bold text-brand-dark"
+                      className="w-20 px-2 py-1 text-xs font-mono font-bold text-brand-dark [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>

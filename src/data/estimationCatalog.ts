@@ -83,7 +83,7 @@ export const STAGE_NAMES: Record<GovStage, string> = {
   E0: "Cadastro e Triagem",
   E1: "Diagnóstico (reunião/roteiro)",
   E2: "Documentação mínima e acessos",
-  E3: "Correção das críticas",
+  E3: "Correção dos itens críticos",
   E4: "Backup e restore",
   E5: "Repasse / dependência",
   E6: "Encerramento",
