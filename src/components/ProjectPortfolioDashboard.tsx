@@ -23,7 +23,8 @@ import {
   ProjectType,
   GovStage,
   UserRole,
-  ScheduledMeeting
+  ScheduledMeeting,
+  ProjectTab
 } from '../types';
 import {
   computeEstimation,
@@ -56,7 +57,7 @@ interface ProjectPortfolioDashboardProps {
   onUpdateProject: (updatedProject: SolutionProject) => void;
   onSelectProjectAndNavigate: (
     project: SolutionProject,
-    targetTab: 'glpi' | 'diagnostic' | 'action_plan' | 'evolution' | 'estimation'
+    targetTab: ProjectTab
   ) => void;
   onOpenNewProjectModal: () => void;
 }
@@ -829,7 +830,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     <Td>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
+                          onClick={() => onSelectProjectAndNavigate(proj, 'overview')}
                           className="font-bold text-grey-900 hover:text-brand-dark text-left hover:underline line-clamp-1"
                           title={`Abrir workspace da solução: ${proj.name}`}
                         >
@@ -992,7 +993,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                         <Button
                           size="sm"
                           color="secondary"
-                          onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
+                          onClick={() => onSelectProjectAndNavigate(proj, 'overview')}
                           rightIcon={<ArrowRight className="w-3 h-3" />}
                           className="bg-brand-lighter text-brand-dark border-brand-light hover:bg-brand-lighter px-2.5 py-1"
                           title="Abrir detalhes da solução"
@@ -1099,7 +1100,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                             {proj.projectType === 'A' ? 'Google Workspace' : proj.projectType === 'B' ? 'Container / VPS' : 'No-Code'} • {STAGE_NAMES[proj.govStage || 'E1'] || proj.govStage || 'E1'}
                           </Badge>
                           <button
-                            onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
+                            onClick={() => onSelectProjectAndNavigate(proj, 'overview')}
                             className="text-xs font-bold text-brand-dark hover:underline flex items-center gap-1"
                           >
                             <span>Abrir Detalhes</span>
@@ -1189,7 +1190,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     return (
                       <Card
                         key={proj.id}
-                        onClick={() => onSelectProjectAndNavigate(proj, 'glpi')}
+                        onClick={() => onSelectProjectAndNavigate(proj, 'overview')}
                         className={`p-3 hover:border-brand-main cursor-pointer transition-all space-y-2 ${
                           proj.hasImpediment ? 'border-danger-300' : ''
                         }`}

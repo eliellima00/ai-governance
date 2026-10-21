@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProjectTab, RiskLevel, SolutionProject } from '../types';
+import { getActionStage } from '../utils/projectStatus';
 import { getRiskColorClass } from '../utils/riskCalculations';
 import { addDays, formatShortPtBr, getWeekStart, isSameDate, parseKnownDate, toIsoDate } from '../utils/date';
 import { PageHeader } from './ui';
@@ -29,6 +30,7 @@ interface PlanItem {
   title: string;
   date: Date | null;
   riskLevel: RiskLevel;
+  targetTab: ProjectTab; // Ao clicar: ações abrem a etapa delas; reuniões, a Visão Geral
 }
 
 const NO_DATE_COL = 'sem-data';
@@ -57,7 +59,8 @@ export const MyWeekView: React.FC<MyWeekViewProps> = ({ projects, onUpdateProjec
           projectName: project.name,
           title: meeting.subject || 'Reunião / Alinhamento',
           date: parseKnownDate(meeting.date),
-          riskLevel: project.initialRisk
+          riskLevel: project.initialRisk,
+          targetTab: 'overview'
         });
       });
       project.actionPlan
@@ -70,7 +73,8 @@ export const MyWeekView: React.FC<MyWeekViewProps> = ({ projects, onUpdateProjec
             projectName: project.name,
             title: action.title,
             date: parseKnownDate(action.deadline),
-            riskLevel: project.initialRisk
+            riskLevel: project.initialRisk,
+            targetTab: getActionStage(action)
           });
         });
     });
@@ -251,7 +255,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ item, onNavigateToProject }) => {
       <p className="text-[11px] font-semibold text-grey-800 leading-snug line-clamp-2">{item.title}</p>
       <button
         onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => onNavigateToProject(item.projectId, item.kind === 'meeting' ? 'glpi' : 'action_plan')}
+        onClick={() => onNavigateToProject(item.projectId, item.targetTab)}
         className="text-[10px] text-brand-dark hover:underline mt-1 truncate block"
       >
         {item.projectName} →

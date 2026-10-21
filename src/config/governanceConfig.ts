@@ -109,6 +109,8 @@ export function getDefaultGovernanceSettings(): GovernanceSettings {
       priorities: ['P0 - Urgente', 'P1 - Alta', 'P2 - Média', 'P3 - Baixa', 'Backlog'],
       generationTools: ['Codex', 'Claude Code', 'Gemini (copia-e-cola)', 'ChatGPT', 'Manual', 'Outro'],
       artifactCategories: [
+        'Manual / POP',
+        'Documentação técnica',
         'Pauta / Ata de Reunião',
         'Especificação Funcional',
         'Arquitetura & Segurança',

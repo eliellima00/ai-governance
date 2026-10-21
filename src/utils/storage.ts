@@ -1,4 +1,5 @@
-import { SolutionProject, Route, UserRole } from '../types';
+import { SolutionProject, ProjectTab, Route, UserRole } from '../types';
+import { isStageTab } from './projectStatus';
 import { GovernanceSettings, getDefaultGovernanceSettings, setGlobalActiveSettings } from '../config/governanceConfig';
 
 export const STORAGE_KEY = 'atto_governanca_state_v1';
@@ -26,6 +27,20 @@ function mergeGovernanceSettings(saved: Partial<GovernanceSettings> | undefined)
     auxiliaryLists: { ...defaults.auxiliaryLists, ...saved.auxiliaryLists },
     featureFlags: { ...defaults.featureFlags, ...saved.featureFlags }
   };
+}
+
+const LEGACY_TAB_MAP: Record<string, ProjectTab> = {
+  glpi: 'ficha',
+  artifacts: 'ficha',
+  diagnostic: 'E1',
+  action_plan: 'overview',
+  evolution: 'E6'
+};
+
+/** Abas salvas antes da navegação por etapas são traduzidas para a aba equivalente. */
+function normalizeStoredTab(raw?: string): ProjectTab {
+  if (raw === 'overview' || raw === 'ficha' || raw === 'estimation' || (raw && isStageTab(raw))) return raw;
+  return (raw && LEGACY_TAB_MAP[raw]) || 'overview';
 }
 
 export function getPtBrCurrentTimestamp(): string {
@@ -113,7 +128,7 @@ export function loadState(): StoredAppState {
         route = {
           name: 'project',
           projectId: parsed.route.projectId,
-          tab: parsed.route.tab || 'glpi'
+          tab: normalizeStoredTab(parsed.route.tab)
         };
       }
     }

@@ -22,14 +22,9 @@ import {
 import { ActionItem, RiskLevel, SolutionProject } from '../types';
 import { calculateRiskLevel, getRiskColorClass } from '../utils/riskCalculations';
 import { getActiveConfig } from '../config/governanceConfig';
-import { Card, Badge, StatTile, PageHeader } from './ui';
+import { RISK_LABELS } from '../utils/projectStatus';
+import { Card, Badge, StatTile } from './ui';
 
-const RISK_LABELS: Record<RiskLevel, string> = {
-  BAIXO: 'Baixo',
-  MEDIO: 'Médio',
-  ALTO: 'Alto',
-  CRITICO: 'Crítico'
-};
 
 /**
  * Datas no app são texto livre em pt-BR (`toLocaleDateString('pt-BR')`, ex.: "16/09/2026"), com
@@ -171,57 +166,45 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
     }
   ];
 
-  const percentReduction = Math.round(
-    ((project.initialScore - residualScore) / project.initialScore) * 100
-  );
+  const percentReduction =
+    project.initialScore > 0
+      ? Math.round(((project.initialScore - residualScore) / project.initialScore) * 100)
+      : 0;
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <Card>
-        <div className="flex items-center gap-2 mb-2">
-          <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200">
-            Métricas de Desescalada de Criticidade
-          </Badge>
-          <span className="text-xs text-grey-500">Monitoramento Contínuo de Risco Residual</span>
-        </div>
-
-        <PageHeader
-          title="Curva de Redução de Risco & Impacto das Tratativas"
-          actions={
-            <div className="flex items-center gap-3">
-              <StatTile
-                label="Score Inicial"
-                value={`${project.initialScore} pts`}
-                subtext={<Badge className={initialRiskColor.badge}>{RISK_LABELS[project.initialRisk]}</Badge>}
-                icon={<AlertTriangle className="w-4 h-4" />}
-                iconClassName="bg-grey-100 text-grey-600"
-                className="w-36"
-              />
-
-              <ArrowRight className="text-grey-300 w-5 h-5 shrink-0 hidden sm:block" />
-
-              <StatTile
-                label="Score Residual Atual"
-                value={`${residualScore} pts`}
-                subtext={<Badge className={residualColor.badge}>{residualLabel}</Badge>}
-                icon={<ShieldCheck className="w-4 h-4" />}
-                iconClassName="bg-indigo-100 text-indigo-700"
-                className="w-36"
-              />
-
-              <StatTile
-                label="Queda de Risco"
-                value={`-${percentReduction}%`}
-                icon={<TrendingDown className="w-4 h-4" />}
-                iconClassName="bg-brand-main/10 text-brand-dark"
-                active
-                className="w-36 bg-brand-lighter"
-              />
-            </div>
-          }
+      {/* Antes x agora */}
+      <div className="flex flex-wrap items-center gap-3">
+        <StatTile
+          label="Risco inicial"
+          value={`${project.initialScore} pts`}
+          subtext={<Badge className={initialRiskColor.badge}>{RISK_LABELS[project.initialRisk]}</Badge>}
+          icon={<AlertTriangle className="w-4 h-4" />}
+          iconClassName="bg-grey-100 text-grey-600"
+          className="w-40"
         />
-      </Card>
+
+        <ArrowRight className="text-grey-300 w-5 h-5 shrink-0 hidden sm:block" />
+
+        <StatTile
+          label="Risco atual"
+          value={`${residualScore} pts`}
+          subtext={<Badge className={residualColor.badge}>{residualLabel}</Badge>}
+          icon={<ShieldCheck className="w-4 h-4" />}
+          iconClassName="bg-indigo-100 text-indigo-700"
+          className="w-40"
+        />
+
+        <StatTile
+          label="Redução"
+          value={`-${percentReduction}%`}
+          subtext={`${completedActions.length} ${completedActions.length === 1 ? 'tarefa concluída' : 'tarefas concluídas'}`}
+          icon={<TrendingDown className="w-4 h-4" />}
+          iconClassName="bg-brand-main/10 text-brand-dark"
+          active
+          className="w-40 bg-brand-lighter"
+        />
+      </div>
 
       {/* Main Chart Card — versão detalhada, atrás da feature flag (Configurações > Funcionalidades) */}
       {detailedEvolution && (
@@ -307,7 +290,7 @@ export const CriticalityEvolutionView: React.FC<CriticalityEvolutionViewProps> =
       <Card className="space-y-3">
         <h3 className="text-sm font-bold text-grey-900 flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-grey-600" />
-          <span>Evolução por Dimensão de Risco (Antes x Agora x Meta)</span>
+          <span>Risco por dimensão (antes × agora × meta)</span>
         </h3>
 
         <div className="h-64 w-full">

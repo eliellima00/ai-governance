@@ -1,74 +1,26 @@
 import React, { useMemo, useState } from 'react';
-import {
-  Clock,
-  Calendar,
-  CheckCircle2,
-  Users,
-  Info,
-  Layers,
-  ShieldCheck,
-  Workflow,
-  Copy,
-  Check,
-  FileText,
-  History,
-  AlertOctagon,
-  RotateCcw,
-  CalendarClock
-} from 'lucide-react';
+import { CalendarClock, ChevronDown, Info, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import {
   DiscountToggle,
+  EstimationInputs,
+  GenerationTool,
   GovStage,
   ModuleToggle,
   ProjectType,
-  GenerationTool,
   SolutionProject,
-  ProjectActivityLog,
   UserRole
 } from '../types';
 import { can } from '../utils/permissions';
-import {
-  CRITICAL_FINDINGS_CHECKLIST,
-  DISCOUNTS_CATALOG,
-  EXIT_CRITERIA_CHECKLIST,
-  GOV_STAGES_CATALOG,
-  MEETINGS_CHECKLIST,
-  MODULES_CATALOG,
-  PROJECT_TYPE_INFO,
-  STAGE_DESCRIPTIONS,
-  STAGE_NAMES
-} from '../data/estimationCatalog';
-import {
-  computeEstimation,
-  formatPtBrDate,
-  getDefaultEstimationInputs,
-  replanFromStage,
-  setStageDate
-} from '../utils/estimation';
+import { computeEstimation, diffDays, formatPtBrDate, replanFromStage, setStageDate } from '../utils/estimation';
+import { getCurrentStage, getEstimationInputs, getStageState, isStageTab, stageLabel } from '../utils/projectStatus';
 import { getActiveConfig } from '../config/governanceConfig';
-import { Card } from './ui/Card';
-import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
-import { Field, Input, Select, Textarea } from './ui/FormField';
-import { PageHeader } from './ui/PageHeader';
-import { Modal, ModalFooter } from './ui/Modal';
-import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
-import { StatTile } from './ui/StatTile';
-import { ChecklistItem } from './ui/ChecklistItem';
-import { SelectableCard } from './ui/SelectableCard';
+import { Badge, Button, Card, ChecklistItem, Field, Input, Select, Table, Tbody, Td, Th, Thead, Tr } from './ui';
 
 interface EstimationScheduleViewProps {
   project: SolutionProject;
   userRole: UserRole;
   onUpdateProject: (updated: SolutionProject) => void;
 }
-
-/** Exibição estática de um campo, usada no lugar do input/select quando o perfil não pode editar a estimativa. */
-const ReadOnlyField: React.FC<{ value: string; className?: string }> = ({ value, className = '' }) => (
-  <div className={`w-full px-3 py-2 border border-grey-200 rounded-md text-sm bg-grey-50 text-grey-700 truncate ${className}`}>
-    {value || '—'}
-  </div>
-);
 
 /** Célula de data de uma etapa: input editável (admin) com destaque quando a data foi ajustada manualmente. */
 const StageDateCell: React.FC<{
@@ -80,921 +32,209 @@ const StageDateCell: React.FC<{
   onChange: (date: string) => void;
   onReset?: () => void;
 }> = ({ value, suggested, isManual, editable, min, onChange, onReset }) => {
-  const showSuggestion = isManual && suggested !== value;
   if (!editable) {
     return (
-      <div className="flex flex-col items-center">
-        <span>{formatPtBrDate(value)}</span>
-        {isManual && <span className="text-[9px] font-semibold text-warning-600 uppercase">manual</span>}
-      </div>
+      <span className="font-mono">
+        {formatPtBrDate(value)}
+        {isManual && <span className="ml-1 text-[9px] font-semibold text-warning-600 uppercase">manual</span>}
+      </span>
     );
   }
   return (
-    <div className="flex flex-col items-center gap-0.5">
-      <div className="flex items-center gap-1">
-        <input
-          type="date"
-          value={value}
-          min={min}
-          onChange={(e) => e.target.value && onChange(e.target.value)}
-          className={`px-1.5 py-0.5 rounded border text-xs font-mono ${
-            isManual ? 'border-warning-400 bg-warning-50 text-warning-800' : 'border-grey-200 bg-white text-inherit'
-          }`}
-          title={isManual ? `Data manual · sugerida: ${formatPtBrDate(suggested)}` : 'Data sugerida pelo motor — altere se quiser'}
-        />
-        {isManual && onReset && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-grey-400 hover:text-brand-dark"
-            title={`Voltar à data sugerida (${formatPtBrDate(suggested)})`}
-          >
-            <RotateCcw className="w-3 h-3" />
-          </button>
-        )}
-      </div>
-      {showSuggestion && (
-        <span className="text-[9px] font-normal text-grey-400">sug. {formatPtBrDate(suggested)}</span>
+    <div className="flex items-center gap-1">
+      <input
+        type="date"
+        value={value}
+        min={min}
+        onChange={(e) => e.target.value && onChange(e.target.value)}
+        className={`px-1.5 py-0.5 rounded border text-xs font-mono ${
+          isManual ? 'border-warning-400 bg-warning-50 text-warning-800' : 'border-grey-200 bg-white'
+        }`}
+        title={isManual ? `Data ajustada manualmente · sugerida: ${formatPtBrDate(suggested)}` : 'Data sugerida — altere se quiser'}
+      />
+      {isManual && onReset && (
+        <button
+          type="button"
+          onClick={onReset}
+          className="text-grey-400 hover:text-brand-dark"
+          title={`Voltar à data sugerida (${formatPtBrDate(suggested)})`}
+        >
+          <RotateCcw className="w-3 h-3" />
+        </button>
       )}
     </div>
   );
 };
+
+const fmtHours = (h: number) => `${Number.isInteger(h) ? h : h.toFixed(1).replace('.', ',')}h`;
 
 export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
   project,
   userRole,
   onUpdateProject
 }) => {
-  const { generationTools: generationToolOptions } = getActiveConfig().auxiliaryLists;
-  const canEditEstimation = can(userRole, 'edit_estimation');
-  const canAdvanceStage = can(userRole, 'advance_stage');
+  const config = getActiveConfig();
+  const canEdit = can(userRole, 'edit_estimation');
+  const currentStage: GovStage = getCurrentStage(project);
 
-  // Modal states
-  const [isGlpiModalOpen, setIsGlpiModalOpen] = useState(false);
-  const [copiedGlpiNote, setCopiedGlpiNote] = useState(false);
-  const [pendingStageModal, setPendingStageModal] = useState<{
-    targetStage: GovStage;
-    missingCriteria: string[];
-  } | null>(null);
-  const [stageJustification, setStageJustification] = useState('');
+  const inputs = useMemo(() => getEstimationInputs(project), [project]);
+  const result = useMemo(() => computeEstimation(inputs), [inputs]);
+  const projectType: ProjectType = inputs.projectType || project.projectType || 'A';
+  const generationTool: GenerationTool = inputs.generationTool || project.generationTool || 'Claude Code';
+  const typeInfo = config.projectTypeInfo[projectType];
+  const hoursPerDay = config.estimationConfig.horasPorManha * config.estimationConfig.fatorRealista;
 
-  // Garantir que o projeto tenha estrutura de estimationInputs e govStage
-  const currentInputs = useMemo(() => {
-    if (project.estimation) {
-      return project.estimation;
-    }
-    return getDefaultEstimationInputs(
-      project.projectType || 'A',
-      project.createdAt ? project.createdAt.split(/[ T]/)[0] : undefined
-    );
-  }, [project.estimation, project.projectType, project.createdAt]);
-
-  const currentGovStage: GovStage = project.govStage || 'E1';
-  const currentProjectType: ProjectType = currentInputs.projectType || project.projectType || 'A';
-  const currentGenerationTool: GenerationTool =
-    currentInputs.generationTool || project.generationTool || 'Claude Code';
-
-  // Checklists de saída marcados no projeto
-  const exitCriteriaChecked = project.exitCriteriaChecked || {
-    C1: false,
-    C2: false,
-    C3: false,
-    C4: false
-  };
-
-  // Executar motor de cálculo
-  const estimationResult = useMemo(() => {
-    return computeEstimation(currentInputs);
-  }, [currentInputs]);
-
-  // Atualizador de inputs
-  const handleUpdateInputs = (newInputs: typeof currentInputs) => {
-    if (!canEditEstimation) return;
-    const updatedProject: SolutionProject = {
-      ...project,
-      projectType: newInputs.projectType,
-      generationTool: newInputs.generationTool,
-      estimation: newInputs
-    };
-    onUpdateProject(updatedProject);
-  };
-
-  const handleToggleExitCriteria = (critId: string) => {
-    if (!canAdvanceStage) return;
-    const nextChecked = {
-      ...exitCriteriaChecked,
-      [critId]: !exitCriteriaChecked[critId]
-    };
-    const updatedProject: SolutionProject = {
-      ...project,
-      exitCriteriaChecked: nextChecked
-    };
-    onUpdateProject(updatedProject);
-  };
-
-  const handleRequestStageChange = (newStage: GovStage) => {
-    if (!canAdvanceStage || newStage === currentGovStage) return;
-
-    // Toda mudança de etapa pede confirmação — evita que um clique acidental no stepper
-    // já mude o status oficial do projeto sem querer. Se estiver avançando para E6/Concluído
-    // com critérios de saída pendentes, o modal também exige justificativa.
-    const isAdvancingToCompletion = newStage === 'E6' || newStage === 'Concluído';
-    const missing = isAdvancingToCompletion
-      ? EXIT_CRITERIA_CHECKLIST.filter((c) => !exitCriteriaChecked[c.id]).map(
-          (c) => `${c.id}: ${c.title}`
-        )
-      : [];
-
-    setPendingStageModal({
-      targetStage: newStage,
-      missingCriteria: missing
-    });
-    setStageJustification('');
-  };
-
-  const applyStageTransition = (newStage: GovStage, justification?: string) => {
-    const nowStr = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    const logEntry: ProjectActivityLog = {
-      id: 'log-' + Date.now(),
-      date: nowStr,
-      timestamp: nowStr,
-      author: project.technicalResponsible || 'T.I Governança',
-      registeredBy: project.technicalResponsible || 'T.I Governança',
-      action: `Avanço de etapa da esteira: ${STAGE_NAMES[currentGovStage]} → ${STAGE_NAMES[newStage]}`,
-      description: `Avanço de etapa da esteira: ${STAGE_NAMES[currentGovStage]} → ${STAGE_NAMES[newStage]}`,
-      details: justification ? `Justificativa informada: ${justification}` : `Transição direta de etapa para ${STAGE_NAMES[newStage]}`,
-      stage: newStage,
-      hours: 0.5
-    };
-
-    const updatedProject: SolutionProject = {
-      ...project,
-      govStage: newStage,
-      activityLog: [logEntry, ...(project.activityLog || [])]
-    };
-
-    onUpdateProject(updatedProject);
-    setPendingStageModal(null);
-  };
-
-  const handleToggleModule = (moduleId: string) => {
-    const updatedModules: ModuleToggle[] = currentInputs.modules.map((m) =>
-      m.id === moduleId ? { ...m, applied: !m.applied } : m
-    );
-    handleUpdateInputs({
-      ...currentInputs,
-      modules: updatedModules
-    });
-  };
-
-  const handleToggleDiscount = (discountId: string, field: 'declared' | 'confirmed') => {
-    const updatedDiscounts: DiscountToggle[] = currentInputs.discounts.map((d) => {
-      if (d.id === discountId) {
-        const nextVal = !d[field];
-        return {
-          ...d,
-          [field]: nextVal,
-          // Se desmarcar declarado, desmarca confirmado automaticamente
-          ...(field === 'declared' && !nextVal ? { confirmed: false } : {})
-        };
-      }
-      return d;
-    });
-    handleUpdateInputs({
-      ...currentInputs,
-      discounts: updatedDiscounts
-    });
-  };
-
-  const handleTypeChange = (newType: ProjectType) => {
-    handleUpdateInputs({
-      ...currentInputs,
-      projectType: newType
-    });
-  };
-
-  const handleToolChange = (newTool: GenerationTool) => {
-    handleUpdateInputs({
-      ...currentInputs,
-      generationTool: newTool
-    });
-  };
-
-  const handleStartDateChange = (newDate: string) => {
-    handleUpdateInputs({
-      ...currentInputs,
-      startDate: newDate
-    });
-  };
-
-  // Datas manuais por etapa: a sugestão do motor continua visível, mas a data escolhida prevalece
+  const [showAdjustments, setShowAdjustments] = useState(false);
   const [replanDate, setReplanDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const canReplan = canEditEstimation && currentGovStage !== 'Concluído';
+  const todayIso = new Date().toISOString().split('T')[0];
 
-  const handleStageDateChange = (stageId: GovStage, field: 'startDate' | 'endDate', date: string) => {
-    handleUpdateInputs(setStageDate(currentInputs, stageId, field, date || undefined));
+  const updateInputs = (next: EstimationInputs) => {
+    if (!canEdit) return;
+    onUpdateProject({ ...project, projectType: next.projectType, generationTool: next.generationTool, estimation: next });
   };
 
-  const handleReplanFromCurrentStage = () => {
-    if (!canReplan || !replanDate) return;
-    handleUpdateInputs(replanFromStage(currentInputs, currentGovStage, replanDate));
+  const toggleModule = (moduleId: string) => {
+    const known = inputs.modules.some((m) => m.id === moduleId);
+    const modules: ModuleToggle[] = known
+      ? inputs.modules.map((m) => (m.id === moduleId ? { ...m, applied: !m.applied } : m))
+      : [
+          ...inputs.modules,
+          { id: moduleId, label: config.modulesCatalog.find((m) => m.id === moduleId)?.label || moduleId, applied: true }
+        ];
+    updateInputs({ ...inputs, modules });
   };
 
-  const handleResetAllStageDates = () => {
-    handleUpdateInputs({ ...currentInputs, stageDateOverrides: {} });
+  const toggleDiscount = (discountId: string, field: 'declared' | 'confirmed') => {
+    const existing: DiscountToggle = inputs.discounts.find((d) => d.id === discountId) || {
+      id: discountId,
+      label: config.discountsCatalog.find((d) => d.id === discountId)?.label || discountId,
+      declared: false,
+      confirmed: false
+    };
+    const nextVal = !existing[field];
+    const updated: DiscountToggle = {
+      ...existing,
+      [field]: nextVal,
+      // Desmarcar "declarado" desmarca "confirmado"
+      ...(field === 'declared' && !nextVal ? { confirmed: false } : {})
+    };
+    const discounts = inputs.discounts.some((d) => d.id === discountId)
+      ? inputs.discounts.map((d) => (d.id === discountId ? updated : d))
+      : [...inputs.discounts, updated];
+    updateInputs({ ...inputs, discounts });
   };
 
-  // Gerar texto formatado do apontamento da esteira para colar no chamado GLPI
-  const generateGlpiNoteText = () => {
-    const optDate = formatPtBrDate(estimationResult.optimistic.deliveryDate);
-    const realDate = formatPtBrDate(estimationResult.realistic.deliveryDate);
-    const stageName = STAGE_NAMES[currentGovStage] || currentGovStage;
-
-    let text = `=======================================================\n`;
-    text += `[ATTO T.I - GOVERNANÇA DE SOLUÇÕES & ATIVOS]\n`;
-    text += `Apontamento da Esteira de Governança para Chamado GLPI\n`;
-    text += `=======================================================\n\n`;
-    text += `DADOS DA SOLUÇÃO:\n`;
-    text += `• Solução: ${project.name}\n`;
-    text += `• Identificador do Ativo: ${project.assetId}\n`;
-    text += `• Chamado GLPI de Origem: ${project.glpiTicketId}\n`;
-    text += `• Área Responsável: ${project.department}\n`;
-    text += `• Dono de Negócio: ${project.businessResponsible}\n`;
-    text += `• Responsável Técnico: ${project.technicalResponsible}\n\n`;
-
-    text += `ESTEIRA & TIPO TÉCNICO (EIXO 2):\n`;
-    text += `• Tipo Técnico: Tipo ${currentProjectType} (${PROJECT_TYPE_INFO[currentProjectType].label})\n`;
-    text += `• Ferramenta / Metodologia: ${currentGenerationTool}\n`;
-    text += `• Etapa Atual: ${currentGovStage} - ${stageName}\n`;
-    text += `• Status Geral: ${project.status || 'Em Adequação'}\n\n`;
-
-    text += `ESTIMATIVA & JANELA DE HOMOLOGAÇÃO:\n`;
-    text += `• Início da Contagem: ${formatPtBrDate(currentInputs.startDate)}\n`;
-    text += `• Janela Homologada: [${optDate} → ${realDate}]\n`;
-    text += `• Esforço Total Previsto da T.I: ${estimationResult.effortTotalHours.toFixed(1)} horas\n`;
-    text += `• Reuniões Previstas: ${estimationResult.meetingsCount} encontros\n`;
-    text += `• Dependências Externas: ${estimationResult.externalDepsCount} integrações/deps\n\n`;
-
-    text += `CRITÉRIOS DE SAÍDA (GATE DE GOVERNANÇA):\n`;
-    EXIT_CRITERIA_CHECKLIST.forEach((c) => {
-      const isChecked = !!exitCriteriaChecked[c.id];
-      text += `[${isChecked ? 'X' : ' '}] ${c.id}: ${c.title} (${isChecked ? 'ATENDIDO' : 'PENDENTE'})\n`;
-    });
-
-    if (project.scheduledMeetings && project.scheduledMeetings.length > 0) {
-      text += `\nAGENDAMENTOS:\n`;
-      [...project.scheduledMeetings]
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .forEach((m) => {
-          text += `• ${m.date} — ${m.subject || 'Alinhamento de esteira'}\n`;
-        });
-    }
-
-    if (project.hasImpediment) {
-      text += `\n🚨 IMPEDIMENTO REGISTRADO:\n`;
-      text += `• Detalhe: ${project.impedimentDetails || 'Impedimento ativo'}\n`;
-      if (project.actionRequiredFromManagement) {
-        text += `• Ação Requerida da Gestão: ${project.actionRequiredFromManagement}\n`;
-      }
-    }
-
-    text += `\n-------------------------------------------------------\n`;
-    text += `Gerado automaticamente via Central de Governança ATTO\n`;
-    text += `Data do Apontamento: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}\n`;
-
-    return text;
-  };
-
-  const handleCopyGlpiNote = () => {
-    const text = generateGlpiNoteText();
-    navigator.clipboard.writeText(text);
-    setCopiedGlpiNote(true);
-    setTimeout(() => setCopiedGlpiNote(false), 2500);
-  };
-
-  const isEarlyStage = currentGovStage === 'E0' || currentGovStage === 'E1';
+  const appliedModules = config.modulesCatalog.filter((m) => inputs.modules.some((t) => t.id === m.id && t.applied));
+  const confirmedDiscounts = config.discountsCatalog.filter((d) =>
+    inputs.discounts.some((t) => t.id === d.id && t.confirmed)
+  );
+  const pendingDeclaredDiscounts = config.discountsCatalog.filter((d) =>
+    inputs.discounts.some((t) => t.id === d.id && t.declared && !t.confirmed)
+  );
 
   return (
-    <div id="estimation-schedule-view" className="space-y-6">
-      {/* Header & Subtitle */}
-      <Card>
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <Badge className="uppercase bg-brand-lighter text-brand-dark border-brand-light">
-            Eixo 2 — Tipo Técnico & Cronograma
-          </Badge>
-          <Badge className="font-mono bg-grey-100 text-grey-700 border-grey-300">
-            {project.assetId}
-          </Badge>
-          <span className="text-xs text-grey-500 font-medium">
-            Chamado: <strong>{project.glpiTicketId}</strong>
+    <div className="space-y-6">
+      {/* Os três números */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <span className="text-xs font-semibold text-grey-500">Esforço total da T.I</span>
+          <div className="text-3xl font-black text-grey-900 mt-1 font-mono">{fmtHours(result.effortTotalHours)}</div>
+          <p className="text-[11px] text-grey-500 mt-1">Horas de trabalho somadas em todas as etapas</p>
+        </Card>
+        <Card>
+          <span className="text-xs font-semibold text-grey-500">Duração prevista</span>
+          <div className="text-3xl font-black text-grey-900 mt-1 font-mono">{result.realistic.totalDays} dias úteis</div>
+          <p className="text-[11px] text-grey-500 mt-1">
+            {result.realistic.activeDays} de trabalho + {result.realistic.agendaDays} de espera (agenda e terceiros)
+          </p>
+        </Card>
+        <Card className="bg-brand-dark border-brand-dark text-white">
+          <span className="text-xs font-semibold text-brand-light">Entrega prevista</span>
+          <div className="text-3xl font-black mt-1 font-mono">{formatPtBrDate(result.realistic.deliveryDate)}</div>
+          <p className="text-[11px] text-brand-light mt-1">
+            Início em {formatPtBrDate(inputs.startDate)}
+            {!result.hasManualDates && <> · no melhor cenário, {formatPtBrDate(result.optimistic.deliveryDate)}</>}
+          </p>
+        </Card>
+      </div>
+
+      {/* Como a conta é feita */}
+      <Card className="space-y-3">
+        <h3 className="text-sm font-bold text-grey-900">Como a conta é feita</h3>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-1.5 rounded-lg bg-grey-100 border border-grey-200">
+            Base do tipo {projectType} ({typeInfo?.label}): <strong className="font-mono">{fmtHours(result.effortBaseHours)}</strong>
+          </span>
+          <span className="text-grey-400 font-bold">+</span>
+          <span className="px-3 py-1.5 rounded-lg bg-info-50 border border-info-200 text-info-700">
+            Módulos extras ({appliedModules.length}): <strong className="font-mono">{fmtHours(result.effortModulesHours)}</strong>
+          </span>
+          <span className="text-grey-400 font-bold">−</span>
+          <span className="px-3 py-1.5 rounded-lg bg-brand-lighter border border-brand-light text-brand-dark">
+            Itens já atendidos ({confirmedDiscounts.length}): <strong className="font-mono">{fmtHours(result.effortDiscountHours)}</strong>
+          </span>
+          <span className="text-grey-400 font-bold">=</span>
+          <span className="px-3 py-1.5 rounded-lg bg-grey-900 text-white">
+            <strong className="font-mono">{fmtHours(result.effortTotalHours)}</strong>
           </span>
         </div>
-
-        <PageHeader
-          title="Estimativa de Esforço, Prazo & Esteira de Governança"
-          subtitle="Modelo oficial de esteira da T.I para soluções departamentais e vibe coding. O tempo de entrega é dominado pelo overhead de agenda e dependências externas, e não apenas pelo tempo de código ativo."
-          actions={
-            <>
-              <Button
-                color="primary"
-                size="sm"
-                leftIcon={<FileText className="w-4 h-4" />}
-                onClick={() => setIsGlpiModalOpen(true)}
-                title="Gerar texto estruturado do apontamento da esteira para colar no chamado GLPI"
-              >
-                Gerar Apontamento GLPI
-              </Button>
-
-              <div className="bg-grey-50 p-2 rounded-lg border border-grey-200 text-right">
-                <div className="text-[10px] uppercase font-bold text-grey-500">Etapa Atual da Esteira</div>
-                <div className="text-xs font-extrabold text-brand-dark flex items-center justify-end gap-1 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-brand-main animate-pulse"></span>
-                  <span>{STAGE_NAMES[currentGovStage] || currentGovStage}</span>
-                </div>
-              </div>
-            </>
-          }
-        />
+        <ul className="text-xs text-grey-600 space-y-1 list-disc list-inside">
+          <li>
+            Prazo: cada dia rende cerca de {hoursPerDay.toString().replace('.', ',')}h de trabalho, e cada reunião ou
+            dependência de outro time acrescenta dias de espera ({result.meetingsCount} reuniões e{' '}
+            {result.externalDepsCount} dependências previstas).
+          </li>
+          <li>Um item "já atendido" só desconta horas depois de confirmado pela T.I na reunião de diagnóstico.</li>
+          {pendingDeclaredDiscounts.length > 0 && (
+            <li className="text-warning-600">
+              {pendingDeclaredDiscounts.length}{' '}
+              {pendingDeclaredDiscounts.length === 1 ? 'item declarado aguarda' : 'itens declarados aguardam'} confirmação
+              (até −{fmtHours(pendingDeclaredDiscounts.reduce((s, d) => s + d.hours, 0))}).
+            </li>
+          )}
+        </ul>
       </Card>
 
-      {/* Mandatory Disclaimer Box */}
-      <div className="bg-warning-50 border border-warning-200 rounded-lg p-3.5 flex items-start gap-3 text-xs text-warning-600 shadow-xs">
-        <Info className="w-4 h-4 text-warning-600 shrink-0 mt-0.5" />
-        <div className="flex-1 leading-relaxed">
-          <span className="font-bold text-warning-600">Princípio de Governança: </span>
-          Estimativa a partir do cadastro; confirmar na reunião de diagnóstico e entendimento. O cadastro inicial é uma declaração do usuário mantenedor, não um fato consumado.
-          {currentGovStage === 'E0' && (
-            <span className="block mt-1 font-semibold text-warning-600 bg-warning-50/80 px-2 py-0.5 rounded border border-warning-200/80 w-fit">
-              ⚠️ Projeto em Cadastro Inicial — Caixas de "Confirmado" ficam desabilitadas até a Reunião de Diagnóstico.
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Main KPI Results Panel (Janela de Entrega em Destaque) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {/* KPI 1: Janela de Entrega */}
-        <StatTile
-          variant="dark"
-          className="md:col-span-2"
-          label="Janela de Entrega Homologada"
-          icon={<Calendar className="w-4 h-4" />}
-          iconClassName="bg-white/10 text-brand-light"
-          value={
-            estimationResult.hasManualDates ? (
-              <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                <span className="text-brand-light font-bold text-sm">Planejado:</span>
-                <span className="text-2xl sm:text-3xl font-black tracking-tight text-warning-200 font-mono">
-                  {formatPtBrDate(estimationResult.realistic.deliveryDate)}
-                </span>
-              </span>
-            ) : (
-              <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                <span className="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">
-                  {formatPtBrDate(estimationResult.optimistic.deliveryDate)}
-                </span>
-                <span className="text-brand-light font-bold text-sm">à</span>
-                <span className="text-2xl sm:text-3xl font-black tracking-tight text-warning-200 font-mono">
-                  {formatPtBrDate(estimationResult.realistic.deliveryDate)}
-                </span>
-              </span>
-            )
-          }
-          subtext={
-            <div className="space-y-2">
-              <div className="text-[10px] text-grey-400 font-mono">
-                Início: {formatPtBrDate(currentInputs.startDate)}
-                {estimationResult.hasManualDates && (
-                  <>
-                    {' '}· Datas ajustadas manualmente · sugestão do motor:{' '}
-                    {formatPtBrDate(estimationResult.optimistic.deliveryDate)} à{' '}
-                    {formatPtBrDate(estimationResult.suggestedDeliveryDate)}
-                  </>
-                )}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-grey-700/80 text-[11px]">
-                <div>
-                  <span className="text-brand-light font-semibold">Cenário Otimista:</span>{' '}
-                  <span className="text-grey-300">
-                    {estimationResult.optimistic.totalDays} dias úteis ({estimationResult.optimistic.activeDays}d ativos + {estimationResult.optimistic.agendaDays}d agenda)
-                  </span>
-                </div>
-                <div>
-                  <span className="text-warning-200 font-semibold">Cenário Realista:</span>{' '}
-                  <span className="text-grey-300">
-                    {estimationResult.realistic.totalDays} dias úteis ({estimationResult.realistic.activeDays}d ativos + {estimationResult.realistic.agendaDays}d agenda)
-                  </span>
-                </div>
-              </div>
-              <p className="text-[10px] text-grey-500 italic pt-1">
-                * Sempre apresentada como janela prospectiva; nunca como data seca.
+      {/* Cronograma por etapa */}
+      <Card className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-bold text-grey-900">Cronograma por etapa</h3>
+            {canEdit && (
+              <p className="text-xs text-grey-500 mt-0.5">
+                As datas são sugeridas, mas podem ser alteradas; as etapas seguintes se reencadeiam.
               </p>
-            </div>
-          }
-        />
-
-        {/* KPI 2: Esforço de T.I */}
-        <StatTile
-          label="Esforço Total T.I"
-          icon={<Clock className="w-4 h-4" />}
-          iconClassName="bg-brand-lighter text-brand-main"
-          value={
-            <span className="flex items-baseline gap-2">
-              <span>{estimationResult.effortTotalHours.toFixed(1)}h</span>
-              <span className="text-xs text-grey-500 font-medium">confirmadas</span>
-            </span>
-          }
-          subtext={
-            <div className="space-y-1 pt-1.5 mt-1 border-t border-grey-100">
-              <div className="flex justify-between">
-                <span>Base {currentProjectType === 'A' ? 'Workspace' : currentProjectType === 'B' ? 'Container/VPS' : 'No-Code'}:</span>
-                <span className="font-mono font-bold">{estimationResult.effortBaseHours.toFixed(1)}h</span>
-              </div>
-              <div className="flex justify-between text-info-700">
-                <span>Módulos extras:</span>
-                <span className="font-mono font-bold">+{estimationResult.effortModulesHours.toFixed(1)}h</span>
-              </div>
-              <div className="flex justify-between text-brand-dark font-semibold">
-                <span>Descontos E1:</span>
-                <span className="font-mono font-bold">-{estimationResult.effortDiscountHours.toFixed(1)}h</span>
-              </div>
-            </div>
-          }
-        />
-
-        {/* KPI 3: Reuniões & Dependências */}
-        <StatTile
-          label="Interações & Bloqueios"
-          icon={<Users className="w-4 h-4" />}
-          iconClassName="bg-info-50 text-info-600"
-          value={
-            <span className="flex items-baseline gap-2">
-              <span>{estimationResult.meetingsCount}</span>
-              <span className="text-xs text-grey-500 font-medium">reuniões</span>
-            </span>
-          }
-          subtext={
-            <div className="space-y-1 pt-1.5 mt-1 border-t border-grey-100">
-              <div className="flex justify-between">
-                <span>Dependências Externas:</span>
-                <span className="font-mono font-bold text-warning-600 bg-warning-50 px-1.5 rounded">
-                  {estimationResult.externalDepsCount} pontos
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Overhead de Espera:</span>
-                <span className="font-mono font-bold text-grey-800">
-                  +{estimationResult.realistic.agendaDays} dias úteis
-                </span>
-              </div>
-            </div>
-          }
-        />
-      </div>
-
-      {/* Seção 1: Configuração do Eixo 2 (Tipo Técnico & Parâmetros) */}
-      <Card className="space-y-5">
-        <div className="border-b border-grey-100 pb-3">
-          <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
-            <Workflow className="w-4 h-4 text-brand-dark" />
-            <span>Arquitetura da Solução & Stack Técnica</span>
-          </h2>
-          <p className="text-xs text-grey-500 mt-0.5">
-            Selecione a arquitetura técnica da solução. Cada stack possui esforço base, lista de reuniões e critérios de teste específicos.
-          </p>
-        </div>
-
-        {/* Cards de Seleção de Tipo Técnico (A / B / C) — só editável para quem pode alterar a estimativa */}
-        {canEditEstimation ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(['A', 'B', 'C'] as ProjectType[]).map((typeKey) => {
-              const isSelected = currentProjectType === typeKey;
-              const info = PROJECT_TYPE_INFO[typeKey];
-
-              return (
-                <SelectableCard
-                  key={typeKey}
-                  selected={isSelected}
-                  onClick={() => handleTypeChange(typeKey)}
-                  className="flex flex-col justify-between h-full"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge
-                        className={`uppercase ${
-                          isSelected
-                            ? 'bg-brand-main text-white border-brand-main'
-                            : 'bg-grey-100 text-grey-700 border-grey-200'
-                        }`}
-                      >
-                        {typeKey === 'A' ? 'Workspace' : typeKey === 'B' ? 'Container / VPS' : 'No-Code'}
-                      </Badge>
-                      {isSelected && (
-                        <span className="text-brand-dark flex items-center gap-1 text-xs font-bold">
-                          <CheckCircle2 className="w-4 h-4" /> Selecionado
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="text-sm font-extrabold text-grey-900 leading-tight">
-                      {info.label}
-                    </h3>
-                    <p className="text-[11px] text-grey-500 mt-1 leading-relaxed">
-                      {info.shortDesc}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-grey-200/80 text-[11px] space-y-1 font-mono">
-                    <div className="flex justify-between text-grey-700">
-                      <span>Stack Sugerida:</span>
-                      <strong className="text-brand-dark text-[10px] truncate max-w-[170px]" title={info.technologyHint}>
-                        {info.technologyHint}
-                      </strong>
-                    </div>
-                    {info.statusBadge && (
-                      <div className="flex justify-between text-grey-700">
-                        <span>Calibração:</span>
-                        <strong className="text-warning-600 text-[10px]">{info.statusBadge}</strong>
-                      </div>
-                    )}
-                  </div>
-                </SelectableCard>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="p-3 rounded-lg border border-grey-200 bg-grey-50">
-            <Badge className="uppercase bg-brand-main text-white border-brand-main">
-              {currentProjectType === 'A' ? 'Workspace' : currentProjectType === 'B' ? 'Container / VPS' : 'No-Code'}
-            </Badge>
-            <h3 className="text-sm font-extrabold text-grey-900 leading-tight mt-2">
-              {PROJECT_TYPE_INFO[currentProjectType].label}
-            </h3>
-            <p className="text-[11px] text-grey-500 mt-1 leading-relaxed">
-              {PROJECT_TYPE_INFO[currentProjectType].shortDesc}
-            </p>
-          </div>
-        )}
-
-        {/* Inputs de Data de Início e Ferramenta de Geração */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-          <Field label="Data de Início da Contagem:">
-            {canEditEstimation ? (
-              <Input
-                type="date"
-                value={currentInputs.startDate}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                className="text-xs font-mono font-bold text-grey-800"
-              />
-            ) : (
-              <ReadOnlyField value={formatPtBrDate(currentInputs.startDate)} className="font-mono font-bold" />
             )}
-          </Field>
-
-          <Field label="Ferramenta de Vibe Coding / Geração:">
-            {canEditEstimation ? (
-              <Select
-                value={currentGenerationTool}
-                onChange={(e) => handleToolChange(e.target.value as GenerationTool)}
-                className="text-xs font-bold text-grey-800"
-              >
-                {generationToolOptions.map((tool) => (
-                  <option key={tool} value={tool}>
-                    {tool}
-                  </option>
-                ))}
-              </Select>
-            ) : (
-              <ReadOnlyField value={currentGenerationTool} className="font-bold" />
-            )}
-          </Field>
-
-          <Field label="Responsável Técnico da T.I:">
-            <Input
-              type="text"
-              readOnly
-              value={project.technicalResponsible}
-              className="text-xs text-grey-600 bg-grey-50 font-medium cursor-not-allowed"
-            />
-          </Field>
-        </div>
-      </Card>
-
-      {/* Seção 2: Esteira de Governança com Stepper Interativo */}
-      <Card className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-grey-100 pb-3">
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-brand-dark" />
-              <span>Esteira Oficial de Governança de Soluções</span>
-            </h2>
-            <p className="text-xs text-grey-500 mt-0.5">
-              Clique na etapa correspondente para avançar o projeto na esteira. Ao avançar para a homologação final, os critérios de saída são validados.
-            </p>
           </div>
-          <Badge className="bg-brand-lighter text-brand-dark border-brand-light font-semibold self-start sm:self-auto">
-            Etapa Atual: {STAGE_NAMES[currentGovStage] || currentGovStage}
-          </Badge>
-        </div>
-
-        {/* Stepper visual com nomes claros das etapas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-2 mb-5">
-          {GOV_STAGES_CATALOG.map((stageKey, idx) => {
-            const isCurrent = currentGovStage === stageKey;
-            const currentIndex = GOV_STAGES_CATALOG.indexOf(currentGovStage);
-            const isPassed = idx < currentIndex;
-
-            const stageClasses = `text-left p-3 rounded-xl border relative flex flex-col justify-between min-h-[72px] ${
-              canAdvanceStage ? 'transition-all' : ''
-            } ${
-              isCurrent
-                ? 'border-brand-main bg-brand-main text-white shadow-md ring-2 ring-brand-main/30'
-                : isPassed
-                ? `border-brand-light bg-brand-lighter/70 text-brand-dark ${canAdvanceStage ? 'hover:bg-brand-lighter' : ''}`
-                : `border-grey-200 bg-white text-grey-700 ${canAdvanceStage ? 'hover:bg-grey-50' : ''}`
-            }`;
-            const stageContent = (
-              <>
-                <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
-                  <span className={isCurrent ? 'text-brand-light' : isPassed ? 'text-brand-main' : 'text-grey-400'}>
-                    Etapa {idx + 1}
-                  </span>
-                  {isPassed ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-brand-main shrink-0" />
-                  ) : isCurrent ? (
-                    <span className="w-2 h-2 rounded-full bg-white animate-ping shrink-0" />
-                  ) : null}
-                </div>
-                <div className={`text-xs font-bold leading-tight ${isCurrent ? 'text-white' : 'text-grey-900'}`}>
-                  {STAGE_NAMES[stageKey]}
-                </div>
-              </>
-            );
-
-            return canAdvanceStage ? (
-              <button
-                key={stageKey}
-                type="button"
-                onClick={() => handleRequestStageChange(stageKey)}
-                className={stageClasses}
-              >
-                {stageContent}
-              </button>
-            ) : (
-              <div key={stageKey} className={stageClasses}>
-                {stageContent}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Informações da Etapa Selecionada */}
-        <div className="bg-grey-50 p-3.5 rounded-lg border border-grey-200 text-xs text-grey-700 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <span className="font-extrabold text-grey-900">Objetivo de {STAGE_NAMES[currentGovStage]}: </span>
-            <span>{STAGE_DESCRIPTIONS[currentGovStage] || 'Esteira finalizada e ativo homologado em produção.'}</span>
-          </div>
-          {currentGovStage === 'E1' && (
-            <Badge className="bg-info-50 text-info-700 border-info-200 shrink-0">
-              Nesta etapa: validar e marcar "Confirmado" nos itens atendidos
-            </Badge>
-          )}
-        </div>
-
-        {/* Critério de Saída Obrigatório (Checklist de 4 itens Interativo) */}
-        <div className="bg-brand-dark text-white rounded-lg p-4 border border-brand-dark">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-brand-light flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-brand-light" />
-              <span>Critérios de Saída da Governança (Gate para Conclusão)</span>
-            </h3>
-            <span className="text-[11px] text-brand-light font-medium hidden sm:inline">
-              O objetivo não é resolver tudo: é resolver o crítico e tirar do risco de pessoa única.
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            {EXIT_CRITERIA_CHECKLIST.map((crit) => {
-              const isChecked = !!exitCriteriaChecked[crit.id];
-
-              return (
-                <div
-                  key={crit.id}
-                  className={`p-3 rounded-lg border transition-all ${
-                    isChecked
-                      ? 'bg-brand-dark/90 border-brand-main shadow-xs'
-                      : 'bg-brand-dark/40 border-brand-dark/80'
-                  }`}
-                >
-                  <ChecklistItem
-                    checked={isChecked}
-                    onToggle={() => handleToggleExitCriteria(crit.id)}
-                    disabled={!canAdvanceStage}
-                    trailing={
-                      isChecked && (
-                        <span className="text-[10px] font-mono text-brand-light font-bold shrink-0">✓ Atendido</span>
-                      )
-                    }
-                  >
-                    <div className="text-xs font-bold text-white">{crit.title}</div>
-                    <div className="text-[11px] text-brand-light leading-snug mt-0.5">
-                      {crit.description}
-                    </div>
-                  </ChecklistItem>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </Card>
-
-      {/* Seções de Módulos Adicionais e Descontos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bloco 1: Módulos Adicionais (Somam horas, reuniões e deps) */}
-        <Card className="flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-info-700" />
-                <span>Módulos Adicionais de Complexidade</span>
-              </h2>
-              <Badge className="font-mono bg-info-50 text-info-700 border-info-200">
-                +{estimationResult.effortModulesHours.toFixed(2)}h
-              </Badge>
-            </div>
-            <p className="text-xs text-grey-500 mb-4">
-              Selecione os módulos extras caso a solução necessite de integrações com ERP, infraestrutura específica ou ambientes de dev.
-            </p>
-
-            <div className="space-y-2.5">
-              {MODULES_CATALOG.map((mod) => {
-                const isApplied = currentInputs.modules.some((m) => m.id === mod.id && m.applied);
-
-                return (
-                  <div
-                    key={mod.id}
-                    className={`p-3 rounded-lg border transition-all ${
-                      isApplied
-                        ? 'border-info-500 bg-info-50/60 shadow-xs'
-                        : 'border-grey-200 hover:bg-grey-50/60'
-                    }`}
-                  >
-                    <ChecklistItem
-                      checked={isApplied}
-                      onToggle={() => handleToggleModule(mod.id)}
-                      disabled={!canEditEstimation}
-                      trailing={
-                        <span className="text-xs font-mono font-bold text-info-700 shrink-0 bg-white px-1.5 py-0.5 rounded border border-info-200">
-                          +{mod.hours}h ({STAGE_NAMES[mod.stageId] || mod.stageId})
-                        </span>
-                      }
-                    >
-                      <span className="text-xs font-bold text-grey-900">{mod.label}</span>
-                      <p className="text-[11px] text-grey-500 mt-0.5">
-                        {mod.description}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1 text-[10px] text-grey-400">
-                        {mod.meetings > 0 && <span>+{mod.meetings} reunião</span>}
-                        {mod.externalDeps > 0 && <span>+{mod.externalDeps} dependência externa</span>}
-                      </div>
-                    </ChecklistItem>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
-
-        {/* Bloco 2: Itens Já Atendidos (Declarado vs Confirmado) */}
-        <Card className="flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-brand-dark" />
-                <span>Itens Já Atendidos (Descontos de Esforço)</span>
-              </h2>
-              <Badge className="font-mono bg-brand-lighter text-brand-dark border-brand-light">
-                -{estimationResult.effortDiscountHours.toFixed(1)}h abatidas
-              </Badge>
-            </div>
-            <p className="text-xs text-grey-500 mb-4">
-              <strong>Regra de Ouro:</strong> Declarado no cadastro não reduz esforço. O desconto de horas só é computado quando a T.I <strong>confirmar na E1</strong>.
-            </p>
-
-            <div className="space-y-3">
-              {DISCOUNTS_CATALOG.map((disc) => {
-                const itemState = currentInputs.discounts.find((d) => d.id === disc.id) || {
-                  id: disc.id,
-                  label: disc.label,
-                  declared: false,
-                  confirmed: false
-                };
-
-                // Regra de bloqueio do interruptor Confirmado: só habilita quando govStage >= E1
-                const canConfirm = itemState.declared && currentGovStage !== 'E0';
-                const confirmTitle =
-                  currentGovStage === 'E0'
-                    ? 'Confirmação habilitada a partir da Reunião de Entendimento (E1)'
-                    : !itemState.declared
-                    ? 'Declare primeiro antes de confirmar'
-                    : undefined;
-
-                return (
-                  <div
-                    key={disc.id}
-                    className={`p-3 rounded-lg border transition-all ${
-                      itemState.confirmed
-                        ? 'border-brand-main bg-brand-lighter/50 shadow-xs'
-                        : itemState.declared
-                        ? 'border-warning-200 bg-warning-50/40'
-                        : 'border-grey-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-grey-900">{disc.label}</div>
-                        <p className="text-[11px] text-grey-500 mt-0.5">{disc.description}</p>
-                        <span className="text-[10px] text-grey-500 font-medium">
-                          Impacto: -{disc.hours}h em {STAGE_NAMES[disc.stageId] || disc.stageId}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-2.5 pt-2 border-t border-grey-100 flex items-center justify-between gap-4 flex-wrap">
-                      {/* Checkbox 1: Declarado */}
-                      <ChecklistItem
-                        checked={itemState.declared}
-                        onToggle={() => handleToggleDiscount(disc.id, 'declared')}
-                        disabled={!canEditEstimation}
-                      >
-                        <span className="text-xs text-grey-700 font-medium">Declarado no Cadastro</span>
-                      </ChecklistItem>
-
-                      {/* Checkbox 2: Confirmado na Reunião de Diagnóstico */}
-                      <div title={confirmTitle}>
-                        <ChecklistItem
-                          checked={itemState.confirmed}
-                          disabled={!canEditEstimation || !canConfirm}
-                          onToggle={() => handleToggleDiscount(disc.id, 'confirmed')}
-                        >
-                          <span className={`text-xs font-bold ${canConfirm ? 'text-brand-dark' : 'text-grey-400'}`}>
-                            Confirmado na Reunião T.I
-                          </span>
-                        </ChecklistItem>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Seção 3: Cronograma Detalhado & Breakdown de Etapas */}
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between border-b border-grey-100 pb-3">
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-wider text-grey-800 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-brand-dark" />
-              <span>Cronograma Realista por Etapa da Esteira</span>
-            </h2>
-            <p className="text-xs text-grey-500 mt-0.5">
-              Detalhamento de dias úteis ativos (código e testes) e dias de espera de agenda e terceiros.
-              {canEditEstimation &&
-                ' As datas são sugeridas pelo motor, mas podem ser alteradas livremente — as etapas seguintes sem ajuste se reencadeiam.'}
-            </p>
-          </div>
-          {canEditEstimation && (
-            <div className="flex flex-wrap items-center gap-2 justify-end">
-              {canReplan && (
+          {canEdit && (
+            <div className="flex flex-wrap items-center gap-2">
+              {isStageTab(currentStage) && (
                 <div className="flex items-center gap-1.5">
                   <Input
                     type="date"
                     value={replanDate}
                     onChange={(e) => setReplanDate(e.target.value)}
-                    className="text-xs font-mono w-36"
+                    className="text-xs font-mono w-36 py-1"
                     aria-label="Nova data de início da etapa atual"
                   />
                   <Button
                     size="sm"
                     color="secondary"
                     leftIcon={<CalendarClock className="w-3.5 h-3.5" />}
-                    onClick={handleReplanFromCurrentStage}
+                    onClick={() => replanDate && updateInputs(replanFromStage(inputs, currentStage, replanDate))}
                     disabled={!replanDate}
-                    title="A etapa atual passa a começar na data escolhida e as seguintes voltam para as durações sugeridas. Etapas anteriores não mudam."
+                    title="A etapa atual passa a começar na data escolhida e as seguintes voltam às durações sugeridas. Etapas anteriores não mudam."
                   >
-                    Replanejar a partir de {currentGovStage} - {STAGE_NAMES[currentGovStage]}
+                    Replanejar a partir de {stageLabel(currentStage)}
                   </Button>
                 </div>
               )}
-              {estimationResult.hasManualDates && (
+              {result.hasManualDates && (
                 <Button
                   size="sm"
                   color="secondary"
                   leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-                  onClick={handleResetAllStageDates}
-                  title="Remove todos os ajustes manuais de datas e volta ao cronograma sugerido"
+                  onClick={() => updateInputs({ ...inputs, stageDateOverrides: {} })}
                 >
                   Restaurar datas sugeridas
                 </Button>
@@ -1003,238 +243,215 @@ export const EstimationScheduleView: React.FC<EstimationScheduleViewProps> = ({
           )}
         </div>
 
-        <Table>
-          <Thead>
-            <Tr>
-              <Th className="min-w-[220px]">Etapa</Th>
-              <Th className="text-right">Horas Base</Th>
-              <Th className="text-right">Módulos</Th>
-              <Th className="text-right">Descontos</Th>
-              <Th className="text-right">Horas Total</Th>
-              <Th className="text-center">Interações</Th>
-              <Th className="text-center">Dias Ativos</Th>
-              <Th className="text-center">Dias Agenda</Th>
-              <Th className="text-center">Início Previsto</Th>
-              <Th className="text-center">Fim Previsto</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {estimationResult.stages.map((stg) => {
-              const isCurrentStage = currentGovStage === stg.stageId;
-
-              return (
-                <Tr
-                  key={stg.stageId}
-                  className={isCurrentStage ? 'bg-brand-lighter/50 font-bold' : ''}
-                >
-                  <Td className="flex items-center gap-2">
-                    <span className="font-semibold text-grey-900 whitespace-nowrap">{stg.stageName}</span>
-                  </Td>
-                  <Td className="text-right font-mono">{stg.baseHours}h</Td>
-                  <Td className="text-right font-mono text-info-700">
-                    {stg.modulesHours > 0 ? `+${stg.modulesHours}h` : '—'}
-                  </Td>
-                  <Td className="text-right font-mono text-brand-dark">
-                    {stg.discountHours > 0 ? `-${stg.discountHours}h` : '—'}
-                  </Td>
-                  <Td className="text-right font-mono font-bold text-grey-900">
-                    {stg.totalHours}h
-                  </Td>
-                  <Td className="text-center text-grey-600 font-mono">
-                    {stg.meetingsCount} reun / {stg.externalDepsCount} deps
-                  </Td>
-                  <Td className="text-center font-mono font-bold text-grey-800">
-                    {stg.workDays}d
-                  </Td>
-                  <Td className="text-center font-mono text-warning-600">
-                    +{stg.waitDays}d
-                  </Td>
-                  <Td className="text-center font-mono text-grey-600">
-                    <StageDateCell
-                      value={stg.startDate}
-                      suggested={stg.suggestedStartDate}
-                      isManual={stg.isStartManual}
-                      editable={canEditEstimation}
-                      // O início da E0 é a própria data de início da contagem — não há "sugestão" a restaurar
-                      onChange={(date) => handleStageDateChange(stg.stageId, 'startDate', date)}
-                      onReset={stg.stageId === 'E0' ? undefined : () => handleStageDateChange(stg.stageId, 'startDate', '')}
-                    />
-                  </Td>
-                  <Td className="text-center font-mono font-bold text-brand-dark">
-                    <StageDateCell
-                      value={stg.endDate}
-                      suggested={stg.suggestedEndDate}
-                      isManual={stg.isEndManual}
-                      editable={canEditEstimation}
-                      min={stg.startDate}
-                      onChange={(date) => handleStageDateChange(stg.stageId, 'endDate', date)}
-                      onReset={() => handleStageDateChange(stg.stageId, 'endDate', '')}
-                    />
-                  </Td>
-                </Tr>
-              );
-            })}
-          </Tbody>
-          <tfoot>
-            <tr className="bg-grey-50 border-t-2 border-grey-200 font-bold text-grey-900">
-              <td className="px-3 py-2.5">Totais Consolidados</td>
-              <td className="px-3 py-2.5 text-right font-mono">{estimationResult.effortBaseHours.toFixed(1)}h</td>
-              <td className="px-3 py-2.5 text-right font-mono text-info-700">+{estimationResult.effortModulesHours.toFixed(1)}h</td>
-              <td className="px-3 py-2.5 text-right font-mono text-brand-dark">-{estimationResult.effortDiscountHours.toFixed(1)}h</td>
-              <td className="px-3 py-2.5 text-right font-mono text-brand-dark text-sm">
-                {estimationResult.effortTotalHours.toFixed(1)}h
-              </td>
-              <td className="px-3 py-2.5 text-center font-mono">
-                {estimationResult.meetingsCount} reun / {estimationResult.externalDepsCount} deps
-              </td>
-              <td className="px-3 py-2.5 text-center font-mono">{estimationResult.realistic.activeDays}d</td>
-              <td className="px-3 py-2.5 text-center font-mono text-warning-600">+{estimationResult.realistic.agendaDays}d</td>
-              <td className="px-3 py-2.5 text-center font-mono">{formatPtBrDate(currentInputs.startDate)}</td>
-              <td className="px-3 py-2.5 text-center font-mono text-brand-dark text-sm">
-                {formatPtBrDate(estimationResult.realistic.deliveryDate)}
-              </td>
-            </tr>
-          </tfoot>
-        </Table>
+        <div className="border border-grey-200 rounded-lg overflow-hidden">
+          <Table>
+            <Thead>
+              <Tr className="hover:bg-transparent">
+                <Th className="min-w-[220px]">Etapa</Th>
+                <Th className="text-right">Horas</Th>
+                <Th className="text-center">Dias úteis</Th>
+                <Th>Início</Th>
+                <Th>Fim</Th>
+                <Th>Situação</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {result.stages.map((stg) => {
+                const state = isStageTab(stg.stageId) ? getStageState(project, stg.stageId) : 'future';
+                const isLate = state === 'current' && diffDays(stg.endDate, todayIso) > 0;
+                return (
+                  <Tr key={stg.stageId} className={state === 'current' ? 'bg-brand-lighter/50' : ''}>
+                    <Td className="font-semibold text-grey-900 whitespace-nowrap">{stageLabel(stg.stageId)}</Td>
+                    <Td className="text-right font-mono" title={`Base ${stg.baseHours}h · módulos +${stg.modulesHours}h · descontos −${stg.discountHours}h`}>
+                      {fmtHours(stg.totalHours)}
+                    </Td>
+                    <Td className="text-center font-mono text-grey-700" title={`${stg.workDays} de trabalho + ${stg.waitDays} de espera`}>
+                      {stg.workDays + stg.waitDays}
+                    </Td>
+                    <Td>
+                      <StageDateCell
+                        value={stg.startDate}
+                        suggested={stg.suggestedStartDate}
+                        isManual={stg.isStartManual}
+                        editable={canEdit}
+                        onChange={(date) => updateInputs(setStageDate(inputs, stg.stageId, 'startDate', date))}
+                        // O início da E0 é a própria data de início — não há sugestão a restaurar
+                        onReset={
+                          stg.stageId === 'E0'
+                            ? undefined
+                            : () => updateInputs(setStageDate(inputs, stg.stageId, 'startDate', undefined))
+                        }
+                      />
+                    </Td>
+                    <Td>
+                      <StageDateCell
+                        value={stg.endDate}
+                        suggested={stg.suggestedEndDate}
+                        isManual={stg.isEndManual}
+                        editable={canEdit}
+                        min={stg.startDate}
+                        onChange={(date) => updateInputs(setStageDate(inputs, stg.stageId, 'endDate', date))}
+                        onReset={() => updateInputs(setStageDate(inputs, stg.stageId, 'endDate', undefined))}
+                      />
+                    </Td>
+                    <Td>
+                      {state === 'done' ? (
+                        <Badge className="bg-brand-lighter text-brand-dark border-brand-light">Concluída</Badge>
+                      ) : isLate ? (
+                        <Badge className="bg-danger-50 text-danger-800 border-danger-300">Atrasada</Badge>
+                      ) : state === 'current' ? (
+                        <Badge className="bg-brand-main text-white border-brand-main">Em andamento</Badge>
+                      ) : (
+                        <span className="text-[11px] text-grey-400">Prevista</span>
+                      )}
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </Tbody>
+            <tfoot>
+              <tr className="bg-grey-50 border-t-2 border-grey-200 font-bold text-grey-900 text-xs">
+                <td className="px-3 py-2.5">Total</td>
+                <td className="px-3 py-2.5 text-right font-mono">{fmtHours(result.effortTotalHours)}</td>
+                <td className="px-3 py-2.5 text-center font-mono">{result.realistic.totalDays}</td>
+                <td className="px-3 py-2.5 font-mono">{formatPtBrDate(inputs.startDate)}</td>
+                <td className="px-3 py-2.5 font-mono">{formatPtBrDate(result.realistic.deliveryDate)}</td>
+                <td />
+              </tr>
+            </tfoot>
+          </Table>
+        </div>
       </Card>
 
-      {/* Histórico e Registro de Atividades da Solução */}
-      {project.activityLog && project.activityLog.length > 0 && (
-        <Card className="space-y-3">
-          <div className="flex items-center gap-2 border-b border-grey-100 pb-2">
-            <History className="w-4 h-4 text-grey-600" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-grey-800">
-              Histórico & Auditoria da Esteira ({project.activityLog.length} registros)
-            </h3>
-          </div>
-          <div className="space-y-2">
-            {project.activityLog.map((log) => (
-              <div
-                key={log.id}
-                className="p-3 rounded-lg border border-grey-100 bg-grey-50 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-              >
-                <div>
-                  <div className="font-bold text-grey-900">{log.action}</div>
-                  {log.details && <div className="text-grey-600 text-[11px] mt-0.5">{log.details}</div>}
-                </div>
-                <div className="text-right text-[11px] text-grey-400 font-mono shrink-0">
-                  <div>{log.timestamp}</div>
-                  <div className="text-grey-500 font-semibold">{log.author}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      {/* Ajustes da estimativa (recolhido) */}
+      <Card className="space-y-4">
+        <button
+          type="button"
+          onClick={() => setShowAdjustments((v) => !v)}
+          className="w-full flex items-center justify-between gap-2 text-left"
+          aria-expanded={showAdjustments}
+        >
+          <span className="text-sm font-bold text-grey-900 flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-brand-dark" />
+            {canEdit ? 'Ajustar estimativa' : 'Parâmetros da estimativa'}
+          </span>
+          <span className="flex items-center gap-2 text-xs text-grey-500">
+            Tipo {projectType} · {appliedModules.length} módulos · {confirmedDiscounts.length} itens atendidos
+            <ChevronDown className={`w-4 h-4 transition-transform ${showAdjustments ? 'rotate-180' : ''}`} />
+          </span>
+        </button>
 
-      {/* MODAL 1: Apontamento para GLPI */}
-      <Modal
-        isOpen={isGlpiModalOpen}
-        onClose={() => setIsGlpiModalOpen(false)}
-        title="Apontamento da Esteira para Chamado GLPI"
-        subtitle="Copie o texto estruturado abaixo e cole diretamente no chamado correspondente no GLPI (ou envie por e-mail/Teams) para registrar a evolução da governança e as datas homologadas."
-        size="lg"
-      >
-        <Textarea
-          readOnly
-          rows={12}
-          value={generateGlpiNoteText()}
-          className="font-mono bg-grey-50 text-grey-800"
-        />
-
-        <ModalFooter>
-          <Button color="secondary" onClick={() => setIsGlpiModalOpen(false)}>
-            Fechar
-          </Button>
-          <Button
-            color="primary"
-            leftIcon={copiedGlpiNote ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            onClick={handleCopyGlpiNote}
-          >
-            {copiedGlpiNote ? 'Copiado com Sucesso!' : 'Copiar para Área de Transferência'}
-          </Button>
-        </ModalFooter>
-      </Modal>
-
-      {/* MODAL 2: Confirmação de Mudança de Etapa (toda transição passa por aqui) */}
-      {pendingStageModal && (() => {
-        const hasMissingCriteria = pendingStageModal.missingCriteria.length > 0;
-        const targetIdx = GOV_STAGES_CATALOG.indexOf(pendingStageModal.targetStage);
-        const currentIdx = GOV_STAGES_CATALOG.indexOf(currentGovStage);
-        const isBackward = targetIdx < currentIdx;
-
-        return (
-          <Modal
-            isOpen
-            onClose={() => setPendingStageModal(null)}
-            title={hasMissingCriteria ? 'Atenção: Critérios de Saída Incompletos' : 'Confirmar Mudança de Etapa'}
-            size="md"
-          >
-            <div className="flex items-center gap-2 text-warning-600 -mt-1">
-              <AlertOctagon className="w-5 h-5" />
-              <span className="text-xs font-semibold">
-                {STAGE_NAMES[currentGovStage]} → {STAGE_NAMES[pendingStageModal.targetStage]}
-              </span>
+        {showAdjustments && (
+          <div className="space-y-5 pt-1 border-t border-grey-100">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+              <Field label="Tipo técnico" hint={typeInfo?.shortDesc}>
+                <Select
+                  value={projectType}
+                  disabled={!canEdit}
+                  onChange={(e) => updateInputs({ ...inputs, projectType: e.target.value as ProjectType })}
+                >
+                  {(['A', 'B', 'C'] as ProjectType[]).map((t) => (
+                    <option key={t} value={t}>
+                      Tipo {t} — {config.projectTypeInfo[t]?.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Data de início">
+                <Input
+                  type="date"
+                  value={inputs.startDate}
+                  disabled={!canEdit}
+                  onChange={(e) => e.target.value && updateInputs({ ...inputs, startDate: e.target.value })}
+                  className="font-mono"
+                />
+              </Field>
+              <Field label="Ferramenta de geração">
+                <Select
+                  value={generationTool}
+                  disabled={!canEdit}
+                  onChange={(e) => updateInputs({ ...inputs, generationTool: e.target.value })}
+                >
+                  {config.auxiliaryLists.generationTools.map((tool) => (
+                    <option key={tool} value={tool}>
+                      {tool}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
             </div>
 
-            {isBackward && !hasMissingCriteria && (
-              <p className="text-xs text-warning-600 bg-warning-50 border border-warning-200 rounded-lg p-2.5 font-medium">
-                ⚠️ Isso volta a esteira para uma etapa anterior.
-              </p>
-            )}
-
-            {hasMissingCriteria ? (
-              <>
-                <p className="text-xs text-grey-600">
-                  Você está avançando para a etapa <strong>{STAGE_NAMES[pendingStageModal.targetStage]}</strong>, mas os seguintes critérios de saída da governança ainda não foram validados:
-                </p>
-
-                <div className="p-3 bg-warning-50 rounded-lg border border-warning-200 space-y-1.5 text-xs text-warning-600 font-medium">
-                  {pendingStageModal.missingCriteria.map((item, i) => (
-                    <div key={i} className="flex items-start gap-1.5">
-                      <span className="text-warning-600 font-bold">•</span>
-                      <span>{item}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-grey-600">Módulos extras (somam horas)</h4>
+                {config.modulesCatalog.map((mod) => {
+                  const applied = inputs.modules.some((m) => m.id === mod.id && m.applied);
+                  return (
+                    <div
+                      key={mod.id}
+                      className={`p-2.5 rounded-lg border ${applied ? 'border-info-500 bg-info-50/60' : 'border-grey-200'}`}
+                    >
+                      <ChecklistItem
+                        checked={applied}
+                        onToggle={() => toggleModule(mod.id)}
+                        disabled={!canEdit}
+                        trailing={<span className="text-xs font-mono font-bold text-info-700 shrink-0">+{fmtHours(mod.hours)}</span>}
+                      >
+                        <span className="text-xs font-semibold text-grey-900">{mod.label}</span>
+                        <p className="text-[11px] text-grey-500 mt-0.5">Entra em {stageLabel(mod.stageId)}</p>
+                      </ChecklistItem>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
 
-                <Field label="Justificativa para avanço extraordinário:">
-                  <Textarea
-                    rows={3}
-                    placeholder="Informe o motivo ou aprovação formal para avançar mesmo com critérios em aberto..."
-                    value={stageJustification}
-                    onChange={(e) => setStageJustification(e.target.value)}
-                    className="bg-grey-50 focus:bg-white"
-                  />
-                </Field>
-              </>
-            ) : (
-              <p className="text-xs text-grey-600">
-                Confirma a mudança da etapa da esteira de <strong>{STAGE_NAMES[currentGovStage]}</strong> para{' '}
-                <strong>{STAGE_NAMES[pendingStageModal.targetStage]}</strong>? Essa mudança fica registrada no
-                histórico de auditoria da solução.
-              </p>
-            )}
-
-            <ModalFooter>
-              <Button color="secondary" onClick={() => setPendingStageModal(null)}>
-                Cancelar
-              </Button>
-              <Button
-                color={hasMissingCriteria ? 'danger' : 'primary'}
-                onClick={() =>
-                  applyStageTransition(
-                    pendingStageModal.targetStage,
-                    hasMissingCriteria ? stageJustification || 'Avanço autorizado com critérios parciais' : undefined
-                  )
-                }
-              >
-                {hasMissingCriteria ? 'Confirmar Avanço de Etapa' : 'Confirmar Mudança'}
-              </Button>
-            </ModalFooter>
-          </Modal>
-        );
-      })()}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-grey-600">
+                  Itens já atendidos (descontam horas)
+                </h4>
+                {currentStage === 'E0' && (
+                  <p className="text-[11px] text-warning-600 flex items-center gap-1">
+                    <Info className="w-3 h-3" /> A confirmação fica liberada a partir de {stageLabel('E1')}.
+                  </p>
+                )}
+                {config.discountsCatalog.map((disc) => {
+                  const item = inputs.discounts.find((d) => d.id === disc.id);
+                  const declared = !!item?.declared;
+                  const confirmed = !!item?.confirmed;
+                  const canConfirm = declared && currentStage !== 'E0';
+                  return (
+                    <div
+                      key={disc.id}
+                      className={`p-2.5 rounded-lg border ${
+                        confirmed ? 'border-brand-main bg-brand-lighter/50' : declared ? 'border-warning-200 bg-warning-50/40' : 'border-grey-200'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-xs font-semibold text-grey-900">{disc.label}</span>
+                        <span className="text-xs font-mono font-bold text-brand-dark shrink-0">−{fmtHours(disc.hours)}</span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-4">
+                        <ChecklistItem checked={declared} onToggle={() => toggleDiscount(disc.id, 'declared')} disabled={!canEdit}>
+                          <span className="text-xs text-grey-700">Declarado no cadastro</span>
+                        </ChecklistItem>
+                        <ChecklistItem
+                          checked={confirmed}
+                          onToggle={() => toggleDiscount(disc.id, 'confirmed')}
+                          disabled={!canEdit || !canConfirm}
+                        >
+                          <span className={`text-xs font-semibold ${canConfirm ? 'text-brand-dark' : 'text-grey-400'}`}>
+                            Confirmado pela T.I
+                          </span>
+                        </ChecklistItem>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
     </div>
   );
 };

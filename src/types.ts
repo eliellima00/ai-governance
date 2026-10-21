@@ -21,7 +21,9 @@ export type ProjectStage =
 export type ExecutivePriority = string;
 
 // --- Navegação Mestre-Detalhe ---
-export type ProjectTab = 'glpi' | 'artifacts' | 'diagnostic' | 'action_plan' | 'evolution' | 'estimation';
+// Etapas da esteira que viram abas do projeto (o estado "Concluído" não tem aba própria).
+export type StageTab = 'E0' | 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6';
+export type ProjectTab = 'overview' | 'ficha' | 'estimation' | StageTab;
 
 export type Route =
   | { name: 'portfolio' }
@@ -124,7 +126,9 @@ export interface ActionItem {
   dimension: 'Segurança' | 'LGPD' | 'Operacional' | 'Governança';
   notes?: string;
   completionDate?: string;
-  evidence?: string;
+  evidence?: string; // Texto livre ou link (http...) para a evidência de conclusão
+  // Etapa da esteira em que a tarefa é executada. Ausente em registros antigos: ver inferActionStage.
+  stage?: StageTab;
 }
 
 export interface ScheduledMeeting {
@@ -167,6 +171,7 @@ export interface ProjectArtifact {
   category: ArtifactCategory;
   fileType: ArtifactFileType;
   url?: string; // Link direto do Google Drive, SharePoint, OneDrive, GLPI, etc.
+  // Legado: o upload de arquivo foi removido (só links agora); arquivos já anexados continuam baixáveis.
   fileName?: string;
   fileSize?: string;
   fileData?: string; // Data URI ou base64 para arquivos locais
@@ -193,6 +198,7 @@ export interface MeetingDiaryEntry {
   linkedArtifactId?: string; // ID ou título do documento associado
   linkedArtifactTitle?: string;
   createdAt?: string;
+  stage?: StageTab; // Etapa da esteira em que a reunião aconteceu (ausente em registros antigos)
 }
 
 export interface SolutionProject {
@@ -250,7 +256,9 @@ export interface SolutionProject {
   };
   criteria: RiskCriterion[];
   actionPlan: ActionItem[];
-  technicalDoc: {
+  // Legado: a "Documentação Viva" saiu da interface; o bloco continua sendo carregado/salvo
+  // para não perder dados já gravados. Só `classification` ainda aparece (na Ficha).
+  technicalDoc?: {
     version: string;
     classification: string;
     frontend: string;

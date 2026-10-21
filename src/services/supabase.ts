@@ -34,6 +34,29 @@ export function isSupabaseConfigured(): boolean {
 }
 
 /**
+ * Insere linhas que carregam a coluna `stage` (migration 20261021000000). Se o banco ainda não
+ * recebeu essa migration, o insert falha por coluna inexistente — como o save apaga as linhas
+ * antes de reinserir, isso perderia as tarefas/reuniões. Nesse caso reinsere sem a coluna.
+ */
+async function insertWithOptionalStage(table: string, rows: Record<string, unknown>[]): Promise<void> {
+  const client = getSupabaseClient();
+  if (!client) return;
+  const { error } = await client.from(table).insert(rows);
+  if (!error) return;
+  const isMissingStageColumn =
+    error.code === 'PGRST204' || (error as any).code === '42703' || error.message?.includes('stage');
+  if (!isMissingStageColumn) {
+    console.warn(`Aviso ao salvar ${table} no Supabase:`, error.message || error);
+    return;
+  }
+  console.info(`ℹ️ [Supabase] Coluna 'stage' ausente em ${table}; rode \`npm run migrate\`. Salvando sem a etapa.`);
+  const { error: retryError } = await client
+    .from(table)
+    .insert(rows.map(({ stage: _stage, ...rest }) => rest));
+  if (retryError) console.warn(`Aviso ao salvar ${table} no Supabase:`, retryError.message || retryError);
+}
+
+/**
  * Verifica de forma segura se as tabelas relacionais do Supabase já foram criadas
  */
 export async function checkSupabaseTablesExist(): Promise<boolean> {
@@ -175,7 +198,8 @@ export async function fetchProjectsFromSupabase(): Promise<SolutionProject[] | n
       dimension: a.dimension,
       notes: a.notes || undefined,
       evidence: a.evidence || undefined,
-      completionDate: a.completion_date || undefined
+      completionDate: a.completion_date || undefined,
+      stage: a.stage || undefined
     });
     actionsMap.set(a.project_id, list);
   });
@@ -215,7 +239,8 @@ export async function fetchProjectsFromSupabase(): Promise<SolutionProject[] | n
       hoursSpent: Number(m.hours_spent) || 1,
       linkedArtifactId: m.linked_artifact_id || undefined,
       linkedArtifactTitle: m.linked_artifact_title || undefined,
-      createdAt: m.created_at
+      createdAt: m.created_at,
+      stage: m.stage || undefined
     });
     meetingsMap.set(m.project_id, list);
   });
@@ -340,7 +365,8 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
     // 3. Atualizar ações
     await client.from('project_actions').delete().eq('project_id', project.id);
     if (project.actionPlan && project.actionPlan.length > 0) {
-      await client.from('project_actions').insert(
+      await insertWithOptionalStage(
+        'project_actions',
         project.actionPlan.map((a) => ({
           id: a.id,
           project_id: project.id,
@@ -353,7 +379,8 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
           dimension: a.dimension,
           notes: a.notes || null,
           evidence: a.evidence || null,
-          completion_date: a.completionDate || null
+          completion_date: a.completionDate || null,
+          stage: a.stage || null
         }))
       );
     }
@@ -383,7 +410,8 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
     // 5. Atualizar acompanhamento / atas
     await client.from('project_meeting_logs').delete().eq('project_id', project.id);
     if (project.meetingLogs && project.meetingLogs.length > 0) {
-      await client.from('project_meeting_logs').insert(
+      await insertWithOptionalStage(
+        'project_meeting_logs',
         project.meetingLogs.map((m) => ({
           id: m.id,
           project_id: project.id,
@@ -396,7 +424,8 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
           registered_by: m.registeredBy,
           hours_spent: m.hoursSpent || 1,
           linked_artifact_id: m.linkedArtifactId || null,
-          linked_artifact_title: m.linkedArtifactTitle || null
+          linked_artifact_title: m.linkedArtifactTitle || null,
+          stage: m.stage || null
         }))
       );
     }

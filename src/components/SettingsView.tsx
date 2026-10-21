@@ -161,7 +161,8 @@ CREATE TABLE IF NOT EXISTS project_actions (
     dimension VARCHAR(50) NOT NULL,
     notes TEXT,
     evidence TEXT,
-    completion_date VARCHAR(50)
+    completion_date VARCHAR(50),
+    stage VARCHAR(10)
 );
 
 CREATE TABLE IF NOT EXISTS project_artifacts (
@@ -193,6 +194,7 @@ CREATE TABLE IF NOT EXISTS project_meeting_logs (
     hours_spent NUMERIC DEFAULT 1,
     linked_artifact_id VARCHAR(100),
     linked_artifact_title VARCHAR(255),
+    stage VARCHAR(10),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -757,8 +759,8 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
             <div className="border-b border-grey-100 pb-3 mb-1">
               <h3 className="text-sm font-extrabold text-grey-900">Listas & Categorias</h3>
               <p className="text-xs text-grey-500">
-                Valores que aparecem nos selects do app (Novo Projeto, Ficha GLPI, filtros do Portfólio,
-                Artefatos e Acompanhamento). Adicione, renomeie, reordene ou remova sem alterar código —
+                Valores que aparecem nos selects do app (Novo Projeto, Ficha, filtros do Portfólio,
+                Documentos e Reuniões). Adicione, renomeie, reordene ou remova sem alterar código —
                 remover um item daqui não apaga nada de projetos que já usam aquele valor.
               </p>
             </div>
@@ -827,8 +829,8 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
 
             <Card>
               <ListCrudEditor
-                label="Categoria de Artefato"
-                description="Usado na aba Artefatos & Diário (Documentos & Artefatos)."
+                label="Categoria de Documento"
+                description="Usado na lista de Documentos & links da aba Ficha & Documentos."
                 items={formData.auxiliaryLists.artifactCategories}
                 disabled={!isAdmin}
                 onChange={(items) =>
@@ -842,8 +844,8 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
 
             <Card>
               <ListCrudEditor
-                label="Tipo de Registro do Acompanhamento"
-                description="Usado na aba Artefatos & Acompanhamento."
+                label="Tipo de Reunião"
+                description="Usado no registro de reuniões & atas de cada etapa."
                 items={formData.auxiliaryLists.meetingEntryTypes}
                 disabled={!isAdmin}
                 onChange={(items) =>
@@ -864,8 +866,8 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
           <div className="border-b border-grey-100 pb-3">
             <h3 className="text-sm font-extrabold text-grey-900">Funcionalidades (Beta)</h3>
             <p className="text-xs text-grey-500">
-              Telas avançadas desligadas por padrão para manter o módulo de gestão sucinto (Ficha,
-              Apontamentos, Artefatos e Plano de Ação). O código continua no projeto — reative aqui
+              Telas avançadas desligadas por padrão para manter o acompanhamento dos projetos
+              sucinto. O código continua no projeto — reative aqui
               quando quiser voltar a usá-las, sem precisar de deploy.
             </p>
           </div>
@@ -893,8 +895,8 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                   Evolução detalhada (gráfico de burn-down)
                 </span>
                 <span className="text-[11px] text-grey-500">
-                  Mostra, na aba Evolução, o gráfico cronológico de queda de risco. Por padrão a aba
-                  mostra só o resumo (score inicial, residual e evolução por dimensão).
+                  Mostra, na etapa E6 - Encerramento, o gráfico cronológico de queda de risco. Por padrão
+                  aparece só o resumo (risco inicial, atual e evolução por dimensão).
                 </span>
               </span>
             </label>

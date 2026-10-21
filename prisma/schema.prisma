@@ -78,6 +78,7 @@ model ProjectAction {
   notes             String?  @db.Text
   evidence          String?  @db.Text
   completionDate    String?  @map("completion_date") @db.VarChar(50)
+  stage             String?  @db.VarChar(10)
 
   project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -119,6 +120,7 @@ model ProjectMeetingLog {
   hoursSpent          Decimal?  @default(1) @map("hours_spent") @db.Decimal
   linkedArtifactId    String?   @map("linked_artifact_id") @db.VarChar(100)
   linkedArtifactTitle String?   @map("linked_artifact_title") @db.VarChar(255)
+  stage               String?   @db.VarChar(10)
   createdAt           DateTime? @default(now()) @map("created_at") @db.Timestamptz
 
   project             Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { AlertTriangle, CalendarClock, RotateCcw, Star } from 'lucide-react';
-import { EstimationInputs, GovStage, SolutionProject, UserRole } from '../types';
+import { EstimationInputs, GovStage, ProjectTab, SolutionProject, UserRole } from '../types';
 import {
   computeEstimation,
   diffDays,
@@ -22,7 +22,7 @@ interface PortfolioGanttViewProps {
   onUpdateProject: (updated: SolutionProject) => void;
   onSelectProjectAndNavigate: (
     project: SolutionProject,
-    targetTab: 'glpi' | 'diagnostic' | 'action_plan' | 'evolution' | 'estimation'
+    targetTab: ProjectTab
   ) => void;
 }
 

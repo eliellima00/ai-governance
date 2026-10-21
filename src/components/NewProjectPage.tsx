@@ -98,6 +98,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       actionPlan.push({
         id: actId++,
         title: 'Adequação LGPD e mapeamento de dados pessoais',
+        stage: 'E3',
         responsible: 'TI / Compliance',
         deadline: '30 dias',
         priority: 'Alta',
@@ -120,6 +121,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       actionPlan.push({
         id: actId++,
         title: 'Controle de acesso granular e proteção contra vazamento',
+        stage: 'E3',
         responsible: 'TI Segurança',
         deadline: '15 dias',
         priority: 'Crítica',
@@ -142,6 +144,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       actionPlan.push({
         id: actId++,
         title: 'Autenticação segura e rotação de credenciais de integração',
+        stage: 'E3',
         responsible: 'TI Dev',
         deadline: '20 dias',
         priority: 'Crítica',
@@ -164,6 +167,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       actionPlan.push({
         id: actId++,
         title: 'Migração para Shared Drive corporativo e rotina de backup',
+        stage: 'E4',
         responsible: 'TI Infra',
         deadline: '10 dias',
         priority: 'Alta',
@@ -186,6 +190,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       actionPlan.push({
         id: actId++,
         title: 'Implementação de autenticação e logs de auditoria externa',
+        stage: 'E3',
         responsible: 'TI Dev',
         deadline: '25 dias',
         priority: 'Alta',
@@ -208,6 +213,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       actionPlan.push({
         id: actId++,
         title: 'Definição de responsável formal de sustentação e homologação',
+        stage: 'E5',
         responsible: 'Gestão TI',
         deadline: '7 dias',
         priority: 'Alta',
@@ -230,6 +236,7 @@ export const NewProjectPage: React.FC<NewProjectPageProps> = ({
       actionPlan.push({
         id: actId++,
         title: 'Elaborar Documentação Técnica e Funcional Padrão ATTO',
+        stage: 'E2',
         responsible: techResp || 'Dev Responsável',
         deadline: '15 dias',
         priority: 'Alta',

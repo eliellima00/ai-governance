@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ShieldAlert,
-  AlertOctagon,
-  CheckCircle2,
   Lock,
   Database,
   Users,
@@ -22,7 +19,6 @@ import {
   Input,
   Modal,
   ModalFooter,
-  PageHeader,
   Select,
   Table,
   Thead,
@@ -32,14 +28,12 @@ import {
   Td,
   Textarea,
   ProgressBar,
-  ChecklistItem,
-  StatTile
+  ChecklistItem
 } from './ui';
 
 interface AiDiagnosticViewProps {
   project: SolutionProject;
   userRole: UserRole;
-  onNavigateToActionPlan: () => void;
   onAddCriterion: (item: Omit<RiskCriterion, 'id'>) => void;
   onEditCriterion: (item: RiskCriterion) => void;
   onDeleteCriterion: (id: string) => void;
@@ -50,7 +44,6 @@ type CriterionDimension = 'Segurança' | 'LGPD' | 'Operacional';
 export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
   project,
   userRole,
-  onNavigateToActionPlan,
   onAddCriterion,
   onEditCriterion,
   onDeleteCriterion
@@ -129,71 +122,21 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Sub-Header */}
-      <div className="bg-white border border-grey-200 rounded-lg p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-brand-lighter text-brand-dark rounded-lg border border-brand-light shrink-0">
-            <ShieldAlert className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Badge className="bg-brand-lighter text-brand-dark border-transparent">
-                Diagnóstico de Risco por Regras
-              </Badge>
-              <span className="text-xs text-grey-500 font-mono">Motor Determinístico T.I</span>
-            </div>
-            <PageHeader
-              title="Parecer Técnico de Criticidade & Avaliação Inicial"
-              subtitle="Classificação por regras a partir do cadastro — declaração a confirmar na Reunião de Entendimento (E1)."
-            />
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-6">
-          {/* Executive Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Overall Score — custom block: StatTile has no decorative-icon slot */}
-            <div className="relative overflow-hidden text-left rounded-lg border border-grey-800 bg-grey-900 text-white p-3.5 min-w-0">
-              <div className="relative">
-                <span className="text-xs font-semibold text-grey-300">Pontuação Total por Regras</span>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-2xl font-black">{project.initialScore}</span>
-                  <span className="text-[11px] text-red-400 font-semibold uppercase">pontos</span>
-                </div>
-                <div className="mt-2">
-                  <Badge className={`${riskColor.badge} border-transparent`}>
-                    <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                    <span>Risco Inicial: {project.initialRisk}</span>
-                  </Badge>
-                </div>
+          {/* Pontuação inicial por regras */}
+          <div className="flex flex-wrap items-center gap-4 rounded-lg border border-grey-800 bg-grey-900 text-white p-4">
+            <div>
+              <span className="text-xs font-semibold text-grey-300 block">Risco inicial (diagnóstico por regras)</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl font-black">{project.initialScore}</span>
+                <span className="text-[11px] text-grey-300 font-semibold uppercase">pontos</span>
               </div>
             </div>
-
-            {/* Category Card */}
-            <StatTile
-              label="Categoria da Solução"
-              value={project.technicalDoc?.classification || 'Classificação a definir'}
-              subtext={`Área responsável: ${project.department}`}
-            />
-
-            {/* TI Mandate */}
-            <StatTile
-              label="Aprovação da T.I"
-              icon={<AlertOctagon className="w-5 h-5" />}
-              iconClassName="bg-warning-50 text-warning-600"
-              value={<span className="text-warning-600">Obrigatória</span>}
-              subtext="Exige esteira com Reunião de Entendimento (E1) e homologação."
-            />
-
-            {/* Security Audit */}
-            <StatTile
-              label="Revisão de Segurança"
-              icon={<CheckCircle2 className="w-5 h-5" />}
-              iconClassName="bg-brand-lighter text-brand-dark"
-              value={<span className="text-brand-dark">Necessária</span>}
-              subtext="Controle de acessos, segregação de credenciais e proteção LGPD."
-            />
+            <Badge className={`${riskColor.badge} border-transparent`}>{project.initialRisk}</Badge>
+            <p className="text-xs text-grey-300 flex-1 min-w-[200px]">
+              Classificação a partir do cadastro: confirme cada critério na reunião de diagnóstico.
+              Ao mexer nos critérios, a pontuação e o risco inicial são recalculados automaticamente.
+            </p>
           </div>
 
           {/* Detailed Dimensions Breakdown */}
@@ -279,12 +222,6 @@ export const AiDiagnosticView: React.FC<AiDiagnosticViewProps> = ({
                     Adicionar Critério
                   </Button>
                 )}
-                <button
-                  onClick={onNavigateToActionPlan}
-                  className="text-xs text-brand-dark font-bold hover:underline whitespace-nowrap"
-                >
-                  Ver Plano de Ação & Mitigações →
-                </button>
               </div>
             </div>
             <Table>

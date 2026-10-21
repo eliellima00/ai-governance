@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS project_actions (
     dimension VARCHAR(50) NOT NULL,
     notes TEXT,
     evidence TEXT,
-    completion_date VARCHAR(50)
+    completion_date VARCHAR(50),
+    stage VARCHAR(10)
 );
 
 -- 5. Tabela Relacional: Artefatos e Documentos Anexados
@@ -105,6 +106,7 @@ CREATE TABLE IF NOT EXISTS project_meeting_logs (
     hours_spent NUMERIC DEFAULT 1,
     linked_artifact_id VARCHAR(100),
     linked_artifact_title VARCHAR(255),
+    stage VARCHAR(10),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

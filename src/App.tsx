@@ -10,6 +10,7 @@ import {
   UserRole
 } from './types';
 import { computeResidualScore, recomputeInitialFromCriteria } from './utils/riskCalculations';
+import { isStageTab } from './utils/projectStatus';
 import { can } from './utils/permissions';
 import { loadState, saveState, resetToDefaultState } from './utils/storage';
 import { getActiveConfig } from './config/governanceConfig';
@@ -25,17 +26,30 @@ import { testSupabaseConnection } from './services/supabase';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { ProjectWorkspaceHeader } from './components/ProjectWorkspaceHeader';
-import { GlpiAssetView } from './components/GlpiAssetView';
-import { AiDiagnosticView } from './components/AiDiagnosticView';
-import { ActionPlanView } from './components/ActionPlanView';
-import { CriticalityEvolutionView } from './components/CriticalityEvolutionView';
+import { ProjectOverviewView } from './components/ProjectOverviewView';
+import { ProjectFichaView } from './components/ProjectFichaView';
+import { StageView } from './components/StageView';
 import { ProjectPortfolioDashboard } from './components/ProjectPortfolioDashboard';
 import { EstimationScheduleView } from './components/EstimationScheduleView';
 import { SettingsView } from './components/SettingsView';
 import { NewProjectPage } from './components/NewProjectPage';
 import { MyWeekView } from './components/MyWeekView';
-import { ProjectFollowUpView } from './components/ProjectFollowUpView';
 import { AppTour } from './components/tour/AppTour';
+
+// Abas antigas (antes da navegação por etapas) continuam abrindo o lugar equivalente
+const LEGACY_TAB_MAP: Record<string, ProjectTab> = {
+  glpi: 'ficha',
+  artifacts: 'ficha',
+  diagnostic: 'E1',
+  action_plan: 'overview',
+  evolution: 'E6'
+};
+
+function normalizeProjectTab(raw?: string): ProjectTab {
+  if (!raw) return 'overview';
+  if (raw === 'overview' || raw === 'ficha' || raw === 'estimation' || isStageTab(raw)) return raw;
+  return LEGACY_TAB_MAP[raw] || 'overview';
+}
 
 // Helper to parse URL hash into Route
 function parseHashToRoute(): Route | null {
@@ -54,19 +68,10 @@ function parseHashToRoute(): Route | null {
   }
   const parts = hash.split('/');
   if (parts[0] === 'project' && parts[1]) {
-    const validTabs: ProjectTab[] = [
-      'glpi',
-      'artifacts',
-      'diagnostic',
-      'action_plan',
-      'evolution',
-      'estimation'
-    ];
-    const tab = validTabs.includes(parts[2] as ProjectTab) ? (parts[2] as ProjectTab) : 'glpi';
     return {
       name: 'project',
       projectId: parts[1],
-      tab
+      tab: normalizeProjectTab(parts[2])
     };
   }
   return null;
@@ -235,7 +240,7 @@ export default function App() {
   }, []);
 
   const navigateToProject = useCallback(
-    (projectId: string, tab: ProjectTab = 'glpi') => {
+    (projectId: string, tab: ProjectTab = 'overview') => {
       setRoute({
         name: 'project',
         projectId,
@@ -379,40 +384,10 @@ export default function App() {
     applyCriteriaChange(currentProject.criteria.filter((c) => c.id !== id));
   };
 
-  const handleSaveGlpiAsset = (updatedFields: {
-    name: string;
-    status: any;
-    technicalResponsible: string;
-    groupEncargado: string;
-    businessResponsible: string;
-    objective: string;
-    initialDoc: string;
-    assetId: string;
-    glpiTicketId: string;
-    technicalDoc: SolutionProject['technicalDoc'];
-    links: SolutionProject['links'];
-  }) => {
-    setProjects((prevProjects) =>
-      prevProjects.map((proj) => {
-        if (proj.id !== currentProject.id) return proj;
-        const updated = {
-          ...proj,
-          ...updatedFields,
-          lastUpdated:
-            new Date().toLocaleDateString('pt-BR') +
-            ' ' +
-            new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        };
-        persistProject(updated).catch(console.error);
-        return updated;
-      })
-    );
-  };
-
   const handleAddNewProject = (newProj: SolutionProject) => {
     setProjects([newProj, ...projects]);
     persistProject(newProj).catch(console.error);
-    navigateToProject(newProj.id, 'diagnostic');
+    navigateToProject(newProj.id, 'E1');
   };
 
   const handleUpdateConfig = (newConfig: GovernanceConfig) => {
@@ -469,9 +444,6 @@ export default function App() {
             project={currentProject}
             activeTab={route.tab}
             onSelectTab={selectProjectTab}
-            residualScore={residualStats.currentResidualScore}
-            completedActions={currentProject.actionPlan.filter((a) => a.status === 'Concluído').length}
-            totalActions={currentProject.actionPlan.length}
             config={governanceConfig}
           />
         )}
@@ -515,53 +487,33 @@ export default function App() {
             />
           )}
 
-          {route.name === 'project' && route.tab === 'glpi' && currentProject && (
-            <GlpiAssetView
-              project={currentProject}
-              residualScore={residualStats.currentResidualScore}
-              userRole={userRole}
-              onNavigateTab={selectProjectTab}
-              onSave={handleSaveGlpiAsset}
-            />
+          {route.name === 'project' && route.tab === 'overview' && currentProject && (
+            <ProjectOverviewView project={currentProject} onNavigateTab={selectProjectTab} />
           )}
 
-          {route.name === 'project' && route.tab === 'artifacts' && currentProject && (
-            <ProjectFollowUpView
+          {route.name === 'project' && route.tab === 'ficha' && currentProject && (
+            <ProjectFichaView
+              key={currentProject.id}
               project={currentProject}
               userRole={userRole}
               onUpdateProject={handleUpdateProject}
             />
           )}
 
-          {route.name === 'project' && route.tab === 'diagnostic' && currentProject && (
-            <AiDiagnosticView
+          {route.name === 'project' && isStageTab(route.tab) && currentProject && (
+            <StageView
               project={currentProject}
+              stage={route.tab}
               userRole={userRole}
-              onNavigateToActionPlan={() => selectProjectTab('action_plan')}
-              onAddCriterion={handleAddCriterion}
-              onEditCriterion={handleEditCriterion}
-              onDeleteCriterion={handleDeleteCriterion}
-            />
-          )}
-
-          {route.name === 'project' && route.tab === 'action_plan' && currentProject && (
-            <ActionPlanView
-              project={currentProject}
-              actionList={currentProject.actionPlan}
-              userRole={userRole}
+              residualScore={residualStats.currentResidualScore}
+              onUpdateProject={handleUpdateProject}
               onToggleActionStatus={handleToggleActionStatus}
               onAddActionItem={handleAddActionItem}
               onEditActionItem={handleEditActionItem}
               onDeleteActionItem={handleDeleteActionItem}
-              onNavigateToEvolution={() => selectProjectTab('evolution')}
-            />
-          )}
-
-          {route.name === 'project' && route.tab === 'evolution' && currentProject && (
-            <CriticalityEvolutionView
-              project={currentProject}
-              actionList={currentProject.actionPlan}
-              residualScore={residualStats.currentResidualScore}
+              onAddCriterion={handleAddCriterion}
+              onEditCriterion={handleEditCriterion}
+              onDeleteCriterion={handleDeleteCriterion}
             />
           )}
 
