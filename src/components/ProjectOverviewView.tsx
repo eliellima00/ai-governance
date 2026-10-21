@@ -47,11 +47,11 @@ export const ProjectOverviewView: React.FC<ProjectOverviewViewProps> = ({ projec
 
   return (
     <div className="space-y-6">
-      {/* Em que pé está */}
+      {/* Etapa atual */}
       <Card className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-grey-500">Em que pé está</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-grey-500">Etapa atual</span>
             <p className="text-base sm:text-lg font-bold text-grey-900 mt-1 leading-snug">{summary.sentence}</p>
           </div>
           <Button

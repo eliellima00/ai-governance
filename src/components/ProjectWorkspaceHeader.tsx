@@ -56,7 +56,7 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
         {/* Na Visão Geral o resumo já aparece em destaque no corpo da página */}
         {activeTab !== 'overview' && (
           <p className="text-sm text-grey-700 pb-4 leading-snug">
-            <span className="font-semibold text-grey-900">Em que pé está:</span> {summary.sentence}
+            <span className="font-semibold text-grey-900">Etapa atual:</span> {summary.sentence}
           </p>
         )}
       </div>
