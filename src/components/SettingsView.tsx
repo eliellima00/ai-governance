@@ -12,6 +12,8 @@ import {
   ChevronDown,
   ChevronRight,
   Database,
+  Plus,
+  Trash2,
   Copy,
   ExternalLink
 } from 'lucide-react';
@@ -21,7 +23,7 @@ import {
   saveGovernanceConfig,
   resetGovernanceConfig
 } from '../config/governanceConfig';
-import { GOV_STAGES_CATALOG } from '../data/estimationCatalog';
+import { DiscountDefinition, GOV_STAGES_CATALOG, ModuleDefinition } from '../data/estimationCatalog';
 import {
   exportStateAsJson,
   importStateFromJson,
@@ -38,6 +40,59 @@ import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
 import { ListCrudEditor } from './ui/ListCrudEditor';
 
 const EDITABLE_STAGES = GOV_STAGES_CATALOG.filter((s) => s !== 'Concluído');
+
+/** Próximo id livre de um catálogo (ex.: M7, D5), sem reaproveitar ids já usados por projetos. */
+function nextCatalogId(prefix: string, existing: string[]): string {
+  const max = existing.reduce((acc, id) => {
+    const n = Number(id.replace(prefix, ''));
+    return Number.isFinite(n) ? Math.max(acc, n) : acc;
+  }, 0);
+  return `${prefix}${max + 1}`;
+}
+
+const NumberField: React.FC<{
+  label: string;
+  value: number;
+  disabled?: boolean;
+  step?: string;
+  onChange: (value: number) => void;
+}> = ({ label, value, disabled, step = '1', onChange }) => (
+  <label className="flex items-center gap-1.5 text-[11px] font-semibold text-grey-600">
+    {label}:
+    <Input
+      type="number"
+      min={0}
+      step={step}
+      disabled={disabled}
+      value={value}
+      onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+      className="w-20 px-2 py-1 text-xs font-mono font-bold"
+    />
+  </label>
+);
+
+const StageSelect: React.FC<{
+  names: Record<GovStage, string>;
+  value: GovStage;
+  disabled?: boolean;
+  onChange: (stage: GovStage) => void;
+}> = ({ names, value, disabled, onChange }) => (
+  <label className="flex items-center gap-1.5 text-[11px] font-semibold text-grey-600">
+    Etapa:
+    <select
+      disabled={disabled}
+      value={value}
+      onChange={(e) => onChange(e.target.value as GovStage)}
+      className="px-2 py-1 border border-grey-300 rounded-md text-xs bg-white text-grey-900 disabled:bg-grey-100"
+    >
+      {EDITABLE_STAGES.map((stage) => (
+        <option key={stage} value={stage}>
+          {stage} - {names[stage]}
+        </option>
+      ))}
+    </select>
+  </label>
+);
 
 interface SettingsViewProps {
   /** Seção aberta, escolhida no menu lateral. */
@@ -230,6 +285,16 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
     }
   };
 
+  // Remover de um catálogo não mexe nos projetos: itens que não existem mais são ignorados no cálculo
+  const removeCatalogItem = (
+    key: 'modulesCatalog' | 'discountsCatalog' | 'exitCriteriaChecklist',
+    idx: number,
+    label: string
+  ) => {
+    if (!window.confirm(`Remover "${label}"? Projetos que usavam este item deixam de considerá-lo.`)) return;
+    setFormData((prev) => ({ ...prev, [key]: (prev[key] as unknown[]).filter((_, i) => i !== idx) }));
+  };
+
   const handleSave = () => {
     if (!isAdmin) return;
     saveGovernanceConfig(formData);
@@ -338,6 +403,45 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
       {/* Sub-tab 1: Motor de Estimativa */}
       {activeSubTab === 'estimation' && (
         <div className="space-y-6">
+          {/* Etapas da esteira: nome e objetivo (os códigos E0–E6 são fixos) */}
+          <Card className="space-y-4">
+            <div className="border-b border-grey-100 pb-3">
+              <h3 className="text-sm font-extrabold text-grey-900">Etapas da Esteira</h3>
+              <p className="text-xs text-grey-500">
+                Nome e objetivo de cada etapa, exibidos no menu do projeto e em todas as telas. Os códigos E0 a E6
+                são fixos.
+              </p>
+            </div>
+            <div className="space-y-2.5">
+              {EDITABLE_STAGES.map((stage) => (
+                <div key={stage} className="grid grid-cols-1 md:grid-cols-[3rem_1fr_2fr] gap-2 items-center">
+                  <Badge className="font-mono bg-grey-100 text-grey-800 border-grey-300 justify-center">{stage}</Badge>
+                  <Input
+                    disabled={!isAdmin}
+                    value={formData.stageNames[stage]}
+                    placeholder="Nome da etapa"
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, stageNames: { ...prev.stageNames, [stage]: e.target.value } }))
+                    }
+                    className="px-2.5 py-1 text-xs font-bold text-grey-900"
+                  />
+                  <Input
+                    disabled={!isAdmin}
+                    value={formData.stageDescriptions[stage]}
+                    placeholder="Objetivo da etapa"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        stageDescriptions: { ...prev.stageDescriptions, [stage]: e.target.value }
+                      }))
+                    }
+                    className="px-2.5 py-1 text-xs text-grey-700"
+                  />
+                </div>
+              ))}
+            </div>
+          </Card>
+
           {/* Tipos Técnicos A, B, C */}
           <Card className="space-y-4">
             <div className="flex items-center justify-between border-b border-grey-100 pb-3">
@@ -421,7 +525,34 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                     </button>
 
                     {isExpanded && (
-                      <div className="px-4 pb-4">
+                      <div className="px-4 pb-4 space-y-3">
+                        <div className="space-y-1.5">
+                          {(
+                            [
+                              ['label', 'Nome do tipo'],
+                              ['shortDesc', 'Descrição'],
+                              ['technologyHint', 'Stack sugerida']
+                            ] as const
+                          ).map(([field, placeholder]) => (
+                            <Input
+                              key={field}
+                              disabled={!isAdmin}
+                              value={info[field]}
+                              placeholder={placeholder}
+                              title={placeholder}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  projectTypeInfo: {
+                                    ...prev.projectTypeInfo,
+                                    [typeKey]: { ...prev.projectTypeInfo[typeKey], [field]: e.target.value }
+                                  }
+                                }))
+                              }
+                              className={`px-2 py-1 text-[11px] ${field === 'label' ? 'font-bold' : ''}`}
+                            />
+                          ))}
+                        </div>
                         <Table className="text-[10px] border-collapse">
                           <Thead>
                             <Tr className="hover:bg-transparent">
@@ -496,56 +627,81 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
             </div>
 
             <div className="space-y-3">
-              {formData.modulesCatalog.map((mod, idx) => (
-                <div
-                  key={mod.id}
-                  className="p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="flex-1 min-w-0">
+              {formData.modulesCatalog.map((mod, idx) => {
+                const update = (patch: Partial<ModuleDefinition>) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    modulesCatalog: prev.modulesCatalog.map((m, i) => (i === idx ? { ...m, ...patch } : m))
+                  }));
+                return (
+                  <div key={mod.id} className="p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <Badge className="font-mono bg-info-50 text-info-700 border-info-200">
-                        {mod.id}
-                      </Badge>
-                      <span className="text-xs font-bold text-grey-900 truncate">{mod.label}</span>
-                    </div>
-                    <p className="text-[11px] text-grey-500 mt-1">{mod.description}</p>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-1.5">
-                      <label className="text-[11px] font-semibold text-grey-600">Horas:</label>
+                      <Badge className="font-mono bg-info-50 text-info-700 border-info-200 shrink-0">{mod.id}</Badge>
                       <Input
-                        type="number"
                         disabled={!isAdmin}
-                        value={mod.hours}
-                        onChange={(e) => {
-                          const val = Math.max(0, Number(e.target.value) || 0);
-                          const updated = [...formData.modulesCatalog];
-                          updated[idx] = { ...updated[idx], hours: val };
-                          setFormData((prev) => ({ ...prev, modulesCatalog: updated }));
-                        }}
-                        className="w-20 px-2 py-1 text-xs font-mono font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        value={mod.label}
+                        placeholder="Nome do módulo"
+                        onChange={(e) => update({ label: e.target.value })}
+                        className="flex-1 px-2.5 py-1 text-xs font-bold text-grey-900"
                       />
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => removeCatalogItem('modulesCatalog', idx, mod.label)}
+                          className="p-1.5 text-grey-400 hover:text-danger-600 hover:bg-danger-50 rounded"
+                          title="Remover módulo"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <label className="text-[11px] font-semibold text-grey-600">Reuniões:</label>
-                      <Input
-                        type="number"
+                    <Input
+                      disabled={!isAdmin}
+                      value={mod.description || ''}
+                      placeholder="Descrição (quando aplicar este módulo)"
+                      onChange={(e) => update({ description: e.target.value })}
+                      className="px-2.5 py-1 text-xs text-grey-700"
+                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <StageSelect names={formData.stageNames} value={mod.stageId} disabled={!isAdmin} onChange={(stageId) => update({ stageId })} />
+                      <NumberField label="Horas" step="0.25" value={mod.hours} disabled={!isAdmin} onChange={(hours) => update({ hours })} />
+                      <NumberField label="Reuniões" value={mod.meetings} disabled={!isAdmin} onChange={(meetings) => update({ meetings: Math.round(meetings) })} />
+                      <NumberField
+                        label="Dependências externas"
+                        value={mod.externalDeps}
                         disabled={!isAdmin}
-                        value={mod.meetings}
-                        onChange={(e) => {
-                          const val = Math.max(0, Number(e.target.value) || 0);
-                          const updated = [...formData.modulesCatalog];
-                          updated[idx] = { ...updated[idx], meetings: val };
-                          setFormData((prev) => ({ ...prev, modulesCatalog: updated }));
-                        }}
-                        className="w-16 px-2 py-1 text-xs font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        onChange={(externalDeps) => update({ externalDeps: Math.round(externalDeps) })}
                       />
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+              {isAdmin && (
+                <Button
+                  color="secondary"
+                  size="sm"
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      modulesCatalog: [
+                        ...prev.modulesCatalog,
+                        {
+                          id: nextCatalogId('M', prev.modulesCatalog.map((m) => m.id)),
+                          label: 'Novo módulo',
+                          description: '',
+                          hours: 1,
+                          stageId: 'E3',
+                          meetings: 0,
+                          externalDeps: 0
+                        }
+                      ]
+                    }))
+                  }
+                >
+                  Adicionar módulo
+                </Button>
+              )}
             </div>
           </Card>
 
@@ -563,38 +719,72 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
             </div>
 
             <div className="space-y-3">
-              {formData.discountsCatalog.map((disc, idx) => (
-                <div
-                  key={disc.id}
-                  className="p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="flex-1 min-w-0">
+              {formData.discountsCatalog.map((disc, idx) => {
+                const update = (patch: Partial<DiscountDefinition>) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    discountsCatalog: prev.discountsCatalog.map((d, i) => (i === idx ? { ...d, ...patch } : d))
+                  }));
+                return (
+                  <div key={disc.id} className="p-3.5 rounded-lg border border-grey-200 bg-grey-50/50 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <Badge className="font-mono bg-brand-lighter text-brand-dark border-brand-light">
-                        {disc.id}
-                      </Badge>
-                      <span className="text-xs font-bold text-grey-900 truncate">{disc.label}</span>
+                      <Badge className="font-mono bg-brand-lighter text-brand-dark border-brand-light shrink-0">{disc.id}</Badge>
+                      <Input
+                        disabled={!isAdmin}
+                        value={disc.label}
+                        placeholder="Nome do item já atendido"
+                        onChange={(e) => update({ label: e.target.value })}
+                        className="flex-1 px-2.5 py-1 text-xs font-bold text-grey-900"
+                      />
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => removeCatalogItem('discountsCatalog', idx, disc.label)}
+                          className="p-1.5 text-grey-400 hover:text-danger-600 hover:bg-danger-50 rounded"
+                          title="Remover item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    <p className="text-[11px] text-grey-500 mt-1">{disc.description}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <label className="text-[11px] font-semibold text-grey-600">Desconto de Horas:</label>
                     <Input
-                      type="number"
                       disabled={!isAdmin}
-                      value={disc.hours}
-                      onChange={(e) => {
-                        const val = Math.max(0, Number(e.target.value) || 0);
-                        const updated = [...formData.discountsCatalog];
-                        updated[idx] = { ...updated[idx], hours: val };
-                        setFormData((prev) => ({ ...prev, discountsCatalog: updated }));
-                      }}
-                      className="w-20 px-2 py-1 text-xs font-mono font-bold text-brand-dark [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      value={disc.description || ''}
+                      placeholder="Descrição (o que a T.I precisa confirmar)"
+                      onChange={(e) => update({ description: e.target.value })}
+                      className="px-2.5 py-1 text-xs text-grey-700"
                     />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <StageSelect names={formData.stageNames} value={disc.stageId} disabled={!isAdmin} onChange={(stageId) => update({ stageId })} />
+                      <NumberField label="Desconto de horas" step="0.25" value={disc.hours} disabled={!isAdmin} onChange={(hours) => update({ hours })} />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+              {isAdmin && (
+                <Button
+                  color="secondary"
+                  size="sm"
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      discountsCatalog: [
+                        ...prev.discountsCatalog,
+                        {
+                          id: nextCatalogId('D', prev.discountsCatalog.map((d) => d.id)),
+                          label: 'Novo item já atendido',
+                          description: '',
+                          hours: 1,
+                          stageId: 'E3'
+                        }
+                      ]
+                    }))
+                  }
+                >
+                  Adicionar item
+                </Button>
+              )}
             </div>
           </Card>
         </div>
@@ -723,6 +913,16 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                     }}
                     className="flex-1 px-2.5 py-1 text-xs font-bold text-grey-900"
                   />
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => removeCatalogItem('exitCriteriaChecklist', idx, crit.title)}
+                      className="p-1.5 text-grey-400 hover:text-danger-600 hover:bg-danger-50 rounded"
+                      title="Remover critério"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 <Textarea
                   rows={2}
@@ -737,6 +937,24 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
                 />
               </div>
             ))}
+            {isAdmin && (
+              <Button
+                color="secondary"
+                size="sm"
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    exitCriteriaChecklist: [
+                      ...prev.exitCriteriaChecklist,
+                      { id: `crit-${Date.now()}`, title: 'Novo critério', description: '' }
+                    ]
+                  }))
+                }
+              >
+                Adicionar critério
+              </Button>
+            )}
           </div>
         </Card>
       )}
