@@ -11,7 +11,8 @@ export interface ProjectWorkspaceHeaderProps {
 }
 
 /**
- * Cabeçalho único da solução: identidade e resumo de "em que pé está".
+ * Cabeçalho único da solução: nome, identificação e risco atual (cada informação aparece uma vez na tela:
+ * etapa e andamento ficam no menu lateral e no corpo de cada página).
  * A navegação do projeto (Visão Geral, etapas E0–E6, Ficha, Estimativa) fica no menu lateral.
  */
 export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
@@ -36,10 +37,15 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
                 <Badge className="bg-info-50 text-info-700 border-info-200 font-mono">{project.assetId}</Badge>
               )}
               <Badge className="bg-purple-50 text-purple-800 border-purple-200">{typeLabel}</Badge>
-              {summary.blocked && <Badge className="bg-danger-50 text-danger-800 border-danger-300">Bloqueado</Badge>}
+              {/* Na Visão Geral o bloqueio já aparece no aviso detalhado */}
+              {summary.blocked && activeTab !== 'overview' && (
+                <Badge className="bg-danger-50 text-danger-800 border-danger-300">Bloqueado</Badge>
+              )}
             </div>
           </div>
 
+          {/* Na Visão Geral o risco já aparece no quadro "Risco" */}
+          {activeTab !== 'overview' && (
           <div className="flex items-center gap-2 bg-grey-50 px-3 py-1.5 rounded-full border border-grey-200 shrink-0">
             <div className="text-right">
               <span className="text-[9px] uppercase tracking-wider text-grey-500 font-bold block leading-tight">
@@ -51,16 +57,10 @@ export const ProjectWorkspaceHeader: React.FC<ProjectWorkspaceHeaderProps> = ({
               {RISK_LABELS[summary.risk.currentLevel]}
             </span>
           </div>
+          )}
         </div>
 
-        {/* Na Visão Geral o resumo já aparece em destaque no corpo da página */}
-        {activeTab !== 'overview' && (
-          <p className="text-sm text-grey-700 pb-4 leading-snug">
-            <span className="font-semibold text-grey-900">Etapa atual:</span> {summary.sentence}
-          </p>
-        )}
       </div>
-
     </div>
   );
 };

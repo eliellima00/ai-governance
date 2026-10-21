@@ -52,7 +52,14 @@ export const ProjectOverviewView: React.FC<ProjectOverviewViewProps> = ({ projec
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[11px] font-bold uppercase tracking-wider text-grey-500">Etapa atual</span>
-            <p className="text-base sm:text-lg font-bold text-grey-900 mt-1 leading-snug">{summary.sentence}</p>
+            <p className="text-base sm:text-lg font-bold text-grey-900 mt-1 leading-snug">
+              {summary.stageLabel}
+              {summary.stage !== 'Concluído' && (
+                <span className="ml-2 text-xs font-medium text-grey-500">
+                  etapa {summary.stageNumber} de {summary.totalStages}
+                </span>
+              )}
+            </p>
           </div>
           <Button
             color="secondary"
@@ -65,17 +72,7 @@ export const ProjectOverviewView: React.FC<ProjectOverviewViewProps> = ({ projec
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          <div className="rounded-lg border border-grey-200 p-3.5">
-            <span className="text-xs font-semibold text-grey-500">Etapa</span>
-            <div className="text-sm font-bold text-grey-900 mt-1">{summary.stageLabel}</div>
-            <div className="text-[11px] text-grey-500 mt-1">
-              {summary.stage === 'Concluído'
-                ? 'Todas as etapas concluídas'
-                : `Etapa ${summary.stageNumber} de ${summary.totalStages}`}
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="rounded-lg border border-grey-200 p-3.5">
             <span className="text-xs font-semibold text-grey-500">Tarefas da etapa</span>
             <div className="text-sm font-bold text-grey-900 mt-1">
