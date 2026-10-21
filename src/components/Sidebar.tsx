@@ -189,8 +189,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span className="truncate">Gestão de Demandas</span>}
           </button>
 
-          {/* Visões do portfólio */}
-          {activePortfolioView && (
+          {/* Visões do portfólio: continuam visíveis com um projeto aberto */}
+          {isPortfolioActive && (
             <div data-tour="portfolio-view-switcher">
               {subList(
                 PORTFOLIO_VIEW_ITEMS.map((item) => (
