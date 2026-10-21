@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, CalendarClock, RotateCcw, Star } from 'lucide-react';
+import { AlertTriangle, CalendarClock, RotateCcw } from 'lucide-react';
 import { EstimationInputs, GovStage, ProjectTab, SolutionProject, UserRole } from '../types';
 import {
   computeEstimation,
@@ -67,7 +67,7 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
   const canTogglePriority = can(userRole, 'toggle_priority');
   const [planningMode, setPlanningMode] = useState(false);
 
-  // Ordem de prioridade: pauta da gestão primeiro, depois a ordem da lista de prioridades
+  // Ordem de prioridade: a ordem da lista de prioridades, depois a data de entrega
   // (Configurações), depois a entrega planejada mais próxima.
   const rows = useMemo(() => {
     const priorityRank = (p: SolutionProject) => {
@@ -82,7 +82,6 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
       })
       .sort(
         (a, b) =>
-          Number(!!b.project.isPriorityForManagement) - Number(!!a.project.isPriorityForManagement) ||
           priorityRank(a.project) - priorityRank(b.project) ||
           diffDays(b.est.realistic.deliveryDate, a.est.realistic.deliveryDate)
       );
@@ -365,21 +364,6 @@ export const PortfolioGanttView: React.FC<PortfolioGanttViewProps> = ({
                     ))}
                   </select>
                 </label>
-
-                <button
-                  type="button"
-                  disabled={!canTogglePriority}
-                  onClick={() =>
-                    onUpdateProject({ ...project, isPriorityForManagement: !project.isPriorityForManagement })
-                  }
-                  className={`flex items-center gap-1 disabled:cursor-not-allowed ${
-                    project.isPriorityForManagement ? 'text-warning-600 font-semibold' : 'text-grey-500'
-                  }`}
-                  title="Marcar/desmarcar como prioridade para a gestão"
-                >
-                  <Star className={`w-3.5 h-3.5 ${project.isPriorityForManagement ? 'fill-current' : ''}`} />
-                  Pauta da gestão
-                </button>
 
                 {!isCompleted && currentStagePlan && (
                   <label className="flex items-center gap-1.5">

@@ -67,7 +67,7 @@ const TOUR_STEPS: TourStep[] = [
     selector: '[data-tour="portfolio-kpis"]',
     title: 'Indicadores do Portfólio',
     content:
-      'Acompanhe rapidamente o total de soluções, os itens priorizados pela gestão, impedimentos ativos e agendamentos marcados.',
+      'Acompanhe rapidamente o total de soluções, impedimentos ativos e agendamentos marcados.',
     placement: 'bottom'
   },
   {

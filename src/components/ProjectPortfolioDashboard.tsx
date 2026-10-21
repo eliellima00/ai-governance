@@ -3,7 +3,6 @@ import {
   Table as TableIcon,
   Calendar,
   AlertTriangle,
-  Star,
   Plus,
   Copy,
   Check,
@@ -275,12 +274,10 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStage, setFilterStage] = useState('all');
-  const [filterManagementOnly, setFilterManagementOnly] = useState(false);
   const [filterImpedimentOnly, setFilterImpedimentOnly] = useState(false);
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterProjectType, setFilterProjectType] = useState('all');
 
-  const [copiedPauta, setCopiedPauta] = useState(false);
   const [copiedItemId, setCopiedItemId] = useState<string | null>(null);
 
   // Modals
@@ -323,7 +320,6 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       if (filterStage !== 'all' && (p.stage || 'Levantamento & Ficha') !== filterStage) return false;
 
       // Management Only Filter
-      if (filterManagementOnly && !p.isPriorityForManagement) return false;
 
       // Impediment Only
       if (filterImpedimentOnly && !p.hasImpediment) return false;
@@ -341,7 +337,6 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     searchTerm,
     filterDepartment,
     filterStage,
-    filterManagementOnly,
     filterImpedimentOnly,
     filterPriority,
     filterProjectType
@@ -360,14 +355,12 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   // General KPI Statistics
   const stats = useMemo(() => {
     const total = projects.length;
-    const prioritizedForManagement = projects.filter((p) => p.isPriorityForManagement).length;
     const withImpediment = projects.filter((p) => p.hasImpediment).length;
     const withScheduledDate = projects.filter((p) => (p.scheduledMeetings?.length || 0) > 0).length;
     const inProduction = projects.filter((p) => p.stage === 'Em Produção / Operação').length;
 
     return {
       total,
-      prioritizedForManagement,
       withImpediment,
       withScheduledDate,
       inProduction
@@ -402,13 +395,6 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     });
   };
 
-  const handleTogglePrioritizeForManagement = (project: SolutionProject) => {
-    if (!canTogglePriority) return;
-    onUpdateProject({
-      ...project,
-      isPriorityForManagement: !project.isPriorityForManagement
-    });
-  };
 
   const handleNotificationChange = (project: SolutionProject, text: string) => {
     if (!canAnnotate) return;
@@ -471,68 +457,6 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
     });
   };
 
-  // Copy Executive Pauta to clipboard for WhatsApp / Email
-  const handleCopyManagementPauta = () => {
-    const managementProjects = projects.filter((p) => p.isPriorityForManagement);
-    const impedimentProjects = projects.filter((p) => p.hasImpediment);
-    const scheduledProjects = projects.filter((p) => (p.scheduledMeetings?.length || 0) > 0);
-
-    let text = `📋 *PAUTA EXECUTIVA DE DEMANDAS & PROJETOS - ATTO T.I*\n`;
-    text += `_Data: ${new Date().toLocaleDateString('pt-BR')}_\n\n`;
-
-    text += `⭐ *DEMANDAS PRIORITÁRIAS DA GESTÃO (${managementProjects.length}):*\n`;
-    managementProjects.forEach((p, idx) => {
-      const inputs = p.estimation || getDefaultEstimationInputs(p.projectType || 'A');
-      const est = computeEstimation(inputs);
-      const stageName = STAGE_NAMES[p.govStage || 'E1'] || p.govStage || 'E1';
-      const optDate = formatPtBrDate(est.optimistic.deliveryDate);
-      const realDate = formatPtBrDate(est.realistic.deliveryDate);
-
-      text += `${idx + 1}. *${p.name}* [${p.assetId}]\n`;
-      text += `   • Arquitetura: ${p.projectType === 'A' ? 'Google Workspace / Apps Script' : p.projectType === 'B' ? 'Container / VPS / Backend' : 'No-Code / Externo'} (${p.generationTool || 'Desenvolvimento'})\n`;
-      text += `   • Esteira T.I: ${p.govStage || 'E1'} - ${stageName}\n`;
-      text += `   • Janela de Entrega: [${optDate} → ${realDate}] (${est.effortTotalHours.toFixed(1)}h T.I)\n`;
-      text += `   • Responsável: ${p.businessResponsible} | Técnico: ${p.technicalResponsible}\n`;
-      if (p.notificationStatus) {
-        text += `   • Notificação/Canal: ${p.notificationStatus}\n`;
-      }
-      if (p.notes) {
-        text += `   • Anotações: ${p.notes}\n`;
-      }
-      text += `\n`;
-    });
-
-    if (impedimentProjects.length > 0) {
-      text += `⚠️ *IMPEDIMENTOS & AÇÕES REQUERIDAS DA GESTÃO (${impedimentProjects.length}):*\n`;
-      impedimentProjects.forEach((p, idx) => {
-        text += `${idx + 1}. *${p.name}*\n`;
-        text += `   • Bloqueio: ${p.impedimentDetails || 'Impedimento sinalizado'}\n`;
-        if (p.actionRequiredFromManagement) {
-          text += `   • 🚨 *Ação necessária da Gestão:* ${p.actionRequiredFromManagement}\n`;
-        }
-        text += `\n`;
-      });
-    }
-
-    if (scheduledProjects.length > 0) {
-      const totalMeetings = scheduledProjects.reduce((sum, p) => sum + (p.scheduledMeetings?.length || 0), 0);
-      text += `📅 *AGENDAMENTOS & PRÓXIMAS REUNIÕES (${totalMeetings}):*\n`;
-      scheduledProjects.forEach((p) => {
-        const meetings = [...(p.scheduledMeetings || [])].sort((a, b) => a.date.localeCompare(b.date));
-        text += `*${p.name}*\n`;
-        meetings.forEach((m) => {
-          text += `   • ${m.date} — ${m.subject || 'Alinhamento geral'}\n`;
-        });
-      });
-      text += `\n`;
-    }
-
-    text += `_Gerado via Painel de Governança de Soluções ATTO_\n`;
-
-    navigator.clipboard.writeText(text);
-    setCopiedPauta(true);
-    setTimeout(() => setCopiedPauta(false), 2500);
-  };
 
   return (
     <div id="project-portfolio-dashboard" className="space-y-6">
@@ -548,28 +472,11 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
             </span>
           </div>
           <p className="text-xs sm:text-sm text-grey-600 mt-1 max-w-3xl leading-relaxed">
-            Painel executivo de esteira, prioridades da gestão, impedimentos e alinhamentos de soluções setoriais.
+            Painel de esteira, prioridades, impedimentos e agendamentos das soluções setoriais.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
-          <Button
-            color="secondary"
-            size="sm"
-            onClick={handleCopyManagementPauta}
-            leftIcon={
-              copiedPauta ? (
-                <Check className="w-4 h-4 text-brand-main" />
-              ) : (
-                <Copy className="w-4 h-4 text-warning-600" />
-              )
-            }
-            className="bg-warning-50 border-warning-200 hover:bg-warning-100 text-grey-800 font-semibold"
-            title="Copiar pauta estruturada para alinhamento executivo no WhatsApp / Teams"
-          >
-            {copiedPauta ? 'Pauta Copiada!' : 'Copiar Pauta de Gestão'}
-          </Button>
-
           {can(userRole, 'create_solution') && (
             <Button
               color="primary"
@@ -585,7 +492,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5" data-tour="portfolio-kpis">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5" data-tour="portfolio-kpis">
         <StatTile
           label="Total Projetos"
           value={
@@ -596,23 +503,6 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           subtext={`${stats.inProduction} em produção estável`}
           icon={<TableIcon className="w-4 h-4" />}
           iconClassName="bg-grey-100 text-grey-700"
-        />
-
-        <StatTile
-          label="Pauta de Gestão"
-          value={
-            <>
-              {stats.prioritizedForManagement}{' '}
-              <span className="text-xs font-normal text-warning-600">priorizadas</span>
-            </>
-          }
-          subtext={
-            filterManagementOnly ? '✓ Filtro ativo (clique para limpar)' : 'Clique para filtrar pauta'
-          }
-          icon={<Star className="w-4 h-4 fill-warning-500 text-warning-500" />}
-          iconClassName="bg-warning-50 text-warning-600"
-          active={filterManagementOnly}
-          onClick={() => setFilterManagementOnly(!filterManagementOnly)}
         />
 
         <StatTile
@@ -734,9 +624,6 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
           <Table className="text-xs">
             <Thead>
               <Tr className="hover:bg-transparent">
-                <Th sticky="left" className="text-center w-12 bg-grey-50" title="Marcar para pauta de gestão">
-                  ⭐ Gestão
-                </Th>
                 <Th className="min-w-[200px]">Solução & Ativo GLPI</Th>
                 <Th className="min-w-[130px]">Área & Dono</Th>
                 <Th className="min-w-[150px]">Arquitetura & Esteira</Th>
@@ -755,43 +642,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                 const priorityStyle = getPriorityStyle(proj.executivePriority);
 
                 return (
-                  <Tr key={proj.id} className={proj.isPriorityForManagement ? 'bg-warning-50/30' : ''}>
-                    {/* 1. Prioritized for Management Star */}
-                    <Td
-                      sticky="left"
-                      className={`text-center ${
-                        proj.isPriorityForManagement ? 'bg-warning-50' : 'bg-white group-hover:bg-grey-50'
-                      }`}
-                    >
-                      {canTogglePriority ? (
-                        <button
-                          onClick={() => handleTogglePrioritizeForManagement(proj)}
-                          className="p-1 rounded-full hover:bg-grey-200/60 transition-transform active:scale-95"
-                          title={
-                            proj.isPriorityForManagement
-                              ? 'Priorizado para apresentar à Gestão (Clique para desmarcar)'
-                              : 'Clique para marcar e priorizar na pauta da Gestão'
-                          }
-                        >
-                          <Star
-                            className={`w-4 h-4 ${
-                              proj.isPriorityForManagement
-                                ? 'fill-warning-500 text-warning-500'
-                                : 'text-grey-300 hover:text-grey-400'
-                            }`}
-                          />
-                        </button>
-                      ) : (
-                        <span className="p-1 inline-flex" title={proj.isPriorityForManagement ? 'Priorizado para a Gestão' : undefined}>
-                          <Star
-                            className={`w-4 h-4 ${
-                              proj.isPriorityForManagement ? 'fill-warning-500 text-warning-500' : 'text-grey-300'
-                            }`}
-                          />
-                        </span>
-                      )}
-                    </Td>
-
+                  <Tr key={proj.id}>
                     {/* 2. Solution Name & Identifiers */}
                     <Td>
                       <div className="flex items-center gap-2">
@@ -943,9 +794,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                     {/* 9. Action Buttons */}
                     <Td
                       sticky="right"
-                      className={`text-right ${
-                        proj.isPriorityForManagement ? 'bg-warning-50' : 'bg-white group-hover:bg-grey-50'
-                      }`}
+                      className="text-right bg-white group-hover:bg-grey-50"
                     >
                       <div className="flex items-center justify-end gap-1">
                         <button
