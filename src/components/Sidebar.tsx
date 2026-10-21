@@ -11,7 +11,6 @@ import {
   Clock,
   CheckCircle2,
   Table2,
-  Users,
   Columns3,
   GanttChart,
   Calculator,
@@ -57,7 +56,6 @@ export interface SidebarProps {
 
 const PORTFOLIO_VIEW_ITEMS: { id: PortfolioView; label: string; icon: React.ElementType }[] = [
   { id: 'spreadsheet', label: 'Planilha Executiva', icon: Table2 },
-  { id: 'executive_summary', label: 'Alinhamento (1:1)', icon: Users },
   { id: 'kanban', label: 'Funil de Etapas (Kanban)', icon: Columns3 },
   { id: 'gantt', label: 'Cronograma (Gantt)', icon: GanttChart }
 ];

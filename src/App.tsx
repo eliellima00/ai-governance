@@ -53,7 +53,7 @@ function normalizeProjectTab(raw?: string): ProjectTab {
   return LEGACY_TAB_MAP[raw] || 'overview';
 }
 
-const PORTFOLIO_VIEWS: PortfolioView[] = ['spreadsheet', 'executive_summary', 'kanban', 'gantt'];
+const PORTFOLIO_VIEWS: PortfolioView[] = ['spreadsheet', 'kanban', 'gantt'];
 const SETTINGS_SECTIONS: SettingsSection[] = ['estimation', 'risk', 'checklists', 'lists', 'flags', 'database', 'backup'];
 
 // Helper to parse URL hash into Route

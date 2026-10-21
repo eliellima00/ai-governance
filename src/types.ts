@@ -26,7 +26,7 @@ export type StageTab = 'E0' | 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6';
 export type ProjectTab = 'overview' | 'ficha' | 'estimation' | StageTab;
 
 // Seções de cada tela, navegadas pelo menu lateral (nunca por abas dentro da página)
-export type PortfolioView = 'spreadsheet' | 'executive_summary' | 'kanban' | 'gantt';
+export type PortfolioView = 'spreadsheet' | 'kanban' | 'gantt';
 export type SettingsSection = 'estimation' | 'risk' | 'checklists' | 'lists' | 'flags' | 'database' | 'backup';
 
 export type Route =
