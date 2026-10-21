@@ -15,7 +15,7 @@ import {
   Copy,
   ExternalLink
 } from 'lucide-react';
-import { GovernanceConfig, GovStage, ProjectType, UserRole, SolutionProject } from '../types';
+import { GovernanceConfig, GovStage, ProjectType, SettingsSection, UserRole, SolutionProject } from '../types';
 import { can } from '../utils/permissions';
 import {
   saveGovernanceConfig,
@@ -34,13 +34,14 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Input, Textarea } from './ui/FormField';
 import { PageHeader } from './ui/PageHeader';
-import { Tabs, TabItem } from './ui/Tabs';
 import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
 import { ListCrudEditor } from './ui/ListCrudEditor';
 
 const EDITABLE_STAGES = GOV_STAGES_CATALOG.filter((s) => s !== 'Concluído');
 
 interface SettingsViewProps {
+  /** Seção aberta, escolhida no menu lateral. */
+  section: SettingsSection;
   userRole: UserRole;
   config: GovernanceConfig;
   projects?: SolutionProject[];
@@ -49,19 +50,9 @@ interface SettingsViewProps {
   onReloadAllState: () => void;
 }
 
-type SubTab = 'estimation' | 'risk' | 'checklists' | 'lists' | 'flags' | 'backup' | 'database';
-
-const SUB_TABS: TabItem<SubTab>[] = [
-  { id: 'estimation', label: 'Motor de Estimativa & Eixo 2' },
-  { id: 'risk', label: 'Réguas de Risco & Corte' },
-  { id: 'checklists', label: 'Critérios de Saída (Checklist)' },
-  { id: 'lists', label: 'Listas & Categorias' },
-  { id: 'flags', label: 'Funcionalidades (Beta)' },
-  { id: 'database', label: 'Banco Relacional (Supabase)' },
-  { id: 'backup', label: 'Backup Técnico (JSON)' }
-];
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
+  section: activeSubTab,
   userRole,
   config,
   projects = [],
@@ -70,7 +61,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onReloadAllState
 }) => {
   const isAdmin = can('edit_settings', userRole);
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('estimation');
   // Accordion: apenas um Tipo Técnico (A/B/C) expandido por vez. Começa com o Tipo A aberto.
   const [expandedType, setExpandedType] = useState<ProjectType | null>('A');
 
@@ -134,6 +124,7 @@ CREATE TABLE IF NOT EXISTS projects (
     links JSONB DEFAULT '{}'::jsonb,
     technical_doc JSONB DEFAULT '{}'::jsonb,
     estimation JSONB DEFAULT '{}'::jsonb,
+    text_versions JSONB DEFAULT '[]'::jsonb,
     custom_hourly_rate NUMERIC,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_updated VARCHAR(50)
@@ -343,8 +334,6 @@ CREATE POLICY "Acesso total settings" ON governance_settings FOR ALL USING (true
         </div>
       )}
 
-      {/* Tabs Navigation */}
-      <Tabs<SubTab> items={SUB_TABS} value={activeSubTab} onChange={setActiveSubTab} />
 
       {/* Sub-tab 1: Motor de Estimativa */}
       {activeSubTab === 'estimation' && (

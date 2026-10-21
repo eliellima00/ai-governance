@@ -25,10 +25,14 @@ export type ExecutivePriority = string;
 export type StageTab = 'E0' | 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6';
 export type ProjectTab = 'overview' | 'ficha' | 'estimation' | StageTab;
 
+// Seções de cada tela, navegadas pelo menu lateral (nunca por abas dentro da página)
+export type PortfolioView = 'spreadsheet' | 'executive_summary' | 'kanban' | 'gantt';
+export type SettingsSection = 'estimation' | 'risk' | 'checklists' | 'lists' | 'flags' | 'database' | 'backup';
+
 export type Route =
-  | { name: 'portfolio' }
+  | { name: 'portfolio'; view?: PortfolioView }
   | { name: 'project'; projectId: string; tab: ProjectTab }
-  | { name: 'settings' }
+  | { name: 'settings'; section?: SettingsSection }
   | { name: 'new-project' }
   | { name: 'my-week' };
 
@@ -201,6 +205,17 @@ export interface MeetingDiaryEntry {
   stage?: StageTab; // Etapa da esteira em que a reunião aconteceu (ausente em registros antigos)
 }
 
+// Campos de texto da Ficha editados com o editor completo (conteúdo em HTML)
+export type RichTextField = 'objective' | 'initialDoc';
+
+export interface TextVersion {
+  id: string;
+  field: RichTextField;
+  html: string;
+  savedAt: string; // ISO
+  savedBy: string;
+}
+
 export interface SolutionProject {
   id: string;
   name: string;
@@ -232,8 +247,9 @@ export interface SolutionProject {
   registeredBy: string;
   groupEncargado: string;
   userGroup: string;
-  objective: string;
-  initialDoc: string;
+  objective: string; // HTML (editor completo); registros antigos podem ser texto puro
+  initialDoc: string; // HTML (editor completo); registros antigos podem ser texto puro
+  textVersions?: TextVersion[]; // Histórico de versões de objective/initialDoc, mais antigas primeiro
   qrCodeUrl: string;
   artifacts?: ProjectArtifact[];
   meetingLogs?: MeetingDiaryEntry[];

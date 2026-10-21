@@ -3,9 +3,11 @@ import {
   ActionItem,
   ActionStatus,
   GovernanceConfig,
+  PortfolioView,
   ProjectTab,
   RiskCriterion,
   Route,
+  SettingsSection,
   SolutionProject,
   UserRole
 } from './types';
@@ -51,14 +53,25 @@ function normalizeProjectTab(raw?: string): ProjectTab {
   return LEGACY_TAB_MAP[raw] || 'overview';
 }
 
+const PORTFOLIO_VIEWS: PortfolioView[] = ['spreadsheet', 'executive_summary', 'kanban', 'gantt'];
+const SETTINGS_SECTIONS: SettingsSection[] = ['estimation', 'risk', 'checklists', 'lists', 'flags', 'database', 'backup'];
+
 // Helper to parse URL hash into Route
 function parseHashToRoute(): Route | null {
   const hash = window.location.hash.replace('#', '');
-  if (!hash || hash === 'portfolio') {
+  if (!hash) {
     return { name: 'portfolio' };
   }
-  if (hash === 'settings') {
-    return { name: 'settings' };
+  const [base, sub] = hash.split('/');
+  if (base === 'portfolio') {
+    return PORTFOLIO_VIEWS.includes(sub as PortfolioView)
+      ? { name: 'portfolio', view: sub as PortfolioView }
+      : { name: 'portfolio' };
+  }
+  if (base === 'settings') {
+    return SETTINGS_SECTIONS.includes(sub as SettingsSection)
+      ? { name: 'settings', section: sub as SettingsSection }
+      : { name: 'settings' };
   }
   if (hash === 'new-project') {
     return { name: 'new-project' };
@@ -80,12 +93,14 @@ function parseHashToRoute(): Route | null {
 // Helper to sync Route to URL hash
 function syncRouteToHash(route: Route) {
   if (route.name === 'portfolio') {
-    if (window.location.hash !== '#portfolio') {
-      window.location.hash = '#portfolio';
+    const targetHash = route.view ? `#portfolio/${route.view}` : '#portfolio';
+    if (window.location.hash !== targetHash) {
+      window.location.hash = targetHash;
     }
   } else if (route.name === 'settings') {
-    if (window.location.hash !== '#settings') {
-      window.location.hash = '#settings';
+    const targetHash = route.section ? `#settings/${route.section}` : '#settings';
+    if (window.location.hash !== targetHash) {
+      window.location.hash = targetHash;
     }
   } else if (route.name === 'new-project') {
     if (window.location.hash !== '#new-project') {
@@ -229,6 +244,14 @@ export default function App() {
 
   const navigateToSettings = useCallback(() => {
     setRoute({ name: 'settings' });
+  }, []);
+
+  const navigateToPortfolioView = useCallback((view: PortfolioView) => {
+    setRoute({ name: 'portfolio', view });
+  }, []);
+
+  const navigateToSettingsSection = useCallback((section: SettingsSection) => {
+    setRoute({ name: 'settings', section });
   }, []);
 
   const navigateToNewProject = useCallback(() => {
@@ -412,6 +435,11 @@ export default function App() {
         onNavigateToSettings={navigateToSettings}
         onOpenNewProject={navigateToNewProject}
         onNavigateToMyWeek={navigateToMyWeek}
+        onNavigateToPortfolioView={navigateToPortfolioView}
+        onNavigateToSettingsSection={navigateToSettingsSection}
+        onSelectProjectTab={selectProjectTab}
+        currentProject={route.name === 'project' ? currentProject : undefined}
+        config={governanceConfig}
         myWeekEnabled={!!governanceConfig.featureFlags?.myWeekEnabled}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -443,7 +471,6 @@ export default function App() {
           <ProjectWorkspaceHeader
             project={currentProject}
             activeTab={route.tab}
-            onSelectTab={selectProjectTab}
             config={governanceConfig}
           />
         )}
@@ -452,6 +479,7 @@ export default function App() {
         <main className="flex-1 w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 max-w-full overflow-x-hidden">
           {route.name === 'portfolio' && (
             <ProjectPortfolioDashboard
+              viewMode={route.view || 'spreadsheet'}
               projects={projects}
               userRole={userRole}
               onUpdateProject={handleUpdateProject}
@@ -462,6 +490,7 @@ export default function App() {
 
           {route.name === 'settings' && (
             <SettingsView
+              section={route.section || 'estimation'}
               userRole={userRole}
               config={governanceConfig}
               projects={projects}

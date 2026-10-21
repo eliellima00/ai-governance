@@ -24,7 +24,8 @@ import {
   GovStage,
   UserRole,
   ScheduledMeeting,
-  ProjectTab
+  ProjectTab,
+  PortfolioView
 } from '../types';
 import {
   computeEstimation,
@@ -44,14 +45,16 @@ import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import { Field, Input, Select, Textarea } from './ui/FormField';
 import { PageHeader } from './ui/PageHeader';
-import { Tabs } from './ui/Tabs';
 import { Modal, ModalFooter } from './ui/Modal';
 import { Table, Thead, Tbody, Tr, Th, Td } from './ui/Table';
 import { StatTile } from './ui/StatTile';
 import { SearchInput } from './ui/SearchInput';
 import { PortfolioGanttView } from './PortfolioGanttView';
+import { richTextToPlain } from '../utils/richText';
 
 interface ProjectPortfolioDashboardProps {
+  /** Visão aberta, escolhida no menu lateral. */
+  viewMode: PortfolioView;
   projects: SolutionProject[];
   userRole?: UserRole;
   onUpdateProject: (updatedProject: SolutionProject) => void;
@@ -256,6 +259,7 @@ const ReadOnlyField: React.FC<{ value: string; multiline?: boolean; className?: 
 );
 
 export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps> = ({
+  viewMode,
   projects,
   userRole = 'admin',
   onUpdateProject,
@@ -268,7 +272,6 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
   const canAdvanceStage = can(userRole, 'advance_stage');
   const canAnnotate = can(userRole, 'add_notes');
 
-  const [viewMode, setViewMode] = useState<'spreadsheet' | 'executive_summary' | 'kanban' | 'gantt'>('spreadsheet');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStage, setFilterStage] = useState('all');
@@ -640,46 +643,9 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
         />
       </div>
 
-      {/* View Mode Switcher and Controls */}
-      <Card className="p-4 space-y-3.5" data-tour="portfolio-view-switcher">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <Tabs<'spreadsheet' | 'executive_summary' | 'kanban' | 'gantt'>
-            items={[
-              {
-                id: 'spreadsheet' as const,
-                label: 'Planilha Executiva',
-                badge: (
-                  <span className="px-1.5 py-0.2 rounded text-[10px] bg-grey-100 text-grey-700 font-mono">
-                    {filteredProjects.length}
-                  </span>
-                )
-              },
-              {
-                id: 'executive_summary' as const,
-                label: 'Alinhamento (1:1)',
-                badge:
-                  stats.prioritizedForManagement > 0 ? (
-                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-warning-50 text-warning-600 font-bold">
-                      {stats.prioritizedForManagement}
-                    </span>
-                  ) : undefined
-              },
-              {
-                id: 'kanban' as const,
-                label: 'Funil de Etapas (Kanban)'
-              },
-              {
-                id: 'gantt' as const,
-                label: 'Cronograma (Gantt)'
-              }
-            ]}
-            value={viewMode}
-            onChange={setViewMode}
-          />
-        </div>
-
-        {/* Filters and Search Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-2 border-t border-grey-100">
+      {/* Filtros (a visão — planilha, 1:1, kanban, gantt — é escolhida no menu lateral) */}
+      <Card className="p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
           {/* Search */}
           <div className="sm:col-span-2">
             <SearchInput
@@ -1067,7 +1033,7 @@ export const ProjectPortfolioDashboard: React.FC<ProjectPortfolioDashboardProps>
                                 </Badge>
                                 <span className="text-xs font-bold text-grey-900">{proj.name}</span>
                               </div>
-                              <p className="text-xs text-grey-500 mt-1 line-clamp-2">{proj.objective}</p>
+                              <p className="text-xs text-grey-500 mt-1 line-clamp-2">{richTextToPlain(proj.objective)}</p>
                             </div>
 
                             {canTogglePriority && (

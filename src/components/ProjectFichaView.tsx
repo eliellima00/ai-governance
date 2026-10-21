@@ -1,10 +1,43 @@
 import React, { useState } from 'react';
-import { Building, CheckCircle, Clock, Lock, Save } from 'lucide-react';
-import { SolutionProject, UserRole } from '../types';
+import { Building, CheckCircle, Clock, History, Lock, Save } from 'lucide-react';
+import { RichTextField, SolutionProject, TextVersion, UserRole } from '../types';
 import { getActiveConfig } from '../config/governanceConfig';
 import { can } from '../utils/permissions';
-import { Button, Field, Input, Select, Textarea } from './ui';
+import { normalizeEditorHtml, toEditorHtml } from '../utils/richText';
+import { Button, Field, Input, Select } from './ui';
+import { RichTextEditor } from './ui/RichTextEditor';
 import { DocumentLinksPanel } from './DocumentLinksPanel';
+import { TextVersionHistoryModal } from './TextVersionHistoryModal';
+
+const RICH_FIELDS: { field: RichTextField; label: string }[] = [
+  { field: 'objective', label: 'Objetivo' },
+  { field: 'initialDoc', label: 'Documentação inicial / observações' }
+];
+
+const ROLE_LABELS: Record<UserRole, string> = { admin: 'Perfil Admin', padrao: 'Perfil Padrão' };
+
+/**
+ * Monta as novas versões dos textos alterados. Na primeira alteração de um campo, o conteúdo que já
+ * existia entra como "versão original", para que também possa ser restaurado.
+ */
+function appendTextVersions(
+  project: SolutionProject,
+  next: Record<RichTextField, string>,
+  savedBy: string
+): TextVersion[] {
+  const versions = [...(project.textVersions || [])];
+  const now = new Date().toISOString();
+  RICH_FIELDS.forEach(({ field }, idx) => {
+    const previous = normalizeEditorHtml(toEditorHtml(project[field]));
+    const current = normalizeEditorHtml(toEditorHtml(next[field]));
+    if (previous === current) return;
+    if (!versions.some((v) => v.field === field) && previous) {
+      versions.push({ id: `tv-${Date.now()}-${idx}-orig`, field, html: previous, savedAt: project.createdAt || now, savedBy: 'Versão original' });
+    }
+    versions.push({ id: `tv-${Date.now()}-${idx}`, field, html: current, savedAt: now, savedBy });
+  });
+  return versions;
+}
 
 interface ProjectFichaViewProps {
   project: SolutionProject;
@@ -45,6 +78,7 @@ export const ProjectFichaView: React.FC<ProjectFichaViewProps> = ({ project, use
     classification: project.technicalDoc?.classification || ''
   });
   const [isSavedToast, setIsSavedToast] = useState(false);
+  const [historyField, setHistoryField] = useState<RichTextField | null>(null);
 
   const set = (field: keyof typeof form) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -55,6 +89,7 @@ export const ProjectFichaView: React.FC<ProjectFichaViewProps> = ({ project, use
     onUpdateProject({
       ...project,
       ...fields,
+      textVersions: appendTextVersions(project, form, ROLE_LABELS[userRole]),
       // O bloco legado da Documentação Viva é preservado; só a classificação continua editável
       technicalDoc: project.technicalDoc
         ? { ...project.technicalDoc, classification }
@@ -129,21 +164,30 @@ export const ProjectFichaView: React.FC<ProjectFichaViewProps> = ({ project, use
 
             {textField('classification', 'Classificação da informação (ex.: Confidencial - Uso Interno)')}
 
-            <Field label="Objetivo">
-              {canEdit ? (
-                <Textarea rows={5} value={form.objective} onChange={set('objective')} className="leading-relaxed" />
-              ) : (
-                <ReadOnlyField value={form.objective} multiline />
-              )}
-            </Field>
-
-            <Field label="Documentação inicial / observações">
-              {canEdit ? (
-                <Textarea rows={3} value={form.initialDoc} onChange={set('initialDoc')} />
-              ) : (
-                <ReadOnlyField value={form.initialDoc} multiline />
-              )}
-            </Field>
+            {RICH_FIELDS.map(({ field, label }) => {
+              const versionCount = (project.textVersions || []).filter((v) => v.field === field).length;
+              return (
+                <div key={field}>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-semibold text-grey-700 text-sm">{label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setHistoryField(field)}
+                      className="text-xs text-grey-500 hover:text-brand-dark flex items-center gap-1"
+                      title="Ver as versões salvas deste texto"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      Histórico ({versionCount})
+                    </button>
+                  </div>
+                  <RichTextEditor
+                    value={form[field]}
+                    editable={canEdit}
+                    onChange={(html) => setForm((prev) => ({ ...prev, [field]: html }))}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="lg:col-span-3">
@@ -184,6 +228,20 @@ export const ProjectFichaView: React.FC<ProjectFichaViewProps> = ({ project, use
       </div>
 
       <DocumentLinksPanel project={project} userRole={userRole} onUpdateProject={onUpdateProject} />
+
+      {historyField && (
+        <TextVersionHistoryModal
+          title={RICH_FIELDS.find((f) => f.field === historyField)?.label || ''}
+          versions={(project.textVersions || []).filter((v) => v.field === historyField)}
+          currentHtml={form[historyField]}
+          canRestore={canEdit}
+          onRestore={(html) => {
+            setForm((prev) => ({ ...prev, [historyField]: html }));
+            setHistoryField(null);
+          }}
+          onClose={() => setHistoryField(null)}
+        />
+      )}
     </div>
   );
 };

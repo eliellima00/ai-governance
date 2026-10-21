@@ -72,10 +72,10 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     selector: '[data-tour="portfolio-view-switcher"]',
-    title: 'Visões & Filtros',
+    title: 'Visões do portfólio',
     content:
-      'Alterne entre Planilha Executiva, Alinhamento 1:1 e Kanban, e use os filtros de área, etapa e prioridade para focar no que importa.',
-    placement: 'bottom'
+      'No menu lateral, alterne entre Planilha Executiva, Alinhamento 1:1, Kanban e Gantt. Os filtros de área, etapa e prioridade ficam no topo da página.',
+    placement: 'right'
   },
   {
     selector: null,

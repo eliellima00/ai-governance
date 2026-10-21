@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS projects (
     links JSONB DEFAULT '{}'::jsonb,
     technical_doc JSONB DEFAULT '{}'::jsonb,
     estimation JSONB DEFAULT '{}'::jsonb,
+    text_versions JSONB DEFAULT '[]'::jsonb,
     custom_hourly_rate NUMERIC,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_updated VARCHAR(50)

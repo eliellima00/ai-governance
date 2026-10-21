@@ -275,6 +275,7 @@ export async function fetchProjectsFromSupabase(): Promise<SolutionProject[] | n
     links: p.links || { spreadsheet: '', script: '', internalPanel: '', externalPortal: '' },
     technicalDoc: p.technical_doc,
     estimation: p.estimation && Object.keys(p.estimation).length > 0 ? p.estimation : undefined,
+    textVersions: Array.isArray(p.text_versions) ? p.text_versions : [],
     createdAt: p.created_at,
     lastUpdated: p.last_updated || new Date().toLocaleDateString('pt-BR'),
     criteria: criteriaMap.get(p.id) || [],
@@ -297,7 +298,7 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
 
   try {
     // 1. Upsert tabela principal
-    const { error: projError } = await client.from('projects').upsert({
+    const projectRow: Record<string, unknown> = {
       id: project.id,
       name: project.name,
       glpi_ticket_id: project.glpiTicketId || null,
@@ -327,8 +328,16 @@ export async function saveProjectToSupabase(project: SolutionProject): Promise<v
       links: project.links || {},
       technical_doc: project.technicalDoc || {},
       estimation: project.estimation || {},
+      text_versions: project.textVersions || [],
       last_updated: project.lastUpdated || new Date().toLocaleDateString('pt-BR')
-    });
+    };
+    let { error: projError } = await client.from('projects').upsert(projectRow);
+    // Banco sem a migration 20261021120000 (coluna text_versions): salva o resto do projeto mesmo assim
+    if (projError && projError.message?.includes('text_versions')) {
+      console.info("ℹ️ [Supabase] Coluna 'text_versions' ausente; rode `npm run migrate`. Salvando sem o histórico de textos.");
+      const { text_versions: _tv, ...rowWithoutVersions } = projectRow;
+      ({ error: projError } = await client.from('projects').upsert(rowWithoutVersions));
+    }
 
     if (projError) {
       if (

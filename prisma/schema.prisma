@@ -38,6 +38,7 @@ model Project {
   links                   Json?    @default("{}")
   technicalDoc            Json?    @default("{}") @map("technical_doc")
   estimation              Json?    @default("{}")
+  textVersions            Json?    @default("[]") @map("text_versions")
   customHourlyRate        Decimal? @map("custom_hourly_rate") @db.Decimal
   createdAt               DateTime? @default(now()) @map("created_at") @db.Timestamptz
   lastUpdated             String?  @map("last_updated") @db.VarChar(50)
